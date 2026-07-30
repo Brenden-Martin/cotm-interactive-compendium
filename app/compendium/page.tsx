@@ -11,7 +11,8 @@ export default function Compendium() {
       <ul className="archive-list">
         <li><span>001</span><Link href="/compendium/nonlinear-oscillations"><strong>Harmonic &amp; Nonlinear Oscillations</strong></Link><small>Read the entry →</small></li>
         <li><span>002</span><Link href="/compendium/polarization-space"><strong>Polarization Space &amp; Waveplates</strong></Link><small>Read the entry →</small></li>
-        <li><span>003</span><strong>Unsorted fragments</strong><small>Awaiting material</small></li>
+        <li><span>003</span><Link href="/compendium/fraunhofer-diffraction"><strong>Square Apertures &amp; Fraunhofer Diffraction</strong></Link><small>Read the entry →</small></li>
+        <li><span>004</span><strong>Unsorted fragments</strong><small>Awaiting material</small></li>
       </ul>
     </main>
   );

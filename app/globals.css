@@ -616,6 +616,52 @@ button { font: inherit; }
 .brush-size { display: grid; grid-template-columns: 42px 1fr 25px; gap: 8px; align-items: center; margin-top: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .brush-size input { width: 100%; accent-color: #111820; }
 
+.diffraction-entry { color:#f7f0db;background:#14100d;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease; }
+.diffraction-entry:hover,.diffraction-entry:focus-visible { transform:translateY(-10px);box-shadow:10px 10px 0 #ef7b2d;outline:none; }
+.diffraction-entry strong { font-size:clamp(26px,4vw,50px);letter-spacing:-.04em; }
+.diffraction-entry-field { width:170px;height:150px;margin:auto;position:relative;background:repeating-linear-gradient(90deg,transparent 0 16px,rgba(255,179,47,.14) 17px),repeating-linear-gradient(0deg,transparent 0 16px,rgba(255,179,47,.14) 17px); }
+.diffraction-entry-field::before,.diffraction-entry-field::after { content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#ffd562;box-shadow:0 0 18px #ff9f31; }
+.diffraction-entry-field::before { width:150px;height:3px; }
+.diffraction-entry-field::after { width:3px;height:130px; }
+.diffraction-entry-field i { position:absolute;inset:50% auto auto 50%;width:34px;height:34px;border:1px solid #ffcf5b;transform:translate(-50%,-50%) rotate(45deg); }
+
+.diff-page { min-height:100svh;background:#100d0b;color:#f7f0db;padding:clamp(18px,3vw,42px); }
+.diff-header { display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:24px;margin-bottom:24px; }
+.diff-header h1 { margin:4px 0 0;font-size:clamp(36px,6vw,82px);line-height:.88;letter-spacing:-.07em; }
+.diff-read { justify-self:end;color:inherit;text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:800;text-decoration:none;border-bottom:1px solid;padding-bottom:4px; }
+.diff-tabs { display:grid;grid-template-columns:repeat(2,minmax(150px,230px));margin-bottom:-2px;position:relative;z-index:2; }
+.diff-tabs button { min-height:42px;border:2px solid #f7f0db;background:#100d0b;color:#f7f0db;font:inherit;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer; }
+.diff-tabs button+button { border-left:0; }.diff-tabs button.active { background:#f7f0db;color:#100d0b; }
+.diff-bench { display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,370px);border:2px solid #f7f0db;min-height:72svh; }
+.diff-views { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;background:#f7f0db; }
+.diff-views figure { margin:0;background:#171311;display:grid;grid-template-rows:1fr auto;min-height:330px; }
+.diff-views .far-field { grid-column:1/-1;min-height:420px; }
+.diff-canvas-wrap { min-height:0;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle,#211912,#0c0a09 72%); }
+.diff-canvas-wrap canvas { width:min(92%,390px);aspect-ratio:1;image-rendering:pixelated;box-shadow:0 0 40px rgba(255,150,30,.12); }
+.far-field .diff-canvas-wrap canvas { width:min(68%,500px); }
+.diff-canvas-wrap.drawable canvas { cursor:crosshair;touch-action:none;border:1px solid rgba(247,240,219,.35); }
+.reticle { position:absolute;width:36px;height:36px;border:1px solid rgba(247,240,219,.28);border-radius:50%;pointer-events:none; }
+.reticle::before,.reticle::after { content:"";position:absolute;background:rgba(247,240,219,.28); }
+.reticle::before { width:52px;height:1px;left:-9px;top:17px; }.reticle::after { height:52px;width:1px;top:-9px;left:17px; }
+.diff-views figcaption { min-height:48px;padding:13px 15px;border-top:1px solid rgba(247,240,219,.35);font-size:10px;text-transform:uppercase;letter-spacing:.12em; }
+.diff-views figcaption b { color:#ef7b2d;margin-right:12px; }.diff-views figcaption em { float:right;font-style:normal;opacity:.55; }
+.diff-controls { background:#e6dec7;color:#15110e;border-left:2px solid #f7f0db;padding:22px; }
+.diff-selector { display:grid;grid-template-columns:repeat(3,1fr);border:0;padding:0;margin:0 0 22px; }
+.diff-selector legend { width:100%;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px; }
+.diff-selector button { min-height:36px;border:1px solid #15110e;background:transparent;font:inherit;font-size:9px;font-weight:800;text-transform:uppercase;cursor:pointer; }
+.diff-selector button+button { border-left:0; }.diff-selector button.active { background:#15110e;color:#f7f0db; }
+.diff-slider { display:block;margin-bottom:21px; }
+.diff-slider span { display:flex;justify-content:space-between;align-items:center;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.11em;margin-bottom:8px; }
+.diff-slider span input { width:74px;border:1px solid #15110e;background:transparent;padding:5px;font:inherit;text-align:right; }
+.diff-slider>input { width:100%;accent-color:#ef7b2d; }
+.diff-log { width:100%;min-height:42px;border:1px solid #15110e;background:transparent;font:inherit;font-size:9px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;cursor:pointer;text-align:left;padding:0 12px; }
+.diff-log i { display:inline-block;width:9px;height:9px;border:1px solid;margin-right:8px; }.diff-log.active i { background:#ef7b2d; }
+.diff-draw-actions { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px; }
+.diff-draw-actions button { min-height:42px;border:1px solid #15110e;background:transparent;font:inherit;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer; }
+.diff-draw-actions button:hover,.diff-draw-actions button:focus-visible { background:#ef7b2d;outline:none; }
+.diff-draw-hint { font-size:11px;line-height:1.5;margin:0 0 20px; }
+.diff-note { font-size:11px;line-height:1.55;border-top:1px solid #15110e;margin-top:22px;padding-top:14px;opacity:.72; }
+
 .research-overlay {
   position: absolute;
   inset: 0;
@@ -702,6 +748,13 @@ button { font: inherit; }
   .pol-lab { grid-template-columns:1fr; }
   .pol-stage { min-height:68svh; }
   .pol-controls { border-left:0;border-top:2px solid #0b2022; }
+  .diff-header { grid-template-columns:1fr auto; }
+  .diff-header > div { grid-column:1/-1;grid-row:2; }
+  .diff-read { grid-column:1/-1;grid-row:3;justify-self:start; }
+  .diff-bench { grid-template-columns:1fr; }
+  .diff-views { grid-template-columns:1fr; }
+  .diff-views .far-field { grid-column:auto; }
+  .diff-controls { border-left:0;border-top:2px solid #f7f0db; }
   .archive-list li { grid-template-columns: 42px 1fr; }
   .archive-list small { grid-column: 2; }
 }

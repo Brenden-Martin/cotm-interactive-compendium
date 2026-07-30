@@ -63,6 +63,12 @@ export default function Gallery() {
           <strong>Polarization Space</strong>
           <small>Enter the optical bench →</small>
         </Link>
+        <Link className="study diffraction-entry" href="/gallery/square-aperture">
+          <span className="eyebrow">Exhibit 10 / Wave Optics</span>
+          <div className="diffraction-entry-field" aria-hidden="true"><i /></div>
+          <strong>Square Aperture</strong>
+          <small>Enter the Fourier plane →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
