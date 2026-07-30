@@ -11,6 +11,7 @@ const channels = ["R", "G", "B"];
 type Config = { k: number[]; exponent: number[]; dt: number; decay: number; noise: number };
 type FieldState = [Float32Array, Float32Array, Float32Array];
 type Preset = Config & { name: string };
+type SharedPreset = { id: number; config: Config; createdAt: string };
 
 const indexK = (dest: number, source: number, template: number) => (dest * 3 + source) * 5 + template;
 const sparseK = (entries: Array<[number, number, number, number]>) => {
@@ -32,7 +33,7 @@ const presets: Preset[] = [
 const cloneConfig = (preset: Preset): Config => ({ k: [...preset.k], exponent: [...preset.exponent], dt: preset.dt, decay: preset.decay, noise: preset.noise });
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
-export function NonlinearDeq() {
+export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<FieldState>([new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)]);
   const configRef = useRef<Config>(cloneConfig(presets[0]));
@@ -44,14 +45,18 @@ export function NonlinearDeq() {
   const pausedRef = useRef(false);
   const autoMutateRef = useRef(true);
   const mutationTimeRef = useRef(0);
+  const morphIndexRef = useRef(0);
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
   const [paintMode, setPaintMode] = useState<"color" | "erase">("color");
   const [brush, setBrush] = useState(7);
   const [paused, setPaused] = useState(false);
-  const [autoMutate, setAutoMutate] = useState(true);
+  const [autoMutate, setAutoMutate] = useState(!presetFoundry);
   const [mutationCount, setMutationCount] = useState(0);
+  const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>([]);
+  const [morphing, setMorphing] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("Ready to collect this state");
 
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => {
@@ -61,6 +66,60 @@ export function NonlinearDeq() {
   useEffect(() => { brushRef.current = brush; }, [brush]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { autoMutateRef.current = autoMutate; }, [autoMutate]);
+
+  useEffect(() => {
+    if (!presetFoundry) return;
+    let active = true;
+    fetch("/api/deq-presets")
+      .then((response) => response.json())
+      .then((data: { presets?: SharedPreset[] }) => {
+        if (active) setSharedPresets(Array.isArray(data.presets) ? data.presets : []);
+      })
+      .catch(() => {
+        if (active) setSaveStatus("Shared bank temporarily unavailable");
+      });
+    return () => { active = false; };
+  }, [presetFoundry]);
+
+  useEffect(() => {
+    if (!presetFoundry || !morphing) return;
+    const anchors: Config[] = [
+      ...presets.map(cloneConfig),
+      ...sharedPresets.map((preset) => preset.config),
+    ];
+    if (anchors.length < 2) return;
+    let raf = 0;
+    let lastPaint = 0;
+    const duration = 6500;
+    const segmentStart = performance.now();
+    const startIndex = morphIndexRef.current % anchors.length;
+    const from = configRef.current;
+    const to = anchors[(startIndex + 1) % anchors.length];
+    const animate = (now: number) => {
+      const raw = Math.min(1, (now - segmentStart) / duration);
+      const blend = raw * raw * (3 - 2 * raw);
+      const mix = (a: number, b: number) => a + (b - a) * blend;
+      const next: Config = {
+        k: from.k.map((value, index) => mix(value, to.k[index])),
+        exponent: from.exponent.map((value, index) => mix(value, to.exponent[index])),
+        dt: mix(from.dt, to.dt),
+        decay: mix(from.decay, to.decay),
+        noise: mix(from.noise, to.noise),
+      };
+      configRef.current = next;
+      if (now - lastPaint > 32 || raw === 1) {
+        setConfig(next);
+        lastPaint = now;
+      }
+      if (raw === 1) {
+        morphIndexRef.current = (startIndex + 1) % anchors.length;
+        setMorphing(false);
+        requestAnimationFrame(() => setMorphing(true));
+      } else raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [morphing, presetFoundry, sharedPresets]);
 
   const seedNoise = useCallback(() => {
     const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
@@ -77,6 +136,32 @@ export function NonlinearDeq() {
     setPresetName(preset.name);
     setConfig(cloneConfig(preset));
     seedNoise();
+  };
+
+  const applySharedPreset = (id: number) => {
+    const preset = sharedPresets.find((item) => item.id === id);
+    if (!preset) return;
+    setMorphing(false);
+    setPresetName(`Shared ${String(preset.id).padStart(3, "0")}`);
+    setConfig({ ...preset.config, k: [...preset.config.k], exponent: [...preset.config.exponent] });
+    seedNoise();
+  };
+
+  const saveCurrentState = async () => {
+    setSaveStatus("Writing anonymous anchor…");
+    try {
+      const response = await fetch("/api/deq-presets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(configRef.current),
+      });
+      const data = await response.json() as { preset?: SharedPreset; error?: string };
+      if (!response.ok || !data.preset) throw new Error(data.error);
+      setSharedPresets((current) => current.some((item) => item.id === data.preset!.id) ? current : [...current, data.preset!]);
+      setSaveStatus(`Saved as shared anchor ${String(data.preset.id).padStart(3, "0")}`);
+    } catch {
+      setSaveStatus("Could not reach the shared bank");
+    }
   };
 
   const mutate = useCallback(() => {
@@ -229,6 +314,15 @@ export function NonlinearDeq() {
         <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{mutationCount} parameter mutations</span></div>
       </div>
       <aside className="deq-controls">
+        {presetFoundry && <div className="control-block deq-foundry">
+          <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{sharedPresets.length} found states</b></div>
+          <div className="transport deq-foundry-actions">
+            <button onClick={saveCurrentState}>Save current state</button>
+            <button className={morphing ? "active" : ""} onClick={() => { setAutoMutate(false); setMorphing((value) => !value); }}>{morphing ? "Hold morph" : "Morph all anchors"}</button>
+          </div>
+          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySharedPreset(Number(event.target.value))}><option value="" disabled>Select shared anchor</option>{sharedPresets.map((preset) => <option key={preset.id} value={preset.id}>Anchor {String(preset.id).padStart(3, "0")}</option>)}</select></label>
+          <p className="deq-save-status" aria-live="polite">{saveStatus}</p>
+        </div>}
         <div className="deq-top-controls">
           <label className="preset-select"><span className="control-label">Preset</span><select value={presetName} onChange={(event) => applyPreset(event.target.value)}>{presets.map((preset) => <option key={preset.name}>{preset.name}</option>)}</select></label>
           <div className="transport deq-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={seedNoise}>Re-seed</button><button onClick={mutate}>Mutate now</button></div>

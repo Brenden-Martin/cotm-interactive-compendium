@@ -81,6 +81,12 @@ export default function Gallery() {
           <strong>Mirror Steering</strong>
           <small>Enter the ray table →</small>
         </Link>
+        <Link className="study deq-entry deq-foundry-entry" href="/gallery/deq-morph-bank">
+          <span className="eyebrow">Exhibit 13 / Collective Systems</span>
+          <div className="deq-entry-field" aria-hidden="true"><i /><i /><i /></div>
+          <strong>DEQ Morph Bank</strong>
+          <small>Collect a new anchor →</small>
+        </Link>
       </section>
     </main>
   );
