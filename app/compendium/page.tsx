@@ -13,7 +13,8 @@ export default function Compendium() {
         <li><span>002</span><Link href="/compendium/polarization-space"><strong>Polarization Space &amp; Waveplates</strong></Link><small>Read the entry →</small></li>
         <li><span>003</span><Link href="/compendium/fraunhofer-diffraction"><strong>Square Apertures &amp; Fraunhofer Diffraction</strong></Link><small>Read the entry →</small></li>
         <li><span>004</span><Link href="/compendium/perlin-noise"><strong>Perlin Noise &amp; Coherent Randomness</strong></Link><small>Read the entry →</small></li>
-        <li><span>005</span><strong>Unsorted fragments</strong><small>Awaiting material</small></li>
+        <li><span>005</span><Link href="/compendium/mirror-steering"><strong>Steering Light with a Mirror</strong></Link><small>Read the entry →</small></li>
+        <li><span>006</span><strong>Unsorted fragments</strong><small>Awaiting material</small></li>
       </ul>
     </main>
   );

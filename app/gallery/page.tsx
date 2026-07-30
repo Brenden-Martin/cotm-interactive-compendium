@@ -75,6 +75,12 @@ export default function Gallery() {
           <strong>Perlin Noise</strong>
           <small>Enter the field generator →</small>
         </Link>
+        <Link className="study mirror-entry" href="/gallery/mirror-steering">
+          <span className="eyebrow">Exhibit 12 / Geometric Optics</span>
+          <div className="mirror-entry-figure" aria-hidden="true"><i/><i/><i/></div>
+          <strong>Mirror Steering</strong>
+          <small>Enter the ray table →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
