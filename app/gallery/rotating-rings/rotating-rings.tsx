@@ -54,9 +54,9 @@ export function RotatingRings() {
       }
       for(let i=0;i<n;i++){velocity[i]+=acc[i]*dt;angle[i]+=velocity[i]*dt;history[i].push(velocity[i]);if(history[i].length>210)history[i].shift();}
     };
-    const drawCoil = (r1:number,r2:number,a1:number,a2:number,z:number) => {
+    const drawCoil = (x1:number,x2:number,a1:number,a2:number) => {
       ctx.beginPath();
-      for(let j=0;j<=44;j++){const t=j/44,rr=r1+(r2-r1)*t+.025*Math.sin(t*Math.PI*12),a=a1+(a2-a1)*t;const p=project(Math.cos(a)*rr,Math.sin(a)*rr,z);j?ctx.lineTo(...p):ctx.moveTo(...p);}
+      for(let j=0;j<=44;j++){const t=j/44,phase=t*Math.PI*12+a1+(a2-a1)*t,p=project(x1+(x2-x1)*t,.035*Math.cos(phase),.035*Math.sin(phase));j?ctx.lineTo(...p):ctx.moveTo(...p);}
       ctx.strokeStyle="rgba(231,243,232,.56)";ctx.lineWidth=1.5;ctx.stroke();
     };
     const draw=(now:number)=>{
@@ -66,13 +66,13 @@ export function RotatingRings() {
       ctx.fillStyle="#07121b";ctx.fillRect(0,0,w,h);
       const n=controlsRef.current.count,maxR=1.45;
       for(let g=-5;g<=5;g++){const p1=project(-1.8,g*.3,-.12),p2=project(1.8,g*.3,-.12);ctx.beginPath();ctx.moveTo(...p1);ctx.lineTo(...p2);ctx.strokeStyle="rgba(69,201,204,.07)";ctx.stroke();}
-      const axle1=project(0,0,-.7),axle2=project(0,0,.7);ctx.beginPath();ctx.moveTo(...axle1);ctx.lineTo(...axle2);ctx.strokeStyle="#d9ded4";ctx.lineWidth=7;ctx.stroke();
+      const axle1=project(-1.72,0,0),axle2=project(1.72,0,0);ctx.beginPath();ctx.moveTo(...axle1);ctx.lineTo(...axle2);ctx.strokeStyle="#d9ded4";ctx.lineWidth=7;ctx.stroke();
       for(let i=n-1;i>=0;i--){
-        const r=maxR-(i/(Math.max(1,n-1)))*.92,z=(i-(n-1)/2)*.035,a=angle[i];
-        if(i<n-1){const prev=maxR-((i+1)/(Math.max(1,n-1)))*.92;drawCoil(prev,r,angle[i+1],a,z);}
-        ctx.beginPath();for(let j=0;j<=128;j++){const t=j/128*Math.PI*2,p=project(Math.cos(t)*r,Math.sin(t)*r,z);j?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.closePath();
+        const r=maxR-(i/(Math.max(1,n-1)))*.92,a=angle[i],ca=Math.cos(a),sa=Math.sin(a);
+        if(i<n-1){const inner=maxR-((i+1)/(Math.max(1,n-1)))*.92;drawCoil(inner,r,angle[i+1],a);drawCoil(-inner,-r,angle[i+1],a);}
+        ctx.beginPath();for(let j=0;j<=128;j++){const t=j/128*Math.PI*2,p=project(Math.cos(t)*r,Math.sin(t)*r*ca,Math.sin(t)*r*sa);j?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.closePath();
         ctx.strokeStyle=COLORS[i];ctx.lineWidth=Math.max(3,7-i*.3);ctx.stroke();
-        const hub=project(0,0,z),mark=project(Math.cos(a)*r,Math.sin(a)*r,z);ctx.beginPath();ctx.moveTo(...hub);ctx.lineTo(...mark);ctx.strokeStyle=COLORS[i];ctx.lineWidth=2;ctx.stroke();
+        const hub=project(0,0,0),mark=project(0,r*ca,r*sa);ctx.beginPath();ctx.moveTo(...hub);ctx.lineTo(...mark);ctx.strokeStyle=COLORS[i];ctx.lineWidth=2;ctx.stroke();
         ctx.beginPath();ctx.arc(mark[0],mark[1],6,0,Math.PI*2);ctx.fillStyle="#f7f2dc";ctx.fill();
       }
       const gx=22,gy=h-126,gw=Math.min(390,w*.43),gh=88;ctx.strokeStyle="rgba(255,255,255,.2)";ctx.strokeRect(gx,gy,gw,gh);
@@ -96,11 +96,11 @@ export function RotatingRings() {
   return <main className="rings-page">
     <header className="rings-header"><Link className="back" href="/gallery">Gallery</Link><div><span className="eyebrow">Interactive Exhibit 07 · Kinetic Sculpture</span><h1>Rotating Rings</h1></div><span className="folio">Iθ̈ = Στ</span></header>
     <section className="rings-lab">
-      <div className="rings-stage"><canvas ref={canvasRef} className="rings-canvas"/><p>Drag to orbit the sculpture. Each bright spoke reveals its ring’s angular position.</p></div>
+      <div className="rings-stage"><canvas ref={canvasRef} className="rings-canvas"/><p>Drag to orbit the sculpture. Every ring turns out of its starting plane around the shared horizontal axle.</p></div>
       <aside className="rings-controls">
         <div className="rings-transport"><button onClick={()=>setPaused(v=>!v)}>{paused?"Resume":"Pause"}</button><button onClick={()=>resetRef.current++}>Release impulse</button></div>
         {sliders.map(([key,label,min,max,step])=><label key={key}><span>{label}</span><output>{key==="count"?controls[key]:controls[key].toFixed(2)}</output><input aria-label={label} type="range" min={min} max={max} step={step} value={controls[key]} onChange={e=>set(key,+e.target.value)}/></label>)}
-        <p>The outer ring receives the initial impulse. Torsion springs resist differences in angle, carrying angular momentum through the nested rotors and eventually returning it.</p>
+        <p>The outer ring receives the initial impulse about a shared diameter. Torsion springs resist differences in tilt, carrying angular momentum through the nested rotors and eventually returning it.</p>
       </aside>
     </section>
   </main>;
