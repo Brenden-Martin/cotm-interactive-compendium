@@ -161,6 +161,7 @@ button { font: inherit; }
 .gag-matrix { position:fixed;inset:0;z-index:32;overflow:hidden;background:rgba(0,6,2,.88);display:flex;justify-content:space-around;pointer-events:none; }
 .gag-matrix i { width:1em;color:#6cff75;font:700 14px/1.05 monospace;overflow-wrap:anywhere;text-shadow:0 0 8px #1dff4c;opacity:.85;translate:0 -130%;animation:gag-matrix-fall .72s linear infinite;animation-delay:calc(var(--i) * -.083s); }
 .menu-dance .color-line { transform-origin:left center; }
+.cotm-gag:not(.cotm-gag-idle) .color-line { transition:none; }
 .menu-extended { filter:saturate(1.08); }
 .menu-dance-ripple-x .color-line { animation:menu-ripple-x 1.15s ease-in-out;animation-delay:calc(var(--i) * .075s) }
 .menu-dance-ripple-y .color-line { animation:menu-ripple-y 1.2s ease-in-out;animation-delay:calc(var(--i) * .085s) }

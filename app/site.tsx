@@ -40,6 +40,20 @@ export function ColorIndex({ active }: { active: Room }) {
     const ctx = new AudioContextClass();
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
+    if (kind === "slidefall") {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1050, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(68, ctx.currentTime + 1.35);
+      gain.gain.setValueAtTime(.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.15, ctx.currentTime + .025);
+      gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + 1.45);
+      osc.connect(gain);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.48);
+      window.setTimeout(() => void ctx.close(), 1750);
+      return;
+    }
     gain.gain.setValueAtTime(.0001, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(.16, ctx.currentTime + .015);
     gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + .5);
@@ -75,7 +89,7 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "invert", weight: 4, sound: "laser", label: "POLARITY REVERSED" },
       { id: "mirage", weight: 3.5, sound: "spring", label: "HEAT HAZE" },
       { id: "upside", weight: 2.5, sound: "bonk", label: "SOUTH IS UP" },
-      { id: "fall", weight: 2.2, sound: "spring", label: "GRAVITY ENABLED" },
+      { id: "fall", weight: 2.2, sound: "slidefall", label: "GRAVITY ENABLED" },
       { id: "explode", weight: 1.5, sound: "laser", label: "BUTTON FAILURE" },
       { id: "rgb", weight: 4.5, sound: "sparkle", label: "LOCAL COLOR SPACE MUTATION" },
       { id: "matrix", weight: 2.2, sound: "laser", label: "TECHNOLOGY DETECTED" },
@@ -106,6 +120,7 @@ export function ColorIndex({ active }: { active: Room }) {
     recentGags.current = [...recentGags.current.slice(-3), choice.id];
     synth(choice.sound);
     if (timer.current) window.clearTimeout(timer.current);
+    setDance("");
     setGag(choice.id);
     setGagLabel(choice.label);
     if (choice.id === "rgb") {
@@ -176,13 +191,13 @@ export function ColorIndex({ active }: { active: Room }) {
           fit neatly elsewhere.
         </p>
       </section>
-      <nav className={`index-nav menu-dance menu-dance-${dance || "idle"}`} aria-label="Main collection">
+      <nav className={`index-nav menu-dance menu-dance-${gag ? "idle" : (dance || "idle")}`} aria-label="Main collection">
         {rooms.map((room, index) => (
           <Link
             key={room.id}
             href={room.href}
-            className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""} ${dancePick === index ? "dance-picked" : ""} ${extensions[index] ? "menu-extended" : ""}`}
-            style={{"--i":index,"--dance-dx":`${danceDx}px`,"--extend":`${extensions[index]}px`} as React.CSSProperties}
+            className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""} ${dancePick === index ? "dance-picked" : ""} ${!gag && extensions[index] ? "menu-extended" : ""}`}
+            style={{"--i":index,"--dance-dx":`${danceDx}px`,"--extend":`${gag ? 0 : extensions[index]}px`} as React.CSSProperties}
             onPointerEnter={playWoosh}
             onClick={room.id === "home" ? (event) => { event.preventDefault(); summonGag(); } : undefined}
             aria-current={active === room.id ? "page" : undefined}
