@@ -342,6 +342,7 @@ button { font: inherit; }
 .lava-slider { margin-bottom: 20px; }
 .lava-slider label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
 .lava-slider input { width: 100%; accent-color: #5d1f67; }
+.lava-slider .lava-number { width: 88px; border: 1px solid #111820; background: transparent; padding: 5px 7px; font: inherit; font-size: 11px; font-weight: 800; text-align: right; letter-spacing: 0; }
 .lava-transport { grid-template-columns: repeat(3, 1fr); }
 .lab-note { font-size: 11px; line-height: 1.5; opacity: .72; border-top: 1px solid #111820; padding-top: 12px; }
 

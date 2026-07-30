@@ -14,18 +14,20 @@ export function LavaLamp() {
   const frameRef = useRef(0);
   const pointerRef = useRef({ x: 0, y: 0, active: false, mode: "attract" as PointerMode });
   const modeRef = useRef<PointerMode>("attract");
-  const paramsRef = useRef({ heaterGain: 15, heatDecay: .035, buoyancy: 185, count: 110, heater: true, paused: false });
+  const paramsRef = useRef({ heaterGain: 15, heatDecay: .035, buoyancy: 185, cohesion: 1, surfaceTension: 1, count: 110, heater: true, paused: false });
   const [heaterGain, setHeaterGain] = useState(15);
   const [heatDecay, setHeatDecay] = useState(.035);
   const [buoyancy, setBuoyancy] = useState(185);
+  const [cohesion, setCohesion] = useState(1);
+  const [surfaceTension, setSurfaceTension] = useState(1);
   const [particleCount, setParticleCount] = useState(110);
   const [heater, setHeater] = useState(true);
   const [paused, setPaused] = useState(false);
   const [pointerMode, setPointerMode] = useState<PointerMode>("attract");
 
   useEffect(() => {
-    paramsRef.current = { heaterGain, heatDecay, buoyancy, count: particleCount, heater, paused };
-  }, [heaterGain, heatDecay, buoyancy, particleCount, heater, paused]);
+    paramsRef.current = { heaterGain, heatDecay, buoyancy, cohesion, surfaceTension, count: particleCount, heater, paused };
+  }, [heaterGain, heatDecay, buoyancy, cohesion, surfaceTension, particleCount, heater, paused]);
 
   useEffect(() => {
     modeRef.current = pointerMode;
@@ -35,11 +37,9 @@ export function LavaLamp() {
   const seed = useCallback((count = paramsRef.current.count) => {
     const particles: Particle[] = [];
     for (let index = 0; index < count; index++) {
-      const column = index % 11;
-      const row = Math.floor(index / 11);
       particles.push({
-        x: .35 + column / 36 + (Math.random() - .5) * .02,
-        y: .65 + row / 48 + (Math.random() - .5) * .02,
+        x: .12 + Math.random() * .76,
+        y: .55 + Math.random() * .38,
         vx: (Math.random() - .5) * .08,
         vy: (Math.random() - .5) * .08,
         heat: 0,
@@ -92,8 +92,21 @@ export function LavaLamp() {
       const params = paramsRef.current;
       const ax = new Float32Array(particles.length);
       const ay = new Float32Array(particles.length);
+      const neighborX = new Float32Array(particles.length);
+      const neighborY = new Float32Array(particles.length);
+      const neighborCount = new Uint16Array(particles.length);
       const rest = .031;
       const cohesionRange = .085;
+      const cellSize = cohesionRange;
+      const grid = new Map<string, number[]>();
+
+      particles.forEach((particle, index) => {
+        const cx = Math.floor(particle.x / cellSize);
+        const cy = Math.floor(particle.y / cellSize);
+        const key = `${cx},${cy}`;
+        const bucket = grid.get(key);
+        if (bucket) bucket.push(index); else grid.set(key, [index]);
+      });
 
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
@@ -116,26 +129,45 @@ export function LavaLamp() {
           ay[i] += dy * influence * 4.8;
         }
 
-        for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 > cohesionRange * cohesionRange || d2 < .0000001) continue;
-          const distance = Math.sqrt(d2);
-          const nx = dx / distance;
-          const ny = dy / distance;
-          let force = 0;
-          if (distance < rest) {
-            force = -(rest - distance) * 21;
-          } else {
-            const t = (distance - rest) / (cohesionRange - rest);
-            force = Math.sin(Math.PI * t) * .075;
+        const cellX = Math.floor(a.x / cellSize);
+        const cellY = Math.floor(a.y / cellSize);
+        for (let gx = -1; gx <= 1; gx++) for (let gy = -1; gy <= 1; gy++) {
+          const bucket = grid.get(`${cellX + gx},${cellY + gy}`);
+          if (!bucket) continue;
+          for (const j of bucket) {
+            if (j <= i) continue;
+            const b = particles[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 > cohesionRange * cohesionRange || d2 < .0000001) continue;
+            const distance = Math.sqrt(d2);
+            const nx = dx / distance;
+            const ny = dy / distance;
+            let force = 0;
+            if (distance < rest) {
+              force = -(rest - distance) * 21;
+            } else {
+              const t = (distance - rest) / (cohesionRange - rest);
+              force = Math.sin(Math.PI * t) * .075 * params.cohesion;
+            }
+            ax[i] += nx * force; ay[i] += ny * force;
+            ax[j] -= nx * force; ay[j] -= ny * force;
+            neighborX[i] += b.x; neighborY[i] += b.y; neighborCount[i]++;
+            neighborX[j] += a.x; neighborY[j] += a.y; neighborCount[j]++;
           }
-          ax[i] += nx * force; ay[i] += ny * force;
-          ax[j] -= nx * force; ay[j] -= ny * force;
         }
       }
+
+      particles.forEach((particle, index) => {
+        const count = neighborCount[index];
+        if (count === 0 || count >= 12 || params.surfaceTension === 0) return;
+        const centerX = neighborX[index] / count;
+        const centerY = neighborY[index] / count;
+        const boundaryFactor = (12 - count) / 12;
+        ax[index] += (centerX - particle.x) * params.surfaceTension * boundaryFactor * 3.2;
+        ay[index] += (centerY - particle.y) * params.surfaceTension * boundaryFactor * 3.2;
+      });
 
       particles.forEach((particle, index) => {
         particle.vx = clamp((particle.vx + ax[index] * dt) * .992, -.65, .65);
@@ -186,7 +218,7 @@ export function LavaLamp() {
         const r = Math.round(cold.r * (1 - t) + hot.r * t);
         const g = Math.round(cold.g * (1 - t) + hot.g * t);
         const b = Math.round(cold.b * (1 - t) + hot.b * t);
-        const radius = Math.max(5, Math.min(10, width * .018));
+        const radius = Math.max(2.2, Math.min(10, width * .018 * Math.sqrt(110 / Math.max(40, particlesRef.current.length))));
         ctx.fillStyle = `rgba(${r},${g},${b},.18)`;
         ctx.beginPath(); ctx.arc(x, y, radius * 2.4, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = `rgb(${r},${g},${b})`;
@@ -224,7 +256,7 @@ export function LavaLamp() {
   }, [seed]);
 
   const updateCount = (value: number) => {
-    const next = clamp(Math.round(value), 40, 180);
+    const next = clamp(Math.round(value), 20, 4000);
     setParticleCount(next);
     paramsRef.current.count = next;
   };
@@ -252,20 +284,28 @@ export function LavaLamp() {
           </div>
         </div>
         <div className="lava-slider">
-          <label><span>Heater gain</span><output>{heaterGain.toFixed(1)}</output></label>
-          <input type="range" min="0" max="60" step=".5" value={heaterGain} onChange={(event) => setHeaterGain(Number(event.target.value))} />
+          <label><span>Heater gain</span><input className="lava-number" aria-label="Enter heater gain" type="number" min="0" max="1000" step=".5" value={heaterGain} onChange={(event) => setHeaterGain(clamp(Number(event.target.value), 0, 1000))} /></label>
+          <input type="range" min="0" max="250" step=".5" value={Math.min(heaterGain, 250)} onChange={(event) => setHeaterGain(Number(event.target.value))} />
         </div>
         <div className="lava-slider">
-          <label><span>Heat decay</span><output>{heatDecay.toFixed(3)}</output></label>
-          <input type="range" min="0" max=".2" step=".001" value={heatDecay} onChange={(event) => setHeatDecay(Number(event.target.value))} />
+          <label><span>Heat decay</span><input className="lava-number" aria-label="Enter heat decay" type="number" min="0" max="10" step=".001" value={heatDecay} onChange={(event) => setHeatDecay(clamp(Number(event.target.value), 0, 10))} /></label>
+          <input type="range" min="0" max="1" step=".001" value={Math.min(heatDecay, 1)} onChange={(event) => setHeatDecay(Number(event.target.value))} />
         </div>
         <div className="lava-slider">
-          <label><span>Buoyancy</span><output>{buoyancy}</output></label>
-          <input type="range" min="0" max="400" step="1" value={buoyancy} onChange={(event) => setBuoyancy(Number(event.target.value))} />
+          <label><span>Buoyancy</span><input className="lava-number" aria-label="Enter buoyancy" type="number" min="0" max="10000" step="1" value={buoyancy} onChange={(event) => setBuoyancy(clamp(Number(event.target.value), 0, 10000))} /></label>
+          <input type="range" min="0" max="1500" step="1" value={Math.min(buoyancy, 1500)} onChange={(event) => setBuoyancy(Number(event.target.value))} />
         </div>
         <div className="lava-slider">
-          <label><span>Particles</span><output>{particleCount}</output></label>
-          <input type="range" min="40" max="180" step="10" value={particleCount} onChange={(event) => updateCount(Number(event.target.value))} />
+          <label><span>Cohesion strength</span><input className="lava-number" aria-label="Enter cohesion strength" type="number" min="0" max="20" step=".05" value={cohesion} onChange={(event) => setCohesion(clamp(Number(event.target.value), 0, 20))} /></label>
+          <input type="range" min="0" max="4" step=".05" value={Math.min(cohesion, 4)} onChange={(event) => setCohesion(Number(event.target.value))} />
+        </div>
+        <div className="lava-slider">
+          <label><span>Surface tension</span><input className="lava-number" aria-label="Enter surface tension" type="number" min="0" max="20" step=".05" value={surfaceTension} onChange={(event) => setSurfaceTension(clamp(Number(event.target.value), 0, 20))} /></label>
+          <input type="range" min="0" max="4" step=".05" value={Math.min(surfaceTension, 4)} onChange={(event) => setSurfaceTension(Number(event.target.value))} />
+        </div>
+        <div className="lava-slider">
+          <label><span>Particles · applies on reset</span><input className="lava-number" aria-label="Enter particle count" type="number" min="20" max="4000" step="10" value={particleCount} onChange={(event) => updateCount(Number(event.target.value))} /></label>
+          <input type="range" min="40" max="1600" step="20" value={Math.min(Math.max(particleCount, 40), 1600)} onChange={(event) => updateCount(Number(event.target.value))} />
         </div>
         <div className="transport lava-transport">
           <button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button>
