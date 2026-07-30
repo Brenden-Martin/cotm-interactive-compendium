@@ -69,6 +69,12 @@ export default function Gallery() {
           <strong>Square Aperture</strong>
           <small>Enter the Fourier plane →</small>
         </Link>
+        <Link className="study noise-entry" href="/gallery/perlin-noise">
+          <span className="eyebrow">Exhibit 11 / Procedural Fields</span>
+          <div className="noise-entry-field" aria-hidden="true" />
+          <strong>Perlin Noise</strong>
+          <small>Enter the field generator →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
