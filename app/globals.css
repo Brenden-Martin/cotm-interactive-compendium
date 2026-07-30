@@ -390,6 +390,34 @@ button { font: inherit; }
 .catenary-controls > button.active { background: #e3cd36; }
 .catenary-controls p { border-top: 1px solid #22231f; margin-top: 28px; padding-top: 14px; font-size: 11px; line-height: 1.55; }
 
+.rings-entry { color: #e7f3e8; background: #07121b; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+.rings-entry:hover, .rings-entry:focus-visible { transform: translateY(-10px); box-shadow: 10px 10px 0 #45c9cc; outline: none; }
+.rings-entry strong { font-size: clamp(26px, 4vw, 50px); letter-spacing: -.04em; }
+.rings-entry-figure { position: relative; width: 180px; height: 145px; margin: 0 auto; }
+.rings-entry-figure::before { content: ""; position: absolute; inset: 25px 8px; border: 5px solid #e7f3e8; border-radius: 50%; transform: rotateX(68deg) rotateZ(-18deg); box-shadow: 0 0 0 2px #45c9cc; }
+.rings-entry-figure::after { content: ""; position: absolute; left: 88px; top: 15px; width: 3px; height: 115px; background: #f46348; transform: rotate(-22deg); }
+.rings-entry-figure i { position: absolute; z-index: 2; width: 16px; height: 16px; border-radius: 50%; background: #f2d83d; left: 22px; top: 73px; }
+.rings-entry-figure i + i { width: 7px; height: 7px; background: #f46348; left: 118px; top: 16px; box-shadow: 12px 5px 0 rgba(244,99,72,.65), 22px 15px 0 rgba(244,99,72,.35); }
+
+.rings-page { min-height: 100svh; background: #bcc4bd; color: #10171a; padding: clamp(18px, 3vw, 42px); }
+.rings-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 24px; margin-bottom: 22px; }
+.rings-header h1 { margin: 4px 0 0; font-size: clamp(38px, 6vw, 84px); line-height: .88; letter-spacing: -.075em; }
+.rings-header .folio { justify-self: end; font-family: monospace; }
+.rings-lab { min-height: 72svh; display: grid; grid-template-columns: minmax(0,1fr) 330px; border: 2px solid #10171a; }
+.rings-stage { position: relative; min-height: 680px; overflow: hidden; background: #07121b; }
+.rings-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.rings-canvas:active { cursor: grabbing; }
+.rings-stage p { position: absolute; left: 22px; top: 18px; max-width: 320px; margin: 0; color: rgba(231,243,232,.65); font: 700 10px/1.5 monospace; text-transform: uppercase; letter-spacing: .08em; pointer-events: none; }
+.rings-controls { border-left: 2px solid #10171a; background: #e7e8dc; padding: 20px; overflow: auto; }
+.rings-transport { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 26px; }
+.rings-transport button, .rings-toggle { min-height: 42px; border: 2px solid #10171a; background: transparent; cursor: pointer; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+.rings-transport button:hover { background: #f2d83d; }
+.rings-controls label { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 18px; font: 800 9px monospace; text-transform: uppercase; letter-spacing: .08em; }
+.rings-controls label input { grid-column: 1 / -1; width: 100%; accent-color: #45c9cc; }
+.rings-toggle { width: 100%; }
+.rings-toggle.active { background: #45c9cc; }
+.rings-controls > p { margin-top: 26px; padding-top: 14px; border-top: 1px solid #10171a; font-size: 11px; line-height: 1.5; }
+
 .moire-page { min-height: 100svh; position: relative; overflow: hidden; background: #000; user-select: none; }
 .moire-canvas { position: fixed; inset: 0; width: 100vw; height: 100svh; }
 .moire-chrome { position: fixed; z-index: 5; left: 24px; top: 22px; max-width: 410px; padding: 16px; color: inherit; background: color-mix(in srgb, currentColor 8%, transparent); backdrop-filter: blur(8px); mix-blend-mode: difference; }
@@ -592,6 +620,11 @@ button { font: inherit; }
   .catenary-console { grid-template-columns: 1fr; grid-template-rows: auto minmax(540px, 68svh) auto; }
   .catenary-stage { min-height: 540px; }
   .catenary-controls { border-left: 0; border-top: 2px solid #22231f; }
+  .rings-header { grid-template-columns: 1fr auto; }
+  .rings-header > div { grid-column: 1 / -1; grid-row: 2; }
+  .rings-lab { grid-template-columns: 1fr; }
+  .rings-stage { min-height: 62svh; }
+  .rings-controls { border-left: 0; border-top: 2px solid #10171a; }
   .archive-list li { grid-template-columns: 42px 1fr; }
   .archive-list small { grid-column: 2; }
 }

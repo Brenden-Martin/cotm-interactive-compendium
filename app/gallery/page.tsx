@@ -45,6 +45,12 @@ export default function Gallery() {
           <strong>Catenary Lab</strong>
           <small>Enter the simulation →</small>
         </Link>
+        <Link className="study rings-entry" href="/gallery/rotating-rings">
+          <span className="eyebrow">Exhibit 07 / Rigid-Body Dynamics</span>
+          <div className="rings-entry-figure" aria-hidden="true"><i /><i /></div>
+          <strong>Rotating Rings</strong>
+          <small>Enter the simulation →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
