@@ -15,6 +15,12 @@ export default function Gallery() {
           <strong>Two &amp; Three Bodies</strong>
           <small>Enter the simulation →</small>
         </Link>
+        <Link className="study lava-entry" href="/gallery/lava-lamp">
+          <span className="eyebrow">Exhibit 02 / Fluid Mechanics</span>
+          <div className="lava-entry-lamp" aria-hidden="true"><i /><i /><i /><i /></div>
+          <strong>Lava Lamp</strong>
+          <small>Enter the simulation →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
