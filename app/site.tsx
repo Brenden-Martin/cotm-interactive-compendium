@@ -17,9 +17,13 @@ export function ColorIndex({ active }: { active: Room }) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const recentGags = useRef<string[]>([]);
   const timer = useRef<number | null>(null);
+  const danceTimer = useRef<number | null>(null);
   const [gag, setGag] = useState("");
   const [gagLabel, setGagLabel] = useState("");
   const [randomColor, setRandomColor] = useState("");
+  const [dance, setDance] = useState("");
+  const [dancePick, setDancePick] = useState(0);
+  const [danceDx, setDanceDx] = useState(80);
 
   const playWoosh = useCallback(() => {
     if (!audio.current) audio.current = new Audio("/woosh.wav");
@@ -78,6 +82,15 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "crumple", weight: 1.15, sound: "bonk", label: "DOCUMENT COMPRESSION" },
       { id: "where-else", weight: 7, sound: "bonk", label: "WHERE ELSE?" },
       { id: "wherever", weight: 5, sound: "sparkle", label: "WHEREVER YOU GO, THERE YOU ARE" },
+      { id: "powerpoint", weight: 2.6, sound: "laser", label: "SLIDE TRANSITION" },
+      { id: "shuffle", weight: 2.2, sound: "sparkle", label: "PLEASE HOLD WHILE WE REORDER REALITY" },
+      { id: "stairs", weight: 1.65, sound: "spring", label: "WATCH YOUR STEP" },
+      { id: "trickle", weight: 2.8, sound: "spring", label: "CASCADE IN PROGRESS" },
+      { id: "handwave", weight: 1.1, sound: "sparkle", label: "HELLO." },
+      { id: "vanish-lines", weight: 1.45, sound: "laser", label: "DIMENSIONAL COLLAPSE" },
+      { id: "bite", weight: 1.2, sound: "bonk", label: "WE'RE GONNA NEED A BIGGER BUTTON" },
+      { id: "balloon", weight: 1.05, sound: "spring", label: "CAPACITY EXCEEDED" },
+      { id: "closing-time", weight: 4.5, sound: "bonk", label: "YOU DON'T HAVE TO GO HOME, BUT YOU CAN'T STAY HERE!" },
       { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
     ];
     const eligible = choices.map(choice => ({
@@ -102,7 +115,7 @@ export function ColorIndex({ active }: { active: Room }) {
       const target = destinations[Math.floor(random * destinations.length)];
       timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
     } else {
-      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : ["matrix","spaghettify","crumple"].includes(choice.id) ? 2100 : choice.id === "oblivion" ? 1800 : 1150;
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
       timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); setRandomColor(""); }, duration);
     }
   }, [synth]);
@@ -110,6 +123,24 @@ export function ColorIndex({ active }: { active: Room }) {
   useEffect(() => () => {
     if (timer.current) window.clearTimeout(timer.current);
   }, []);
+
+  useEffect(() => {
+    const dances = ["ripple-x","ripple-y","trickle","cradle","fan","accordion","bobble","shake-one","drift-one","shoot-one"];
+    const schedule = () => {
+      danceTimer.current = window.setTimeout(() => {
+        const random = crypto.getRandomValues(new Uint32Array(3));
+        const next = dances[random[0] % dances.length];
+        setDancePick(random[1] % rooms.length);
+        setDanceDx(45 + random[2] % 150);
+        setDance(next);
+        playWoosh();
+        window.setTimeout(() => setDance(""), next === "shoot-one" ? 1900 : 1250);
+        schedule();
+      }, 6500 + Math.random() * 9000);
+    };
+    schedule();
+    return () => { if (danceTimer.current) window.clearTimeout(danceTimer.current); };
+  }, [playWoosh]);
 
   return (
     <main className={`index-shell cotm-gag cotm-gag-${gag || "idle"}`} style={randomColor ? {"--gag-rgb":randomColor} as React.CSSProperties : undefined}>
@@ -124,12 +155,13 @@ export function ColorIndex({ active }: { active: Room }) {
           fit neatly elsewhere.
         </p>
       </section>
-      <nav className="index-nav" aria-label="Main collection">
-        {rooms.map((room) => (
+      <nav className={`index-nav menu-dance menu-dance-${dance || "idle"}`} aria-label="Main collection">
+        {rooms.map((room, index) => (
           <Link
             key={room.id}
             href={room.href}
-            className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""}`}
+            className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""} ${dancePick === index ? "dance-picked" : ""}`}
+            style={{"--i":index,"--dance-dx":`${danceDx}px`} as React.CSSProperties}
             onPointerEnter={playWoosh}
             onClick={room.id === "home" ? (event) => { event.preventDefault(); summonGag(); } : undefined}
             aria-current={active === room.id ? "page" : undefined}
@@ -141,6 +173,9 @@ export function ColorIndex({ active }: { active: Room }) {
       {gagLabel && <div className="gag-caption" aria-live="polite">{gagLabel}</div>}
       {gag === "explode" && <div className="gag-debris" aria-hidden="true">{Array.from({ length: 26 }, (_, i) => <i key={i} style={{ "--i": i } as React.CSSProperties} />)}</div>}
       {gag === "matrix" && <div className="gag-matrix" aria-hidden="true">{Array.from({length:28},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}>{"01⌬Ψλ∆∷⌁101Ξµ∴Φ⊕⟟0101".repeat(3)}</i>)}</div>}
+      {gag === "powerpoint" && <div className="gag-powerpoint" aria-hidden="true">{Array.from({length:12},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
+      {gag === "stairs" && <div className="gag-stair-dot" aria-hidden="true"/>}
+      {gag === "balloon" && <div className="gag-confetti" aria-hidden="true">{Array.from({length:42},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
     </main>
   );
 }
