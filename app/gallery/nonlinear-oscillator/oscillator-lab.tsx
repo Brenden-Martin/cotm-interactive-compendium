@@ -108,14 +108,15 @@ export function OscillatorLab() {
     const canvas = canvasRef.current, ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     let w = 0, h = 0, raf = 0, last = performance.now(), seen = -1, time = 0, x = .7, v = 0, spectrumFrame = 0;
-    const fftSamples: number[] = [], visibleSamples: number[] = [], drives: number[] = [];
+    const visibleSamples: number[] = [], drives: number[] = [], spectrumHistory: number[][] = [];
     let mechanicalSpectrum: number[] = [];
+    let averagedSpectrum: number[] = [];
     const audioWave = new Uint8Array(2048), audioSpectrum = new Float32Array(2048);
     const resize = () => { const d = Math.min(devicePixelRatio, 2); w = canvas.clientWidth; h = canvas.clientHeight; canvas.width = w*d; canvas.height = h*d; ctx.setTransform(d,0,0,d,0,0); };
     const force = (z: number, q: P) => -(2*q.a2*z + 3*q.a3*z*z + 4*q.a4*z**3 + 5*q.a5*z**4 + 6*q.a6*z**5);
     const potential = (z: number, q: P) => q.a2*z*z + q.a3*z**3 + q.a4*z**4 + q.a5*z**5 + q.a6*z**6;
     const transfer = (z: number, q: P) => Math.tanh((q.a2*z + q.a3*z**2 + q.a4*z**3 + q.a5*z**4 + q.a6*z**5) * 1.4);
-    const restart = () => { time = 0; x = .7; v = 0; fftSamples.length = 0; visibleSamples.length = 0; drives.length = 0; seen = resetRef.current; };
+    const restart = () => { time = 0; x = .7; v = 0; spectrumFrame = 0; visibleSamples.length = 0; drives.length = 0; spectrumHistory.length = 0; mechanicalSpectrum = []; averagedSpectrum = []; seen = resetRef.current; };
     const panel = (x0:number,y0:number,pw:number,ph:number,title:string) => { ctx.strokeStyle="rgba(240,238,220,.25)";ctx.lineWidth=1;ctx.strokeRect(x0,y0,pw,ph);ctx.fillStyle="#eeecd8";ctx.font="700 10px monospace";ctx.fillText(title,x0+10,y0+17); };
     const curve = (values:number[], x0:number,y0:number,pw:number,ph:number,color:string,scale:number) => { if(values.length<2)return;ctx.beginPath();values.forEach((n,i)=>{const xx=x0+i/(values.length-1)*pw,yy=y0+ph/2-n*scale;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)});ctx.strokeStyle=color;ctx.lineWidth=1.8;ctx.stroke(); };
     const drawSpectrum = (spec: number[], frequencyAtBin: (index: number) => number, q: P, left: number, top: number, right: number) => {
@@ -132,14 +133,29 @@ export function OscillatorLab() {
       });
       ctx.fillStyle="rgba(238,236,216,.6)";ctx.font="700 8px monospace";ctx.fillText(scaleRef.current === "db" ? "dB" : "LINEAR", left+right-44, top+17);
     };
+    const drawMechanicalSpectrum = (q: P, left: number, top: number, right: number) => {
+      if(++spectrumFrame%6===0||mechanicalSpectrum.length===0){
+        const bins=36,windowSize=300,padding=windowSize-visibleSamples.length,spec:number[]=[];
+        for(let k=0;k<bins;k++){let re=0,im=0;for(let n=0;n<windowSize;n++){const sample=n<padding?0:visibleSamples[n-padding],a=2*Math.PI*k*n/windowSize;re+=sample*Math.cos(a);im-=sample*Math.sin(a)}spec.push(Math.hypot(re,im)/windowSize);}
+        mechanicalSpectrum=spec;
+        spectrumHistory.push(spec);
+        if(spectrumHistory.length>50)spectrumHistory.shift();
+        averagedSpectrum=spec.map((_,index)=>spectrumHistory.reduce((sum,item)=>sum+item[index],0)/spectrumHistory.length);
+      }
+      const reference=Math.max(...mechanicalSpectrum,...averagedSpectrum,.001);
+      const normalize=(value:number)=>scaleRef.current==="db"?Math.max(0,(20*Math.log10(Math.max(value/reference,1e-7))+72)/72):value/reference;
+      const live=mechanicalSpectrum.map(normalize),average=averagedSpectrum.map(normalize),bw=(right-30)/live.length,plotHeight=h-top-48;
+      if(average.length>1){ctx.beginPath();average.forEach((value,index)=>{const xx=left+15+(index+.5)*bw,yy=h-18-value*plotHeight;index?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)});ctx.strokeStyle="rgba(210,213,211,.66)";ctx.lineWidth=2;ctx.stroke();}
+      live.forEach((value,index)=>{ctx.fillStyle=index===Math.round(q.drive*5)?"#f36b4f":"#48d3cf";ctx.fillRect(left+15+index*bw,h-18,bw-2,-value*plotHeight);});
+      ctx.fillStyle="rgba(238,236,216,.6)";ctx.font="700 8px monospace";ctx.fillText(`${scaleRef.current==="db"?"dB":"LINEAR"} · GREY 5s AVG`,left+right-103,top+17);
+    };
     const draw = (now: number) => {
       if (seen !== resetRef.current) restart();
       const dt = Math.min(.025,(now-last)/1000); last=now; const q=ref.current;
       const isAudio = modeRef.current === "audio";
       if(!isAudio && !pausedRef.current){
         for(let i=0;i<4;i++){const d=dt/4,drive=q.amplitude*Math.sin(2*Math.PI*q.drive*time);v+=(force(x,q)+drive-q.damping*v)*d;x+=v*d;time+=d;}
-        fftSamples.push(x);visibleSamples.push(x);drives.push(Math.sin(2*Math.PI*q.drive*time));
-        if(fftSamples.length>2048)fftSamples.shift();
+        visibleSamples.push(x);drives.push(Math.sin(2*Math.PI*q.drive*time));
         if(visibleSamples.length>300){visibleSamples.shift();drives.shift();}
       }
       ctx.fillStyle="#11151b";ctx.fillRect(0,0,w,h);
@@ -166,8 +182,7 @@ export function OscillatorLab() {
         ctx.beginPath();for(let i=0;i<=160;i++){const z=-2+i/40,xx=rx+i/160*rw,yy=ry+rh*.72-force(z,q)*10;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)}ctx.strokeStyle="#f36b4f";ctx.stroke();
         ctx.beginPath();for(let i=0;i<=160;i++){const z=-2+i/40,xx=rx+i/160*rw,yy=ry+rh*.72-Math.min(120,potential(z,q)*14);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)}ctx.strokeStyle="#48d3cf";ctx.stroke();
         curve(visibleSamples,12,top+20,left-gap-24,h-top-30,"#f2dc43",32);curve(drives,12,top+20,left-gap-24,h-top-30,"rgba(72,211,207,.55)",24);
-        if(++spectrumFrame%6===0||mechanicalSpectrum.length===0){const bins=192,spec:number[]=[];for(let k=0;k<bins;k++){let re=0,im=0;for(let n=0;n<fftSamples.length;n++){const a=2*Math.PI*k*n/fftSamples.length;re+=fftSamples[n]*Math.cos(a);im-=fftSamples[n]*Math.sin(a)}spec.push(Math.hypot(re,im)/(fftSamples.length||1));}mechanicalSpectrum=spec;}
-        drawSpectrum(mechanicalSpectrum,k=>k*60/Math.max(fftSamples.length,1),q,left,top,right);
+        drawMechanicalSpectrum(q,left,top,right);
       }
       raf=requestAnimationFrame(draw);
     };
