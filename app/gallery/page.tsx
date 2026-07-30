@@ -27,6 +27,18 @@ export default function Gallery() {
           <strong>DEQ Sandbox</strong>
           <small>Enter the simulation →</small>
         </Link>
+        <Link className="study moire-entry" href="/gallery/moire">
+          <span className="eyebrow">Exhibit 04 / Optical Interference</span>
+          <div className="moire-entry-field" aria-hidden="true" />
+          <strong>Moiré Field</strong>
+          <small>Enter the simulation →</small>
+        </Link>
+        <Link className="study lissajous-entry" href="/gallery/lissajous">
+          <span className="eyebrow">Exhibit 05 / Harmonic Motion</span>
+          <div className="lissajous-entry-scope" aria-hidden="true"><i /></div>
+          <strong>Lissajous Scope</strong>
+          <small>Enter the simulation →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
