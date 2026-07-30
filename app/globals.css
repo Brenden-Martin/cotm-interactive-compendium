@@ -492,9 +492,17 @@ button { font: inherit; }
 .osc-stage { position:relative;min-height:700px;background:#11151b; }
 .osc-canvas { position:absolute;inset:0;width:100%;height:100%;display:block; }
 .osc-controls { border-left:2px solid #11151b;background:#eeecd8;padding:20px;overflow:auto; }
+.osc-mode-tabs { display:flex;margin:0 0 -2px auto;border:2px solid #11151b;width:max-content;position:relative;z-index:1; }
+.osc-mode-tabs button,.osc-scale button { border:0;border-right:1px solid #11151b;background:#eeecd8;color:#11151b;padding:9px 15px;font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em;cursor:pointer; }
+.osc-mode-tabs button:last-child { border-right:0; }
+.osc-mode-tabs button.active,.osc-scale button.active,.osc-transport button.active { background:#11151b;color:#f2dc43; }
 .osc-transport { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px; }
 .osc-transport button { min-height:42px;border:2px solid #11151b;background:transparent;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em; }
 .osc-transport button:hover { background:#f2dc43; }
+.osc-transport button:only-child { grid-column:1/-1; }
+.osc-scale { display:grid;grid-template-columns:1fr auto auto;align-items:center;margin:-8px 0 20px;border:1px solid #11151b; }
+.osc-scale > span { padding:8px 10px;font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em; }
+.osc-scale button { border-left:1px solid #11151b;border-right:0;padding:8px 10px; }
 .osc-controls label { display:grid;grid-template-columns:1fr auto;gap:7px;margin-bottom:15px;font:800 9px monospace;text-transform:uppercase;letter-spacing:.07em; }
 .osc-controls label input { grid-column:1/-1;width:100%;accent-color:#f36b4f; }
 .osc-controls p { margin-top:24px;padding-top:13px;border-top:1px solid #11151b;font-size:11px;line-height:1.5; }
