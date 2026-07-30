@@ -13,7 +13,28 @@ type Config = { k: number[]; exponent: number[]; dt: number; decay: number; nois
 type FieldState = [Float32Array, Float32Array, Float32Array];
 type Preset = Config & { name: string };
 type SharedPreset = { id: number; config: Config; createdAt: string };
+type FoundryMode = "standard" | "photo" | "cursor";
+type AnchorBank = "all" | "curated";
+type AutoCursor = {
+  frequencyX: number;
+  frequencyY: number;
+  amplitudeX: number;
+  amplitudeY: number;
+  angularVelocity: number;
+  harmonicsX: number[];
+  harmonicsY: number[];
+};
 const archivedPresets = archivedPresetData.presets as SharedPreset[];
+const archivedFingerprints = new Set(archivedPresets.map((preset) => JSON.stringify(preset.config)));
+const initialAutoCursor: AutoCursor = {
+  frequencyX: 3,
+  frequencyY: 2,
+  amplitudeX: .43,
+  amplitudeY: .36,
+  angularVelocity: .08,
+  harmonicsX: [1, .24, .08],
+  harmonicsY: [1, .18, -.06],
+};
 
 const indexK = (dest: number, source: number, template: number) => (dest * 3 + source) * 5 + template;
 const sparseK = (entries: Array<[number, number, number, number]>) => {
@@ -48,6 +69,11 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const pausedRef = useRef(false);
   const autoMutateRef = useRef(true);
   const mutationTimeRef = useRef(0);
+  const foundryModeRef = useRef<FoundryMode>("standard");
+  const boundaryRef = useRef<FieldState | null>(null);
+  const uploadedBoundaryRef = useRef<FieldState | null>(null);
+  const autoCursorRef = useRef<AutoCursor>(initialAutoCursor);
+  const cursorStartRef = useRef(0);
   const morphIndexRef = useRef(0);
   const morphRateRef = useRef(1);
   const morphRandomnessRef = useRef(.18);
@@ -63,6 +89,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const [morphing, setMorphing] = useState(false);
   const [morphRate, setMorphRate] = useState(1);
   const [morphRandomness, setMorphRandomness] = useState(.18);
+  const [foundryMode, setFoundryMode] = useState<FoundryMode>("standard");
+  const [anchorBank, setAnchorBank] = useState<AnchorBank>("all");
+  const [boundaryName, setBoundaryName] = useState("No photo loaded");
+  const [autoCursor, setAutoCursor] = useState<AutoCursor>(initialAutoCursor);
   const [saveStatus, setSaveStatus] = useState("Ready to collect this state");
 
   useEffect(() => { configRef.current = config; }, [config]);
@@ -73,6 +103,73 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   useEffect(() => { brushRef.current = brush; }, [brush]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { autoMutateRef.current = autoMutate; }, [autoMutate]);
+
+  const switchFoundryMode = (mode: FoundryMode) => {
+    foundryModeRef.current = mode;
+    setFoundryMode(mode);
+    boundaryRef.current = mode === "photo" ? uploadedBoundaryRef.current : null;
+    pointerRef.current.active = false;
+    if (mode === "cursor") cursorStartRef.current = performance.now();
+  };
+
+  const updateAutoCursor = (update: (current: AutoCursor) => AutoCursor) => {
+    setAutoCursor((current) => {
+      const next = update(current);
+      autoCursorRef.current = next;
+      return next;
+    });
+  };
+
+  const loadBoundaryImage = async (file: File) => {
+    try {
+      setBoundaryName("Preparing image weights…");
+      const bitmap = await createImageBitmap(file);
+      const originalWidth = bitmap.width;
+      const originalHeight = bitmap.height;
+      const averageCanvas = document.createElement("canvas");
+      averageCanvas.width = 32;
+      averageCanvas.height = 32;
+      const averageContext = averageCanvas.getContext("2d", { willReadFrequently: true });
+      const gridCanvas = document.createElement("canvas");
+      gridCanvas.width = W;
+      gridCanvas.height = H;
+      const gridContext = gridCanvas.getContext("2d", { willReadFrequently: true });
+      if (!averageContext || !gridContext) throw new Error("Canvas unavailable");
+      averageContext.drawImage(bitmap, 0, 0, 32, 32);
+      const averagePixels = averageContext.getImageData(0, 0, 32, 32).data;
+      let red = 0, green = 0, blue = 0, weight = 0;
+      for (let index = 0; index < averagePixels.length; index += 4) {
+        const alpha = averagePixels[index + 3] / 255;
+        red += averagePixels[index] * alpha;
+        green += averagePixels[index + 1] * alpha;
+        blue += averagePixels[index + 2] * alpha;
+        weight += alpha;
+      }
+      const divisor = Math.max(1, weight);
+      gridContext.fillStyle = `rgb(${Math.round(red/divisor)},${Math.round(green/divisor)},${Math.round(blue/divisor)})`;
+      gridContext.fillRect(0, 0, W, H);
+      const scale = Math.min(W / bitmap.width, H / bitmap.height);
+      const drawWidth = bitmap.width * scale;
+      const drawHeight = bitmap.height * scale;
+      gridContext.imageSmoothingEnabled = true;
+      gridContext.imageSmoothingQuality = "high";
+      gridContext.drawImage(bitmap, (W-drawWidth)/2, (H-drawHeight)/2, drawWidth, drawHeight);
+      const pixels = gridContext.getImageData(0, 0, W, H).data;
+      const weights: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
+      for (let index = 0; index < SIZE; index++) {
+        weights[0][index] = pixels[index*4] / 255;
+        weights[1][index] = pixels[index*4+1] / 255;
+        weights[2][index] = pixels[index*4+2] / 255;
+      }
+      bitmap.close();
+      uploadedBoundaryRef.current = weights;
+      boundaryRef.current = weights;
+      switchFoundryMode("photo");
+      setBoundaryName(`${file.name} · ${originalWidth}×${originalHeight} → ${W}×${H}`);
+    } catch {
+      setBoundaryName("That image could not be decoded");
+    }
+  };
 
   useEffect(() => {
     if (!presetFoundry) return;
@@ -94,7 +191,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     const anchors: Config[] = [
       ...presets.map(cloneConfig),
       ...archivedPresets.map((preset) => preset.config),
-      ...sharedPresets.map((preset) => preset.config),
+      ...(anchorBank === "all" ? sharedPresets.map((preset) => preset.config) : []),
     ].filter((anchor) => {
       const fingerprint = JSON.stringify(anchor);
       if (seenAnchors.has(fingerprint)) return false;
@@ -146,7 +243,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     };
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [morphing, presetFoundry, sharedPresets]);
+  }, [anchorBank, morphing, presetFoundry, sharedPresets]);
 
   const seedNoise = useCallback(() => {
     const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
@@ -239,7 +336,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       }
     };
 
-    const step = () => {
+    const stepOriginal = () => {
       const src = fieldRef.current;
       const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
       const cfg = configRef.current;
@@ -272,6 +369,72 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       fieldRef.current = next;
     };
 
+    const stepBoundary = (weights: FieldState) => {
+      const src = fieldRef.current;
+      const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
+      const cfg = configRef.current;
+      for (let y = 0; y < H; y++) {
+        const yu = ((y - 1 + H) % H) * W;
+        const yd = ((y + 1) % H) * W;
+        const row = y * W;
+        for (let x = 0; x < W; x++) {
+          const xl = (x - 1 + W) % W;
+          const xr = (x + 1) % W;
+          const index = row + x;
+          for (let dest = 0; dest < 3; dest++) {
+            let acc = 0;
+            for (let source = 0; source < 3; source++) {
+              const field = src[source];
+              const mask = weights[source];
+              const center = field[index];
+              const centerWeight = mask[index];
+              const right = field[row + xr];
+              const left = field[row + xl];
+              const down = field[yd + x];
+              const up = field[yu + x];
+              const dx = (right - center) * centerWeight;
+              const dy = (down - center) * centerWeight;
+              const grad = Math.sqrt(dx * dx + dy * dy);
+              const lap =
+                (centerWeight + mask[row + xr]) * .5 * (right - center) +
+                (centerWeight + mask[row + xl]) * .5 * (left - center) +
+                (centerWeight + mask[yd + x]) * .5 * (down - center) +
+                (centerWeight + mask[yu + x]) * .5 * (up - center);
+              const values = [center * centerWeight, dx, dy, grad, lap];
+              for (let template = 0; template < 5; template++) acc += cfg.k[indexK(dest, source, template)] * values[template];
+            }
+            let value = (1 - cfg.decay) * src[dest][index] + cfg.dt * acc;
+            value = Math.sign(value) * Math.pow(Math.abs(value), cfg.exponent[dest]);
+            if (cfg.noise > 0) value += (Math.random() - .5) * cfg.noise;
+            next[dest][index] = clamp01(value);
+          }
+        }
+      }
+      fieldRef.current = next;
+    };
+
+    const step = () => {
+      const weights = boundaryRef.current;
+      if (weights) stepBoundary(weights);
+      else stepOriginal();
+    };
+
+    const updateAutomatedPointer = (now: number) => {
+      if (foundryModeRef.current !== "cursor") return;
+      const settings = autoCursorRef.current;
+      const seconds = (now - cursorStartRef.current) / 1000;
+      const harmonic = (frequency: number, values: number[], phase: number) => {
+        const normalizer = Math.max(1, values.reduce((sum, value) => sum + Math.abs(value), 0));
+        return values.reduce((sum, value, index) => sum + value * Math.sin(2*Math.PI*frequency*(index+1)*seconds + phase), 0) / normalizer;
+      };
+      const localX = settings.amplitudeX * harmonic(settings.frequencyX, settings.harmonicsX, 0);
+      const localY = settings.amplitudeY * harmonic(settings.frequencyY, settings.harmonicsY, Math.PI/2);
+      const angle = settings.angularVelocity * seconds;
+      pointerRef.current.x = clamp(.5 + localX*Math.cos(angle) - localY*Math.sin(angle), .001, .999);
+      pointerRef.current.y = clamp(.5 + localX*Math.sin(angle) + localY*Math.cos(angle), .001, .999);
+      pointerRef.current.active = true;
+    };
+
     const draw = () => {
       const field = fieldRef.current;
       for (let index = 0; index < SIZE; index++) {
@@ -282,6 +445,13 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
         image.data[offset + 3] = 255;
       }
       ctx.putImageData(image, 0, 0);
+      if (foundryModeRef.current === "cursor") {
+        ctx.beginPath();
+        ctx.arc(pointerRef.current.x*W, pointerRef.current.y*H, Math.max(2, brushRef.current*.55), 0, Math.PI*2);
+        ctx.strokeStyle = "rgba(255,255,255,.85)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
     };
 
     const locate = (event: PointerEvent) => {
@@ -290,6 +460,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       pointerRef.current.y = Math.max(0, Math.min(.999, (event.clientY - rect.top) / rect.height));
     };
     const down = (event: PointerEvent) => {
+      if (foundryModeRef.current === "cursor") return;
       locate(event);
       pointerRef.current.active = true;
       paintModeRef.current = event.button === 2 ? "erase" : selectedPaintRef.current;
@@ -301,6 +472,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
 
     let last = performance.now();
     const loop = (now: number) => {
+      updateAutomatedPointer(now);
       if (!pausedRef.current && now - last > 24) {
         paint();
         step();
@@ -337,6 +509,8 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     k[indexK(destination, source, template)] = value;
     return { ...current, k };
   });
+  const subsequentPresets = sharedPresets.filter((preset) => !archivedFingerprints.has(JSON.stringify(preset.config)));
+  const bankSize = presets.length + archivedPresets.length + (anchorBank === "all" ? subsequentPresets.length : 0);
 
   return (
     <section className="deq-lab">
@@ -347,6 +521,37 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       <aside className="deq-controls">
         {presetFoundry && <div className="control-block deq-foundry">
           <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{archivedPresets.length} archived · {sharedPresets.length} live</b></div>
+          <b className="deq-bank-summary">{archivedPresets.length} curated · {subsequentPresets.length} subsequent</b>
+          <div className="deq-foundry-tabs" role="tablist" aria-label="Field input mode">
+            <button role="tab" aria-selected={foundryMode==="standard"} className={foundryMode==="standard"?"active":""} onClick={()=>switchFoundryMode("standard")}>Standard field</button>
+            <button role="tab" aria-selected={foundryMode==="photo"} className={foundryMode==="photo"?"active":""} onClick={()=>switchFoundryMode("photo")}>Photo boundary</button>
+            <button role="tab" aria-selected={foundryMode==="cursor"} className={foundryMode==="cursor"?"active":""} onClick={()=>switchFoundryMode("cursor")}>Auto cursor</button>
+          </div>
+          {foundryMode==="photo" && <div className="deq-input-panel">
+            <span className="control-label">RGB operator weights</span>
+            <div className="deq-photo-actions">
+              <label className="deq-file-input"><input type="file" accept="image/*" onChange={(event)=>{const file=event.target.files?.[0];if(file)void loadBoundaryImage(file);event.currentTarget.value="";}}/><span>Choose a photo</span></label>
+              <button className="deq-clear-input" onClick={()=>{uploadedBoundaryRef.current=null;boundaryRef.current=null;setBoundaryName("No photo loaded");}}>Clear</button>
+            </div>
+            <p>{boundaryName}</p>
+            <small>RGB scales gain and gradients by channel. Laplacian terms become div(RGB · grad(field)). Letterbox fill uses the photo’s average color.</small>
+          </div>}
+          {foundryMode==="cursor" && <div className="deq-input-panel deq-cursor-panel">
+            <span className="control-label">Rotating Lissajous brush path</span>
+            <div className="deq-cursor-numbers">
+              <label><span>X frequency</span><input type="number" min=".01" max="20" step=".01" value={autoCursor.frequencyX} onChange={(event)=>updateAutoCursor(current=>({...current,frequencyX:clamp(Number(event.target.value),.01,20)}))}/></label>
+              <label><span>Y frequency</span><input type="number" min=".01" max="20" step=".01" value={autoCursor.frequencyY} onChange={(event)=>updateAutoCursor(current=>({...current,frequencyY:clamp(Number(event.target.value),.01,20)}))}/></label>
+            </div>
+            <div className="deq-cursor-sliders">
+              <label><span>X amplitude</span><output>{autoCursor.amplitudeX.toFixed(2)}</output><input type="range" min="0" max=".49" step=".01" value={autoCursor.amplitudeX} onChange={(event)=>updateAutoCursor(current=>({...current,amplitudeX:Number(event.target.value)}))}/></label>
+              <label><span>Y amplitude</span><output>{autoCursor.amplitudeY.toFixed(2)}</output><input type="range" min="0" max=".49" step=".01" value={autoCursor.amplitudeY} onChange={(event)=>updateAutoCursor(current=>({...current,amplitudeY:Number(event.target.value)}))}/></label>
+              <label><span>Angular velocity</span><output>{autoCursor.angularVelocity.toFixed(2)} rad/s</output><input type="range" min="-2" max="2" step=".01" value={autoCursor.angularVelocity} onChange={(event)=>updateAutoCursor(current=>({...current,angularVelocity:Number(event.target.value)}))}/></label>
+            </div>
+            <div className="deq-harmonic-grid">
+              {(["X","Y"] as const).map((axis)=>{const values=axis==="X"?autoCursor.harmonicsX:autoCursor.harmonicsY;return <div key={axis}><b>{axis} harmonics</b>{values.map((value,index)=><label key={`${axis}-${index}`}><span>{index+1}</span><input type="range" min="-1" max="1" step=".01" value={value} onChange={(event)=>updateAutoCursor(current=>{const key=axis==="X"?"harmonicsX":"harmonicsY";const next=[...current[key]];next[index]=Number(event.target.value);return {...current,[key]:next};})}/><output>{value.toFixed(2)}</output></label>)}</div>})}
+            </div>
+          </div>}
+          <label className="preset-select deq-bank-select"><span className="control-label">Morph anchor bank · {bankSize} states</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="all">All · curated + future saves</option><option value="curated">Curated · locked clean set</option></select></label>
           <div className="transport deq-foundry-actions">
             <button onClick={saveCurrentState}>Save current state</button>
             <button className={morphing ? "active" : ""} onClick={() => { setAutoMutate(false); setMorphing((value) => !value); }}>{morphing ? "Hold morph" : "Morph all anchors"}</button>
@@ -355,7 +560,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
             <label><span>Traversal rate</span><output>{morphRate.toFixed(2)}×</output><input type="range" min=".15" max="3" step=".05" value={morphRate} onChange={(event) => { const value=Number(event.target.value);morphRateRef.current=value;setMorphRate(value); }} /></label>
             <label><span>Transition wildness</span><output>{Math.round(morphRandomness*100)}%</output><input type="range" min="0" max="1" step=".01" value={morphRandomness} onChange={(event) => { const value=Number(event.target.value);morphRandomnessRef.current=value;setMorphRandomness(value); }} /></label>
           </div>
-          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Git archive">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Archive {String(preset.id).padStart(3, "0")}</option>)}</optgroup><optgroup label="Live shared bank">{sharedPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>Live {String(preset.id).padStart(3, "0")}</option>)}</optgroup></select></label>
+          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Curated">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Curated {String(preset.id).padStart(3, "0")}</option>)}</optgroup>{anchorBank==="all"&&<optgroup label="Subsequent saves">{subsequentPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>All {String(preset.id).padStart(3, "0")}</option>)}</optgroup>}</select></label>
           <p className="deq-save-status" aria-live="polite">{saveStatus}</p>
         </div>}
         <div className="deq-top-controls">
