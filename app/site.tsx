@@ -19,14 +19,12 @@ export function ColorIndex({ active }: { active: Room }) {
   const timer = useRef<number | null>(null);
   const danceTimer = useRef<number | null>(null);
   const extensionTimer = useRef<number | null>(null);
-  const idleEnvelope = useRef(.35);
   const [gag, setGag] = useState("");
   const [gagLabel, setGagLabel] = useState("");
   const [randomColor, setRandomColor] = useState("");
   const [dance, setDance] = useState("");
   const [dancePick, setDancePick] = useState(0);
   const [danceDx, setDanceDx] = useState(80);
-  const [idleAmplitudes, setIdleAmplitudes] = useState([3,4,5,4,3]);
   const [extensions, setExtensions] = useState([0,0,0,0,0]);
 
   const playWoosh = useCallback(() => {
@@ -147,13 +145,6 @@ export function ColorIndex({ active }: { active: Room }) {
   }, [playWoosh]);
 
   useEffect(() => {
-    const envelopeTimer = window.setInterval(() => {
-      const impulse = Math.random();
-      idleEnvelope.current = .86 * idleEnvelope.current + .14 * impulse;
-      if (Math.random() < .14) idleEnvelope.current *= .08;
-      const center = idleEnvelope.current * 9;
-      setIdleAmplitudes(rooms.map((_,i) => Math.max(.15, center * (.72 + .28 * Math.sin(i * 1.18 + impulse * 4)))));
-    }, 1700);
     const scheduleExtensions = () => {
       extensionTimer.current = window.setTimeout(() => {
         const count = 1 + Math.floor(Math.random() * 4);
@@ -168,7 +159,6 @@ export function ColorIndex({ active }: { active: Room }) {
     };
     scheduleExtensions();
     return () => {
-      window.clearInterval(envelopeTimer);
       if (extensionTimer.current) window.clearTimeout(extensionTimer.current);
     };
   }, [playWoosh]);
@@ -192,7 +182,7 @@ export function ColorIndex({ active }: { active: Room }) {
             key={room.id}
             href={room.href}
             className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""} ${dancePick === index ? "dance-picked" : ""} ${extensions[index] ? "menu-extended" : ""}`}
-            style={{"--i":index,"--dance-dx":`${danceDx}px`,"--idle-a":`${idleAmplitudes[index]}px`,"--extend":`${extensions[index]}px`} as React.CSSProperties}
+            style={{"--i":index,"--dance-dx":`${danceDx}px`,"--extend":`${extensions[index]}px`} as React.CSSProperties}
             onPointerEnter={playWoosh}
             onClick={room.id === "home" ? (event) => { event.preventDefault(); summonGag(); } : undefined}
             aria-current={active === room.id ? "page" : undefined}
