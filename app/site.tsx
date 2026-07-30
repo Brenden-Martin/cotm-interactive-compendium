@@ -26,12 +26,13 @@ export function ColorIndex({ active }: { active: Room }) {
     <main className="index-shell">
       <section className="index-aside">
         <div>
-          <div className="eyebrow">Collection of the Moment · Est. 2023</div>
+          <div className="eyebrow">Child of the Machine · Est. 2023</div>
           <h1 className="brand">COTM</h1>
         </div>
         <p className="intro">
-          An interactive cabinet for sound, visual studies, private experiments,
-          and whatever refuses to fit neatly elsewhere.
+          Child of the Machine is an evolving cabinet of interactive exhibits:
+          sound, visual systems, private experiments, and whatever refuses to
+          fit neatly elsewhere.
         </p>
       </section>
       <nav className="index-nav" aria-label="Main collection">

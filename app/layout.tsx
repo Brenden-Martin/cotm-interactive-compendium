@@ -7,27 +7,27 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const base = new URL(`${protocol}://${host}`);
-  const description = "An interactive cabinet of music, visual studies, private research, and collected fragments.";
+  const description = "Child of the Machine: interactive exhibits exploring sound, motion, systems, and collected fragments.";
 
   return {
     metadataBase: base,
     title: {
-      default: "COTM — An Interactive Compendium",
-      template: "%s · COTM",
+      default: "Child of the Machine",
+      template: "%s · Child of the Machine",
     },
     description,
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
     openGraph: {
-      title: "COTM — An Interactive Compendium",
+      title: "Child of the Machine",
       description,
       type: "website",
-      images: [{ url: new URL("/og.png", base), width: 1735, height: 907, alt: "COTM, an interactive compendium" }],
+      images: [{ url: new URL("/og-gravity.png", base), width: 1735, height: 907, alt: "Child of the Machine gravity study" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "COTM — An Interactive Compendium",
+      title: "Child of the Machine",
       description,
-      images: [new URL("/og.png", base)],
+      images: [new URL("/og-gravity.png", base)],
     },
   };
 }
