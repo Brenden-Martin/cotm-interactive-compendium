@@ -3,139 +3,105 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-type Params = { ix: number; iz: number; coupling: number; wx: number; wy: number; wz: number; speed: number };
-type V3 = [number, number, number];
-type Q4 = [number, number, number, number];
+type Controls = { count: number; stiffness: number; damping: number; impulse: number; inertia: number; speed: number };
 
-const rotate = (q: Q4, v: V3): V3 => {
-  const [w, x, y, z] = q, [vx, vy, vz] = v;
-  const tx = 2 * (y * vz - z * vy), ty = 2 * (z * vx - x * vz), tz = 2 * (x * vy - y * vx);
-  return [vx + w * tx + y * tz - z * ty, vy + w * ty + z * tx - x * tz, vz + w * tz + x * ty - y * tx];
-};
+const COLORS = ["#f2d83d", "#45c9cc", "#f46348", "#8f79d6", "#ef9b42", "#77d278", "#ed7f9b", "#9cd7ee", "#d6ee79", "#efb7e9", "#8da2ff", "#ffcf85"];
 
 export function RotatingRings() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const paramsRef = useRef<Params>({ ix: 1, iz: 1.8, coupling: .08, wx: .35, wy: .04, wz: 2.1, speed: 1 });
-  const [params, setParams] = useState(paramsRef.current);
+  const defaults: Controls = { count: 6, stiffness: 2.4, damping: .025, impulse: 3.6, inertia: .18, speed: 1 };
+  const controlsRef = useRef(defaults);
+  const [controls, setControls] = useState(defaults);
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(false);
-  const [trail, setTrail] = useState(true);
-  const trailRef = useRef(true);
   const resetRef = useRef(0);
-
-  const update = (key: keyof Params, value: number) => {
-    const next = { ...paramsRef.current, [key]: value };
-    paramsRef.current = next; setParams(next);
-  };
-  const reset = () => { resetRef.current++; };
   useEffect(() => { pausedRef.current = paused; }, [paused]);
-  useEffect(() => { trailRef.current = trail; }, [trail]);
+  const set = (key: keyof Controls, value: number) => {
+    const next = { ...controlsRef.current, [key]: value };
+    controlsRef.current = next; setControls(next);
+    if (key === "count") resetRef.current++;
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current, ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    let w = 0, h = 0, raf = 0, last = performance.now(), resetSeen = -1;
-    let q: Q4 = [1, 0, 0, 0], omega: V3 = [0, 0, 0], path: Array<[number, number]> = [];
-    let yaw = -.55, pitch = .42, dragging = false, px = 0, py = 0;
-    const history: V3[] = [];
+    let w = 0, h = 0, raf = 0, last = performance.now(), seen = -1;
+    let angle: number[] = [], velocity: number[] = [], history: number[][] = [];
+    let yaw = -.35, pitch = .58, dragging = false, px = 0, py = 0;
     const resize = () => {
-      const dpr = Math.min(devicePixelRatio, 2); w = canvas.clientWidth; h = canvas.clientHeight;
-      canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    const project = (v: V3): [number, number, number] => {
-      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-      const x1 = cy * v[0] + sy * v[2], z1 = -sy * v[0] + cy * v[2];
-      const y1 = cp * v[1] - sp * z1, z2 = sp * v[1] + cp * z1;
-      const scale = Math.min(w, h) * .25 * (3.7 / (3.7 + z2));
-      return [w * .5 + x1 * scale, h * .47 + y1 * scale, z2];
+      const d = Math.min(devicePixelRatio, 2); w = canvas.clientWidth; h = canvas.clientHeight;
+      canvas.width = w*d; canvas.height = h*d; ctx.setTransform(d,0,0,d,0,0);
     };
     const restart = () => {
-      const p = paramsRef.current; omega = [p.wx, p.wy, p.wz]; q = [1, 0, 0, 0]; path = []; history.length = 0; resetSeen = resetRef.current;
+      const n = controlsRef.current.count;
+      angle = Array(n).fill(0); velocity = Array(n).fill(0); velocity[0] = controlsRef.current.impulse;
+      history = Array.from({ length: n }, () => []); seen = resetRef.current;
     };
-    const step = (dt: number) => {
-      const p = paramsRef.current, [wx, wy, wz] = omega;
-      const ix = p.ix, iy = p.ix * 1.03, iz = p.iz;
-      const c = p.coupling;
-      omega = [
-        wx + (((iy - iz) / ix) * wy * wz + c * wz * wz * .08) * dt,
-        wy + (((iz - ix) / iy) * wz * wx - c * wz * wz * .055) * dt,
-        wz + (((ix - iy) / iz) * wx * wy - c * wx * wz * .03) * dt,
-      ];
-      const mag = Math.hypot(...omega);
-      if (mag > 8) omega = omega.map(v => v * 8 / mag) as V3;
-      const [qw, qx, qy, qz] = q, [a, b, c2] = omega;
-      q = [
-        qw + (-qx * a - qy * b - qz * c2) * dt * .5,
-        qx + (qw * a + qy * c2 - qz * b) * dt * .5,
-        qy + (qw * b + qz * a - qx * c2) * dt * .5,
-        qz + (qw * c2 + qx * b - qy * a) * dt * .5,
-      ];
-      const n = Math.hypot(...q); q = q.map(v => v / n) as Q4;
-      history.push([...omega]); if (history.length > 150) history.shift();
+    const project = (x:number,y:number,z:number):[number,number] => {
+      const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+      const x1=cy*x+sy*z,z1=-sy*x+cy*z,y1=cp*y-sp*z1,z2=sp*y+cp*z1;
+      const s=Math.min(w,h)*.31*(4/(4+z2));
+      return [w*.48+x1*s,h*.48+y1*s];
     };
-    const line3 = (a: V3, b: V3, color: string, width = 1) => {
-      const p1 = project(a), p2 = project(b); ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]);
-      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
-    };
-    const draw = (now: number) => {
-      if (resetSeen !== resetRef.current) restart();
-      const dt = Math.min(.025, (now - last) / 1000) * paramsRef.current.speed; last = now;
-      if (!pausedRef.current) for (let i = 0; i < 3; i++) step(dt / 3);
-      ctx.fillStyle = "#07121b"; ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = "rgba(139,225,255,.1)"; ctx.lineWidth = 1;
-      for (let i = -5; i <= 5; i++) { line3([-2, i * .35, 0], [2, i * .35, 0], "rgba(139,225,255,.09)"); line3([i * .35, -2, 0], [i * .35, 2, 0], "rgba(139,225,255,.09)"); }
-      const ring = Array.from({ length: 121 }, (_, i) => rotate(q, [Math.cos(i / 120 * Math.PI * 2) * 1.35, Math.sin(i / 120 * Math.PI * 2) * 1.35, 0] as V3));
-      const normal = rotate(q, [0, 0, 1]);
-      const tip = project([normal[0] * 1.8, normal[1] * 1.8, normal[2] * 1.8]);
-      if (trailRef.current) { path.push([tip[0], tip[1]]); if (path.length > 420) path.shift(); }
-      else path = [];
-      if (path.length > 1) {
-        ctx.beginPath(); path.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p));
-        ctx.strokeStyle = "rgba(244,99,72,.55)"; ctx.lineWidth = 1.5; ctx.stroke();
+    const step = (dt:number) => {
+      const c=controlsRef.current,n=c.count,acc=Array(n).fill(0);
+      for(let i=0;i<n;i++){
+        const inertia=1+c.inertia*i;
+        let torque=-c.damping*velocity[i];
+        if(i>0) torque+=c.stiffness*(angle[i-1]-angle[i]);
+        if(i<n-1) torque+=c.stiffness*(angle[i+1]-angle[i]);
+        acc[i]=torque/inertia;
       }
-      ctx.beginPath(); ring.forEach((v, i) => { const p = project(v); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
-      ctx.closePath(); ctx.strokeStyle = "#e7f3e8"; ctx.lineWidth = 8; ctx.stroke();
-      ctx.strokeStyle = "#45c9cc"; ctx.lineWidth = 2; ctx.stroke();
-      line3([0, 0, 0], [normal[0] * 1.8, normal[1] * 1.8, normal[2] * 1.8], "#f46348", 3);
-      const marker = project(rotate(q, [1.35, 0, 0])); ctx.beginPath(); ctx.arc(marker[0], marker[1], 8, 0, Math.PI * 2); ctx.fillStyle = "#f2d83d"; ctx.fill();
-      const ox = 24, oy = h - 108, gw = Math.min(280, w * .35), gh = 70;
-      ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.strokeRect(ox, oy, gw, gh);
-      const colors = ["#f46348", "#45c9cc", "#f2d83d"];
-      colors.forEach((color, component) => {
-        ctx.beginPath(); history.forEach((v, i) => {
-          const x = ox + i / 149 * gw, y = oy + gh / 2 - v[component] * 13;
-          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        }); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
-      });
-      ctx.fillStyle = "#e7f3e8"; ctx.font = "700 10px monospace"; ctx.fillText("ωx / ωy / ωz", ox, oy - 8);
-      raf = requestAnimationFrame(draw);
+      for(let i=0;i<n;i++){velocity[i]+=acc[i]*dt;angle[i]+=velocity[i]*dt;history[i].push(velocity[i]);if(history[i].length>210)history[i].shift();}
     };
-    const down = (e: PointerEvent) => { dragging = true; px = e.clientX; py = e.clientY; canvas.setPointerCapture(e.pointerId); };
-    const move = (e: PointerEvent) => { if (!dragging) return; yaw += (e.clientX - px) * .008; pitch += (e.clientY - py) * .008; px = e.clientX; py = e.clientY; };
-    const up = () => { dragging = false; };
-    resize(); restart(); addEventListener("resize", resize);
-    canvas.addEventListener("pointerdown", down); canvas.addEventListener("pointermove", move); canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
-    raf = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(raf); removeEventListener("resize", resize); canvas.removeEventListener("pointerdown", down); canvas.removeEventListener("pointermove", move); canvas.removeEventListener("pointerup", up); canvas.removeEventListener("pointercancel", up); };
-  }, []);
+    const drawCoil = (r1:number,r2:number,a1:number,a2:number,z:number) => {
+      ctx.beginPath();
+      for(let j=0;j<=44;j++){const t=j/44,rr=r1+(r2-r1)*t+.025*Math.sin(t*Math.PI*12),a=a1+(a2-a1)*t;const p=project(Math.cos(a)*rr,Math.sin(a)*rr,z);j?ctx.lineTo(...p):ctx.moveTo(...p);}
+      ctx.strokeStyle="rgba(231,243,232,.56)";ctx.lineWidth=1.5;ctx.stroke();
+    };
+    const draw=(now:number)=>{
+      if(seen!==resetRef.current)restart();
+      const dt=Math.min(.026,(now-last)/1000)*controlsRef.current.speed;last=now;
+      if(!pausedRef.current)for(let k=0;k<4;k++)step(dt/4);
+      ctx.fillStyle="#07121b";ctx.fillRect(0,0,w,h);
+      const n=controlsRef.current.count,maxR=1.45;
+      for(let g=-5;g<=5;g++){const p1=project(-1.8,g*.3,-.12),p2=project(1.8,g*.3,-.12);ctx.beginPath();ctx.moveTo(...p1);ctx.lineTo(...p2);ctx.strokeStyle="rgba(69,201,204,.07)";ctx.stroke();}
+      const axle1=project(0,0,-.7),axle2=project(0,0,.7);ctx.beginPath();ctx.moveTo(...axle1);ctx.lineTo(...axle2);ctx.strokeStyle="#d9ded4";ctx.lineWidth=7;ctx.stroke();
+      for(let i=n-1;i>=0;i--){
+        const r=maxR-(i/(Math.max(1,n-1)))*.92,z=(i-(n-1)/2)*.035,a=angle[i];
+        if(i<n-1){const prev=maxR-((i+1)/(Math.max(1,n-1)))*.92;drawCoil(prev,r,angle[i+1],a,z);}
+        ctx.beginPath();for(let j=0;j<=128;j++){const t=j/128*Math.PI*2,p=project(Math.cos(t)*r,Math.sin(t)*r,z);j?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.closePath();
+        ctx.strokeStyle=COLORS[i];ctx.lineWidth=Math.max(3,7-i*.3);ctx.stroke();
+        const hub=project(0,0,z),mark=project(Math.cos(a)*r,Math.sin(a)*r,z);ctx.beginPath();ctx.moveTo(...hub);ctx.lineTo(...mark);ctx.strokeStyle=COLORS[i];ctx.lineWidth=2;ctx.stroke();
+        ctx.beginPath();ctx.arc(mark[0],mark[1],6,0,Math.PI*2);ctx.fillStyle="#f7f2dc";ctx.fill();
+      }
+      const gx=22,gy=h-126,gw=Math.min(390,w*.43),gh=88;ctx.strokeStyle="rgba(255,255,255,.2)";ctx.strokeRect(gx,gy,gw,gh);
+      for(let i=0;i<n;i++){ctx.beginPath();history[i].forEach((v,j)=>{const xx=gx+j/209*gw,yy=gy+gh/2-v*10;j?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)});ctx.strokeStyle=COLORS[i];ctx.lineWidth=1.4;ctx.stroke();}
+      ctx.fillStyle="#e7f3e8";ctx.font="700 10px monospace";ctx.fillText("ANGULAR VELOCITY / EACH RING",gx,gy-9);
+      const energy=velocity.reduce((sum,v,i)=>sum+.5*(1+controlsRef.current.inertia*i)*v*v,0);
+      ctx.fillText(`KINETIC ENERGY  ${energy.toFixed(3)}`,gx,gy+gh+19);
+      raf=requestAnimationFrame(draw);
+    };
+    const down=(e:PointerEvent)=>{dragging=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);};
+    const move=(e:PointerEvent)=>{if(!dragging)return;yaw+=(e.clientX-px)*.008;pitch+=(e.clientY-py)*.008;px=e.clientX;py=e.clientY;};
+    const up=()=>{dragging=false;};
+    resize();restart();addEventListener("resize",resize);canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);canvas.addEventListener("pointercancel",up);raf=requestAnimationFrame(draw);
+    return()=>{cancelAnimationFrame(raf);removeEventListener("resize",resize);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);canvas.removeEventListener("pointercancel",up);};
+  },[]);
 
-  const sliders: Array<[keyof Params, string, number, number, number]> = [
-    ["ix", "Equatorial inertia", .25, 3, .01], ["iz", "Axial inertia", .25, 3, .01],
-    ["coupling", "EM coupling", 0, .6, .005], ["wx", "Initial ωx", -3, 3, .01],
-    ["wy", "Initial ωy", -3, 3, .01], ["wz", "Initial ωz", -4, 4, .01], ["speed", "Time scale", .1, 3, .05],
+  const sliders:Array<[keyof Controls,string,number,number,number]>=[
+    ["count","Nested rings",2,12,1],["stiffness","Torsion stiffness",.1,8,.05],["damping","Bearing damping",0,.2,.002],
+    ["impulse","Initial impulse",-7,7,.05],["inertia","Inertia gradient",0,.65,.01],["speed","Time scale",.1,3,.05],
   ];
-  return (
-    <main className="rings-page">
-      <header className="rings-header"><Link className="back" href="/gallery">Gallery</Link><div><span className="eyebrow">Interactive Exhibit 07 · IPT</span><h1>Rotating Rings</h1></div><span className="folio">Iω̇ = −ω × Iω</span></header>
-      <section className="rings-lab">
-        <div className="rings-stage"><canvas ref={canvasRef} className="rings-canvas" /><p>Drag the field to orbit the camera. The red trace follows the ring normal.</p></div>
-        <aside className="rings-controls">
-          <div className="rings-transport"><button onClick={() => setPaused(v => !v)}>{paused ? "Resume" : "Pause"}</button><button onClick={reset}>Restart</button></div>
-          {sliders.map(([key, label, min, max, step]) => <label key={key}><span>{label}</span><output>{params[key].toFixed(2)}</output><input aria-label={label} type="range" min={min} max={max} step={step} value={params[key]} onChange={e => update(key, +e.target.value)} /></label>)}
-          <button className={`rings-toggle ${trail ? "active" : ""}`} onClick={() => setTrail(v => !v)}>Wobble trail {trail ? "on" : "off"}</button>
-          <p>Unequal moments of inertia trade angular velocity between the body axes. Coupling makes the effective inertia depend on the spin, pushing the ring away from ideal torque-free motion.</p>
-        </aside>
-      </section>
-    </main>
-  );
+  return <main className="rings-page">
+    <header className="rings-header"><Link className="back" href="/gallery">Gallery</Link><div><span className="eyebrow">Interactive Exhibit 07 · Kinetic Sculpture</span><h1>Rotating Rings</h1></div><span className="folio">Iθ̈ = Στ</span></header>
+    <section className="rings-lab">
+      <div className="rings-stage"><canvas ref={canvasRef} className="rings-canvas"/><p>Drag to orbit the sculpture. Each bright spoke reveals its ring’s angular position.</p></div>
+      <aside className="rings-controls">
+        <div className="rings-transport"><button onClick={()=>setPaused(v=>!v)}>{paused?"Resume":"Pause"}</button><button onClick={()=>resetRef.current++}>Release impulse</button></div>
+        {sliders.map(([key,label,min,max,step])=><label key={key}><span>{label}</span><output>{key==="count"?controls[key]:controls[key].toFixed(2)}</output><input aria-label={label} type="range" min={min} max={max} step={step} value={controls[key]} onChange={e=>set(key,+e.target.value)}/></label>)}
+        <p>The outer ring receives the initial impulse. Torsion springs resist differences in angle, carrying angular momentum through the nested rotors and eventually returning it.</p>
+      </aside>
+    </section>
+  </main>;
 }

@@ -46,7 +46,7 @@ export default function Gallery() {
           <small>Enter the simulation →</small>
         </Link>
         <Link className="study rings-entry" href="/gallery/rotating-rings">
-          <span className="eyebrow">Exhibit 07 / Rigid-Body Dynamics</span>
+          <span className="eyebrow">Exhibit 07 / Torsion Dynamics</span>
           <div className="rings-entry-figure" aria-hidden="true"><i /><i /></div>
           <strong>Rotating Rings</strong>
           <small>Enter the simulation →</small>
