@@ -33,6 +33,7 @@ const presets: Preset[] = [
 ];
 
 const cloneConfig = (preset: Preset): Config => ({ k: [...preset.k], exponent: [...preset.exponent], dt: preset.dt, decay: preset.decay, noise: preset.noise });
+const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolean }) {
@@ -48,6 +49,8 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const autoMutateRef = useRef(true);
   const mutationTimeRef = useRef(0);
   const morphIndexRef = useRef(0);
+  const morphRateRef = useRef(1);
+  const morphRandomnessRef = useRef(.18);
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
@@ -58,6 +61,8 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const [mutationCount, setMutationCount] = useState(0);
   const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>([]);
   const [morphing, setMorphing] = useState(false);
+  const [morphRate, setMorphRate] = useState(1);
+  const [morphRandomness, setMorphRandomness] = useState(.18);
   const [saveStatus, setSaveStatus] = useState("Ready to collect this state");
 
   useEffect(() => { configRef.current = config; }, [config]);
@@ -99,23 +104,34 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     if (anchors.length < 2) return;
     let raf = 0;
     let lastPaint = 0;
-    const duration = 6500;
-    const segmentStart = performance.now();
+    let lastTime = performance.now();
+    let progress = 0;
     const startIndex = morphIndexRef.current % anchors.length;
     const from = configRef.current;
     let targetIndex = startIndex;
     while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * anchors.length);
     const to = anchors[targetIndex];
+    const randomSigned = () => Math.random() * 2 - 1;
+    const jitter: Config = {
+      k: to.k.map((value) => randomSigned() * (.2 + Math.min(2, Math.abs(value) * .15))),
+      exponent: to.exponent.map(() => randomSigned() * .4),
+      dt: randomSigned() * .32,
+      decay: randomSigned() * .2,
+      noise: randomSigned() * .0015,
+    };
     const animate = (now: number) => {
-      const raw = Math.min(1, (now - segmentStart) / duration);
+      progress = Math.min(1, progress + (now - lastTime) / 6500 * morphRateRef.current);
+      lastTime = now;
+      const raw = progress;
       const blend = raw * raw * (3 - 2 * raw);
+      const wildness = Math.sin(Math.PI * blend) * morphRandomnessRef.current;
       const mix = (a: number, b: number) => a + (b - a) * blend;
       const next: Config = {
-        k: from.k.map((value, index) => mix(value, to.k[index])),
-        exponent: from.exponent.map((value, index) => mix(value, to.exponent[index])),
-        dt: mix(from.dt, to.dt),
-        decay: mix(from.decay, to.decay),
-        noise: mix(from.noise, to.noise),
+        k: from.k.map((value, index) => clamp(mix(value, to.k[index]) + jitter.k[index] * wildness, -100, 100)),
+        exponent: from.exponent.map((value, index) => clamp(mix(value, to.exponent[index]) + jitter.exponent[index] * wildness, .25, 3)),
+        dt: clamp(mix(from.dt, to.dt) + jitter.dt * wildness, .003, 2),
+        decay: clamp(mix(from.decay, to.decay) + jitter.decay * wildness, 0, 1),
+        noise: clamp(mix(from.noise, to.noise) + jitter.noise * wildness, 0, .02),
       };
       configRef.current = next;
       if (now - lastPaint > 32 || raw === 1) {
@@ -334,6 +350,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
           <div className="transport deq-foundry-actions">
             <button onClick={saveCurrentState}>Save current state</button>
             <button className={morphing ? "active" : ""} onClick={() => { setAutoMutate(false); setMorphing((value) => !value); }}>{morphing ? "Hold morph" : "Morph all anchors"}</button>
+          </div>
+          <div className="deq-morph-sliders">
+            <label><span>Traversal rate</span><output>{morphRate.toFixed(2)}×</output><input type="range" min=".15" max="3" step=".05" value={morphRate} onChange={(event) => { const value=Number(event.target.value);morphRateRef.current=value;setMorphRate(value); }} /></label>
+            <label><span>Transition wildness</span><output>{Math.round(morphRandomness*100)}%</output><input type="range" min="0" max="1" step=".01" value={morphRandomness} onChange={(event) => { const value=Number(event.target.value);morphRandomnessRef.current=value;setMorphRandomness(value); }} /></label>
           </div>
           <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Git archive">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Archive {String(preset.id).padStart(3, "0")}</option>)}</optgroup><optgroup label="Live shared bank">{sharedPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>Live {String(preset.id).padStart(3, "0")}</option>)}</optgroup></select></label>
           <p className="deq-save-status" aria-live="polite">{saveStatus}</p>

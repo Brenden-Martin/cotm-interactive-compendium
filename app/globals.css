@@ -670,6 +670,10 @@ button { font: inherit; }
 .deq-foundry-title b { font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em; }
 .deq-foundry-actions { grid-template-columns:1fr 1fr;margin:0 0 12px; }
 .deq-foundry-actions button.active { background:#111820;color:#f2dc43; }
+.deq-morph-sliders { display:grid;gap:8px;margin:0 0 12px; }
+.deq-morph-sliders label { display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em; }
+.deq-morph-sliders input { grid-column:1/-1;width:100%;accent-color:#e74731; }
+.deq-morph-sliders output { font:inherit; }
 .deq-shared-select { display:grid;grid-template-columns:1fr;gap:6px; }
 .deq-save-status { margin:10px 0 0!important;padding:8px 0 0!important;border-top:1px solid #111820!important;font:800 9px monospace!important;text-transform:uppercase;letter-spacing:.08em; }
 .preset-select select { width: 100%; height: 42px; border: 1px solid #111820; background: transparent; padding: 0 10px; font: inherit; font-weight: 800; }
