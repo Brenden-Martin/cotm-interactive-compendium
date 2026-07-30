@@ -15,6 +15,10 @@ const rooms: Array<{ id: Room; label: string; href: string; color: string }> = [
 
 export function ColorIndex({ active }: { active: Room }) {
   const audio = useRef<HTMLAudioElement | null>(null);
+  const recentGags = useRef<string[]>([]);
+  const timer = useRef<number | null>(null);
+  const [gag, setGag] = useState("");
+  const [gagLabel, setGagLabel] = useState("");
 
   const playWoosh = useCallback(() => {
     if (!audio.current) audio.current = new Audio("/woosh.wav");
@@ -22,8 +26,81 @@ export function ColorIndex({ active }: { active: Room }) {
     void audio.current.play().catch(() => {});
   }, []);
 
+  const synth = useCallback((kind: string) => {
+    const AudioContextClass = window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.16, ctx.currentTime + .015);
+    gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + .5);
+    const notes =
+      kind === "bonk" ? [155, 72] :
+      kind === "laser" ? [920, 110] :
+      kind === "spring" ? [110, 640, 150] :
+      kind === "error" ? [180, 180, 130] :
+      kind === "sparkle" ? [523, 659, 784] :
+      [240, 330];
+    notes.forEach((frequency, index) => {
+      const osc = ctx.createOscillator();
+      osc.type = kind === "laser" ? "sawtooth" : kind === "bonk" ? "square" : "sine";
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime + index * .075);
+      if (kind === "spring") osc.frequency.exponentialRampToValueAtTime(Math.max(40, frequency * .65), ctx.currentTime + index * .075 + .18);
+      osc.connect(gain);
+      osc.start(ctx.currentTime + index * .075);
+      osc.stop(ctx.currentTime + index * .075 + .22);
+    });
+    window.setTimeout(() => void ctx.close(), 850);
+  }, []);
+
+  const summonGag = useCallback(() => {
+    const choices = [
+      { id: "sound-bonk", weight: 18, sound: "bonk", label: "BONK." },
+      { id: "sound-laser", weight: 15, sound: "laser", label: "PEW." },
+      { id: "sound-spring", weight: 14, sound: "spring", label: "BOYOYOING." },
+      { id: "sound-sparkle", weight: 12, sound: "sparkle", label: "AUSPICIOUS." },
+      { id: "shake", weight: 8, sound: "bonk", label: "LOCAL TREMOR" },
+      { id: "squish", weight: 7, sound: "spring", label: "COMPRESSED" },
+      { id: "blink", weight: 6, sound: "error", label: "PLEASE STAND BY" },
+      { id: "hue", weight: 5, sound: "sparkle", label: "CHROMATIC INCIDENT" },
+      { id: "invert", weight: 4, sound: "laser", label: "POLARITY REVERSED" },
+      { id: "mirage", weight: 3.5, sound: "spring", label: "HEAT HAZE" },
+      { id: "upside", weight: 2.5, sound: "bonk", label: "SOUTH IS UP" },
+      { id: "fall", weight: 2.2, sound: "spring", label: "GRAVITY ENABLED" },
+      { id: "explode", weight: 1.5, sound: "laser", label: "BUTTON FAILURE" },
+      { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
+    ];
+    const eligible = choices.map(choice => ({
+      ...choice,
+      adjusted: recentGags.current.includes(choice.id) ? choice.weight * .12 : choice.weight,
+    }));
+    const total = eligible.reduce((sum, choice) => sum + choice.adjusted, 0);
+    const random = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+    let cursor = random * total;
+    const choice = eligible.find(item => (cursor -= item.adjusted) <= 0) ?? eligible[0];
+    recentGags.current = [...recentGags.current.slice(-3), choice.id];
+    synth(choice.sound);
+    if (timer.current) window.clearTimeout(timer.current);
+    setGag(choice.id);
+    setGagLabel(choice.label);
+    if (choice.id === "random") {
+      const destinations = ["/compendium", "/music", "/gallery", "/research", "/gallery/gravity", "/gallery/lava-lamp", "/gallery/nonlinear-deq", "/gallery/moire", "/gallery/lissajous", "/gallery/catenary"];
+      const target = destinations[Math.floor(random * destinations.length)];
+      timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
+    } else {
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : 1150;
+      timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); }, duration);
+    }
+  }, [synth]);
+
+  useEffect(() => () => {
+    if (timer.current) window.clearTimeout(timer.current);
+  }, []);
+
   return (
-    <main className="index-shell">
+    <main className={`index-shell cotm-gag cotm-gag-${gag || "idle"}`}>
       <section className="index-aside">
         <div>
           <div className="eyebrow">Child of the Machine · Est. 2023</div>
@@ -40,14 +117,17 @@ export function ColorIndex({ active }: { active: Room }) {
           <Link
             key={room.id}
             href={room.href}
-            className={`color-line ${room.color} ${active === room.id ? "is-active" : ""}`}
+            className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""}`}
             onPointerEnter={playWoosh}
+            onClick={room.id === "home" ? (event) => { event.preventDefault(); summonGag(); } : undefined}
             aria-current={active === room.id ? "page" : undefined}
           >
             <span>{room.label}</span>
           </Link>
         ))}
       </nav>
+      {gagLabel && <div className="gag-caption" aria-live="polite">{gagLabel}</div>}
+      {gag === "explode" && <div className="gag-debris" aria-hidden="true">{Array.from({ length: 26 }, (_, i) => <i key={i} style={{ "--i": i } as React.CSSProperties} />)}</div>}
     </main>
   );
 }
