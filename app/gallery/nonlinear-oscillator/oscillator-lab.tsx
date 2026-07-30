@@ -139,7 +139,7 @@ export function OscillatorLab() {
         for(let k=0;k<bins;k++){let re=0,im=0;for(let n=0;n<windowSize;n++){const sample=n<padding?0:visibleSamples[n-padding],a=2*Math.PI*k*n/windowSize;re+=sample*Math.cos(a);im-=sample*Math.sin(a)}spec.push(Math.hypot(re,im)/windowSize);}
         mechanicalSpectrum=spec;
         spectrumHistory.push(spec);
-        if(spectrumHistory.length>50)spectrumHistory.shift();
+        if(spectrumHistory.length>100)spectrumHistory.shift();
         averagedSpectrum=spec.map((_,index)=>spectrumHistory.reduce((sum,item)=>sum+item[index],0)/spectrumHistory.length);
       }
       const reference=Math.max(...mechanicalSpectrum,...averagedSpectrum,.001);
@@ -147,7 +147,7 @@ export function OscillatorLab() {
       const live=mechanicalSpectrum.map(normalize),average=averagedSpectrum.map(normalize),bw=(right-30)/live.length,plotHeight=h-top-48;
       if(average.length>1){ctx.beginPath();average.forEach((value,index)=>{const xx=left+15+(index+.5)*bw,yy=h-18-value*plotHeight;index?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)});ctx.strokeStyle="rgba(210,213,211,.66)";ctx.lineWidth=2;ctx.stroke();}
       live.forEach((value,index)=>{ctx.fillStyle=index===Math.round(q.drive*5)?"#f36b4f":"#48d3cf";ctx.fillRect(left+15+index*bw,h-18,bw-2,-value*plotHeight);});
-      ctx.fillStyle="rgba(238,236,216,.6)";ctx.font="700 8px monospace";ctx.fillText(`${scaleRef.current==="db"?"dB":"LINEAR"} · GREY 5s AVG`,left+right-103,top+17);
+      ctx.fillStyle="rgba(238,236,216,.6)";ctx.font="700 8px monospace";ctx.fillText(`${scaleRef.current==="db"?"dB":"LINEAR"} · GREY 10s AVG`,left+right-108,top+17);
     };
     const draw = (now: number) => {
       if (seen !== resetRef.current) restart();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import archivedPresetData from "../deq-morph-bank/saved-presets.json";
 
 const W = 160;
 const H = 90;
@@ -12,6 +13,7 @@ type Config = { k: number[]; exponent: number[]; dt: number; decay: number; nois
 type FieldState = [Float32Array, Float32Array, Float32Array];
 type Preset = Config & { name: string };
 type SharedPreset = { id: number; config: Config; createdAt: string };
+const archivedPresets = archivedPresetData.presets as SharedPreset[];
 
 const indexK = (dest: number, source: number, template: number) => (dest * 3 + source) * 5 + template;
 const sparseK = (entries: Array<[number, number, number, number]>) => {
@@ -83,10 +85,17 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
 
   useEffect(() => {
     if (!presetFoundry || !morphing) return;
+    const seenAnchors = new Set<string>();
     const anchors: Config[] = [
       ...presets.map(cloneConfig),
+      ...archivedPresets.map((preset) => preset.config),
       ...sharedPresets.map((preset) => preset.config),
-    ];
+    ].filter((anchor) => {
+      const fingerprint = JSON.stringify(anchor);
+      if (seenAnchors.has(fingerprint)) return false;
+      seenAnchors.add(fingerprint);
+      return true;
+    });
     if (anchors.length < 2) return;
     let raf = 0;
     let lastPaint = 0;
@@ -94,7 +103,9 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     const segmentStart = performance.now();
     const startIndex = morphIndexRef.current % anchors.length;
     const from = configRef.current;
-    const to = anchors[(startIndex + 1) % anchors.length];
+    let targetIndex = startIndex;
+    while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * anchors.length);
+    const to = anchors[targetIndex];
     const animate = (now: number) => {
       const raw = Math.min(1, (now - segmentStart) / duration);
       const blend = raw * raw * (3 - 2 * raw);
@@ -112,7 +123,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
         lastPaint = now;
       }
       if (raw === 1) {
-        morphIndexRef.current = (startIndex + 1) % anchors.length;
+        morphIndexRef.current = targetIndex;
         setMorphing(false);
         requestAnimationFrame(() => setMorphing(true));
       } else raf = requestAnimationFrame(animate);
@@ -138,8 +149,12 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     seedNoise();
   };
 
-  const applySharedPreset = (id: number) => {
-    const preset = sharedPresets.find((item) => item.id === id);
+  const applySavedPreset = (value: string) => {
+    const [source, rawId] = value.split(":");
+    const id = Number(rawId);
+    const preset = source === "archive"
+      ? archivedPresets.find((item) => item.id === id)
+      : sharedPresets.find((item) => item.id === id);
     if (!preset) return;
     setMorphing(false);
     setPresetName(`Shared ${String(preset.id).padStart(3, "0")}`);
@@ -315,12 +330,12 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       </div>
       <aside className="deq-controls">
         {presetFoundry && <div className="control-block deq-foundry">
-          <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{sharedPresets.length} found states</b></div>
+          <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{archivedPresets.length} archived · {sharedPresets.length} live</b></div>
           <div className="transport deq-foundry-actions">
             <button onClick={saveCurrentState}>Save current state</button>
             <button className={morphing ? "active" : ""} onClick={() => { setAutoMutate(false); setMorphing((value) => !value); }}>{morphing ? "Hold morph" : "Morph all anchors"}</button>
           </div>
-          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySharedPreset(Number(event.target.value))}><option value="" disabled>Select shared anchor</option>{sharedPresets.map((preset) => <option key={preset.id} value={preset.id}>Anchor {String(preset.id).padStart(3, "0")}</option>)}</select></label>
+          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Git archive">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Archive {String(preset.id).padStart(3, "0")}</option>)}</optgroup><optgroup label="Live shared bank">{sharedPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>Live {String(preset.id).padStart(3, "0")}</option>)}</optgroup></select></label>
           <p className="deq-save-status" aria-live="polite">{saveStatus}</p>
         </div>}
         <div className="deq-top-controls">
