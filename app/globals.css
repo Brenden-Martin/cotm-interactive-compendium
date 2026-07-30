@@ -173,6 +173,8 @@ button { font: inherit; }
 .menu-dance-shake-one .dance-picked { animation:menu-shake-one .8s linear }
 .menu-dance-drift-one .dance-picked { animation:menu-drift-one 1.25s ease-in-out }
 .menu-dance-shoot-one .dance-picked { animation:menu-shoot-one 1.8s cubic-bezier(.65,0,.15,1) }
+.menu-dance-height-focus .color-line { animation:menu-height-small 1.4s cubic-bezier(.25,.9,.3,1); }
+.menu-dance-height-focus .dance-picked { animation:menu-height-large 1.4s cubic-bezier(.25,.9,.3,1);z-index:2; }
 .cotm-gag-shuffle .color-line { animation:gag-shuffle 2.35s cubic-bezier(.4,0,.2,1);animation-delay:calc(var(--i) * .04s) }
 .cotm-gag-stairs .color-line { animation:gag-stairs 2.35s ease-in-out;animation-delay:calc(var(--i) * .045s) }
 .cotm-gag-trickle .color-line { animation:gag-trickle-buttons 1.5s cubic-bezier(.2,.8,.2,1);animation-delay:calc(var(--i) * .13s) }
@@ -220,6 +222,8 @@ button { font: inherit; }
 @keyframes menu-shake-one { 0%,100%{transform:translate(0)} 20%{transform:translateX(-22px)} 40%{transform:translateX(18px)} 60%{transform:translateY(-13px)} 80%{transform:translateY(11px)} }
 @keyframes menu-drift-one { 0%,100%{transform:translateX(0)} 50%{transform:translateX(calc(-1 * var(--dance-dx)))} }
 @keyframes menu-shoot-one { 0%{transform:translateX(0)} 38%{transform:translateX(-115vw)} 39%{opacity:0} 40%{transform:translateX(105vw);opacity:0} 62%{opacity:1} 100%{transform:translateX(0)} }
+@keyframes menu-height-small { 0%,100%{transform:scaleY(1)} 30%,68%{transform:scaleY(.6667)} }
+@keyframes menu-height-large { 0%,100%{transform:scaleY(1)} 30%,68%{transform:scaleY(1.5)} }
 @keyframes gag-shuffle { 0%,100%{transform:translate(0) rotate(0)} 25%{transform:translate(calc((2 - var(--i))*72px),calc((var(--i) - 2)*58px)) rotate(calc((var(--i) - 2)*8deg))} 55%{transform:translate(calc((var(--i) - 2)*55px),calc((2 - var(--i))*42px)) rotate(calc((2 - var(--i))*6deg))} }
 @keyframes gag-stairs { 0%,100%{transform:translate(0)} 30%,72%{transform:translate(calc(var(--i)*-42px),calc(var(--i)*34px))} }
 @keyframes gag-trickle-buttons { 0%,100%{transform:translate(0)} 30%{transform:translate(-72px,18px) scaleX(.92)} 65%{transform:translate(24px,-8px)} }

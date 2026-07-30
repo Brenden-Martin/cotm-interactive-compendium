@@ -142,7 +142,7 @@ export function ColorIndex({ active }: { active: Room }) {
   }, []);
 
   useEffect(() => {
-    const dances = ["ripple-x","ripple-y","trickle","cradle","fan","accordion","bobble","shake-one","drift-one","shoot-one"];
+    const dances = ["ripple-x","ripple-y","trickle","cradle","fan","accordion","bobble","shake-one","drift-one","shoot-one","height-focus"];
     const schedule = () => {
       danceTimer.current = window.setTimeout(() => {
         const random = crypto.getRandomValues(new Uint32Array(3));
@@ -170,7 +170,7 @@ export function ColorIndex({ active }: { active: Room }) {
         playWoosh();
         window.setTimeout(() => setExtensions([0,0,0,0,0]), 2600);
         scheduleExtensions();
-      }, 3200 + Math.random()*4300);
+      }, 7500 + Math.random()*7500);
     };
     scheduleExtensions();
     return () => {
