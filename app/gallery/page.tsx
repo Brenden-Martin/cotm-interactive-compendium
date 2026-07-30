@@ -57,6 +57,12 @@ export default function Gallery() {
           <strong>Nonlinear Oscillator</strong>
           <small>Enter the laboratory →</small>
         </Link>
+        <Link className="study polarization-entry" href="/gallery/polarization-space">
+          <span className="eyebrow">Exhibit 09 / Polarization Optics</span>
+          <div className="polarization-entry-sphere" aria-hidden="true"><i /><i /></div>
+          <strong>Polarization Space</strong>
+          <small>Enter the optical bench →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
