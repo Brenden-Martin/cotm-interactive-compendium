@@ -71,11 +71,12 @@ button { font: inherit; }
   --line: var(--red);
   --shadow: #b82d20;
   --line-height: clamp(62px, 9vh, 95px);
+  --base-extra:48px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: calc(100% + 48px);
+  width: calc(100% + var(--base-extra) + var(--extend, 0px));
   min-height: var(--line-height);
   padding: 0 clamp(54px, 8vw, 110px) 0 28px;
   border: 0;
@@ -84,7 +85,7 @@ button { font: inherit; }
   text-decoration: none;
   color: #fff4a8;
   cursor: pointer;
-  transition: transform .22s ease, filter .22s ease;
+  transition: transform .78s cubic-bezier(.22,1.42,.34,1), width 1.05s cubic-bezier(.2,1.28,.3,1), filter .22s ease;
 }
 
 .color-line::after {
@@ -100,7 +101,7 @@ button { font: inherit; }
 
 .color-line:hover,
 .color-line:focus-visible {
-  transform: translateX(-32px);
+  transform: translateX(-76px);
   filter: saturate(1.12);
   outline: none;
 }
@@ -159,6 +160,8 @@ button { font: inherit; }
 .gag-matrix { position:fixed;inset:0;z-index:32;overflow:hidden;background:rgba(0,6,2,.88);display:flex;justify-content:space-around;pointer-events:none; }
 .gag-matrix i { width:1em;color:#6cff75;font:700 14px/1.05 monospace;overflow-wrap:anywhere;text-shadow:0 0 8px #1dff4c;opacity:.85;translate:0 -130%;animation:gag-matrix-fall .72s linear infinite;animation-delay:calc(var(--i) * -.083s); }
 .menu-dance .color-line { transform-origin:left center; }
+.menu-dance-idle .color-line { animation:menu-idle-coupled 3.8s ease-in-out infinite;animation-delay:calc(var(--i) * -.31s); }
+.menu-extended { filter:saturate(1.08); }
 .menu-dance-ripple-x .color-line { animation:menu-ripple-x 1.15s ease-in-out;animation-delay:calc(var(--i) * .075s) }
 .menu-dance-ripple-y .color-line { animation:menu-ripple-y 1.2s ease-in-out;animation-delay:calc(var(--i) * .085s) }
 .menu-dance-trickle .color-line { animation:menu-trickle 1.2s cubic-bezier(.2,.8,.2,1);animation-delay:calc(var(--i) * .11s) }
@@ -206,6 +209,7 @@ button { font: inherit; }
 @keyframes gag-crumple { 0%,100%{transform:perspective(900px) rotateX(0) rotateY(0) scale(1);clip-path:polygon(0 0,100% 0,100% 100%,0 100%);filter:none} 25%{transform:perspective(900px) rotateX(18deg) rotateY(-12deg) scale(.86,.92);clip-path:polygon(3% 9%,93% 2%,99% 88%,8% 97%)} 55%{transform:perspective(900px) rotateX(48deg) rotateY(37deg) scale(.38,.44);clip-path:polygon(18% 2%,89% 19%,76% 92%,4% 68%);filter:drop-shadow(14px 18px 8px rgba(0,0,0,.35))} 72%{transform:perspective(900px) rotateX(-20deg) rotateY(18deg) scale(.2,.22);clip-path:polygon(29% 4%,97% 38%,63% 100%,0 59%)} }
 @keyframes gag-matrix-fall { from{translate:0 -130%} to{translate:0 105%} }
 @keyframes menu-ripple-x { 0%,100%{transform:translateX(0)} 45%{transform:translateX(calc(-28px - var(--i)*5px))} }
+@keyframes menu-idle-coupled { 0%,100%{translate:0 0} 22%{translate:calc(-1 * var(--idle-a)) 0} 48%{translate:calc(var(--idle-a) * .58) 0} 70%{translate:calc(var(--idle-a) * -.32) 0} 86%{translate:calc(var(--idle-a) * .13) 0} }
 @keyframes menu-ripple-y { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-14px)} 65%{transform:translateY(12px)} }
 @keyframes menu-trickle { 0%,100%{transform:translate(0)} 28%{transform:translate(-38px,12px) rotate(-1deg)} 60%{transform:translate(18px,-7px)} }
 @keyframes menu-cradle-left { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-13deg)} 52%{transform:rotate(0)} }
@@ -772,7 +776,7 @@ button { font: inherit; }
   .index-aside { min-height: 36svh; padding-bottom: 12px; }
   .intro { font-size: 14px; }
   .index-nav { padding: 16px 0 56px 12vw; gap: 7px; }
-  .color-line { --line-height:58px; width: calc(100% + 22px); }
+  .color-line { --line-height:58px;--base-extra:22px; }
   .color-line:hover, .color-line:focus-visible { transform: translateX(-14px); }
   .music-grid { grid-template-columns: repeat(2, 1fr); }
   .tone { min-height: 150px; }
