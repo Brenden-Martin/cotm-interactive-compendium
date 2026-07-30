@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const deqPresets = sqliteTable("deq_presets", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -7,3 +7,21 @@ export const deqPresets = sqliteTable("deq_presets", {
   stateHash: text("state_hash").notNull().unique(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const siteCounters = sqliteTable("site_counters", {
+  counterKey: text("counter_key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const siteCounterEvents = sqliteTable(
+  "site_counter_events",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    counterKey: text("counter_key").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("site_counter_events_key_created_idx").on(table.counterKey, table.createdAt),
+  ],
+);

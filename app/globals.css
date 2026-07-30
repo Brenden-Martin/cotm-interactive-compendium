@@ -114,6 +114,20 @@ button { font: inherit; }
   text-transform: uppercase;
 }
 
+.color-line-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.color-line .you-are-here-count {
+  color: rgba(255, 244, 168, .72);
+  font: 700 clamp(8px, .72vw, 10px)/1.1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
 .color-line.red { --line: var(--red); --shadow: #bb2e23; }
 .color-line.orange { --line: var(--orange); --shadow: #b75c16; }
 .color-line.green { --line: var(--green); --shadow: #168048; }

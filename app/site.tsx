@@ -26,6 +26,7 @@ export function ColorIndex({ active }: { active: Room }) {
   const [dancePick, setDancePick] = useState(0);
   const [danceDx, setDanceDx] = useState(80);
   const [extensions, setExtensions] = useState([0,0,0,0,0]);
+  const [youAreHereCount, setYouAreHereCount] = useState<number | null>(null);
 
   const playWoosh = useCallback(() => {
     if (!audio.current) audio.current = new Audio("/woosh.wav");
@@ -137,8 +138,40 @@ export function ColorIndex({ active }: { active: Room }) {
     }
   }, [synth]);
 
+  const recordYouAreHerePress = useCallback(() => {
+    void fetch("/api/you-are-here-count", { method: "POST" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Counter unavailable");
+        return response.json() as Promise<{ count?: unknown }>;
+      })
+      .then(({ count }) => {
+        if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0) return;
+        setYouAreHereCount((current) => current === null ? count : Math.max(current, count));
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => () => {
     if (timer.current) window.clearTimeout(timer.current);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/you-are-here-count", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Counter unavailable");
+        return response.json() as Promise<{ count?: unknown }>;
+      })
+      .then(({ count }) => {
+        if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) {
+          setYouAreHereCount(count);
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -199,10 +232,23 @@ export function ColorIndex({ active }: { active: Room }) {
             className={`color-line ${room.color} ${active === room.id ? "is-active" : ""} ${room.id === "home" ? "you-are-here" : ""} ${dancePick === index ? "dance-picked" : ""} ${!gag && extensions[index] ? "menu-extended" : ""}`}
             style={{"--i":index,"--dance-dx":`${danceDx}px`,"--extend":`${gag ? 0 : extensions[index]}px`} as React.CSSProperties}
             onPointerEnter={playWoosh}
-            onClick={room.id === "home" ? (event) => { event.preventDefault(); summonGag(); } : undefined}
+            onClick={room.id === "home" ? (event) => {
+              event.preventDefault();
+              recordYouAreHerePress();
+              summonGag();
+            } : undefined}
             aria-current={active === room.id ? "page" : undefined}
           >
-            <span>{room.label}</span>
+            <span className="color-line-label">
+              {room.label}
+              {room.id === "home" && (
+                <small className="you-are-here-count" aria-live="polite">
+                  {youAreHereCount === null
+                    ? "counting presses..."
+                    : `${youAreHereCount.toLocaleString()} ${youAreHereCount === 1 ? "press" : "presses"} so far`}
+                </small>
+              )}
+            </span>
           </Link>
         ))}
       </nav>
