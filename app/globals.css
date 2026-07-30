@@ -285,6 +285,14 @@ button { font: inherit; }
 .lava-entry-lamp::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(32,215,215,.16), rgba(247,231,0,.12)); }
 .lava-entry-lamp i { position: absolute; z-index: 1; width: 31px; height: 31px; border-radius: 50%; background: #20d7d7; left: 15px; bottom: 12px; box-shadow: 25px -27px 0 #c15b31, 4px -66px 0 #f7e700, 29px -94px 0 #20d7d7; }
 
+.deq-entry { grid-column: span 2; min-height: 360px; color: #111820; background: #d7d3c4; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+.deq-entry:hover, .deq-entry:focus-visible { transform: translateY(-10px); box-shadow: 10px 10px 0 #e74731; outline: none; }
+.deq-entry strong { font-size: clamp(26px, 4vw, 52px); letter-spacing: -.04em; }
+.deq-entry-field { height: 130px; position: relative; overflow: hidden; background: repeating-radial-gradient(circle at 35% 55%, #20d7d7 0 4px, transparent 5px 13px), repeating-radial-gradient(circle at 68% 42%, #e74731 0 5px, transparent 6px 16px), #111820; }
+.deq-entry-field i { position: absolute; width: 80px; height: 80px; border-radius: 43% 57% 68% 32%; background: rgba(247,231,0,.72); filter: blur(4px); left: 18%; top: 20%; }
+.deq-entry-field i:nth-child(2) { background: rgba(32,215,215,.72); left: 48%; top: 8%; transform: rotate(65deg); }
+.deq-entry-field i:nth-child(3) { background: rgba(231,71,49,.75); left: 72%; top: 34%; transform: rotate(125deg); }
+
 .gravity-page { min-height: 100svh; background: #d7d3c4; color: #111820; padding: clamp(18px, 3vw, 42px); }
 .gravity-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 24px; margin-bottom: 24px; }
 .gravity-head h1 { margin: 4px 0 0; font-size: clamp(34px, 6vw, 82px); line-height: .9; letter-spacing: -.07em; }
@@ -346,6 +354,38 @@ button { font: inherit; }
 .lava-transport { grid-template-columns: repeat(3, 1fr); }
 .lab-note { font-size: 11px; line-height: 1.5; opacity: .72; border-top: 1px solid #111820; padding-top: 12px; }
 
+.deq-page { min-height: 100svh; background: #d7d3c4; color: #111820; padding: clamp(18px, 3vw, 42px); }
+.deq-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 24px; margin-bottom: 24px; }
+.deq-head h1 { margin: 4px 0 0; font-size: clamp(34px, 6vw, 82px); line-height: .9; letter-spacing: -.07em; }
+.deq-head .folio { justify-self: end; }
+.deq-lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 450px); border: 2px solid #111820; min-height: 72svh; }
+.deq-stage { position: relative; min-height: 680px; background: #080b10; overflow: hidden; }
+.deq-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; touch-action: none; cursor: crosshair; }
+.deq-status { position: absolute; left: 18px; bottom: 18px; display: flex; gap: 14px; color: #fff; pointer-events: none; }
+.deq-status b, .deq-status span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.deq-status span { opacity: .6; }
+.deq-controls { background: #f4f0df; border-left: 2px solid #111820; padding: 20px; overflow: auto; max-height: 76svh; }
+.preset-select select { width: 100%; height: 42px; border: 1px solid #111820; background: transparent; padding: 0 10px; font: inherit; font-weight: 800; }
+.deq-transport { grid-template-columns: repeat(3, 1fr); margin-top: 10px; }
+.toggle-wide { width: 100%; min-height: 42px; border: 1px solid #111820; background: transparent; cursor: pointer; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.toggle-wide.active { background: #111820; color: #f4f0df; }
+.deq-scalar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 24px; }
+.deq-scalar-grid label, .exponent-row label { border: 1px solid #8f8b7f; padding: 7px; display: grid; gap: 5px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.deq-scalar-grid input, .exponent-row input { width: 100%; min-width: 0; border: 0; border-top: 1px solid #8f8b7f; background: transparent; padding-top: 5px; font: inherit; }
+.exponent-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.exponent-row i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.channel-0 { background: #e74731; } .channel-1 { background: #20d7d7; } .channel-2 { background: #3989d2; }
+.matrix-title { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.channel-tabs { display: grid; grid-template-columns: repeat(3, 30px); }
+.channel-tabs button { height: 28px; border: 1px solid #111820; background: transparent; cursor: pointer; }
+.channel-tabs button + button { border-left: 0; }
+.channel-tabs button.active { background: #111820; color: #fff; }
+.matrix-grid { display: grid; grid-template-columns: 27px repeat(5, minmax(43px, 1fr)); gap: 4px; align-items: center; overflow-x: auto; padding-bottom: 5px; }
+.matrix-grid b, .matrix-grid strong { font-size: 8px; text-transform: uppercase; text-align: center; }
+.matrix-grid input { width: 100%; min-width: 43px; height: 34px; border: 1px solid #8f8b7f; background: transparent; padding: 3px; font: inherit; font-size: 9px; text-align: right; }
+.brush-size { display: grid; grid-template-columns: 42px 1fr 25px; gap: 8px; align-items: center; margin-top: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.brush-size input { width: 100%; accent-color: #111820; }
+
 .research-overlay {
   position: absolute;
   inset: 0;
@@ -379,6 +419,7 @@ button { font: inherit; }
   .gallery-grid { grid-template-columns: 1fr; }
   .signal-study { transform: none; }
   .gravity-entry { grid-column: auto; }
+  .deq-entry { grid-column: auto; }
   .gravity-head { grid-template-columns: 1fr auto; }
   .gravity-head > div { grid-column: 1 / -1; grid-row: 2; }
   .gravity-lab { grid-template-columns: 1fr; }
@@ -391,6 +432,11 @@ button { font: inherit; }
   .lamp-glass { width: min(72%, 330px); }
   .lamp-cap { width: min(78%, 370px); }
   .lava-controls { border-left: 0; border-top: 2px solid #f4f0df; }
+  .deq-head { grid-template-columns: 1fr auto; }
+  .deq-head > div { grid-column: 1 / -1; grid-row: 2; }
+  .deq-lab { grid-template-columns: 1fr; }
+  .deq-stage { min-height: 62svh; }
+  .deq-controls { border-left: 0; border-top: 2px solid #111820; max-height: none; }
   .archive-list li { grid-template-columns: 42px 1fr; }
   .archive-list small { grid-column: 2; }
 }
