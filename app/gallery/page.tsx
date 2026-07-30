@@ -39,6 +39,12 @@ export default function Gallery() {
           <strong>Lissajous Scope</strong>
           <small>Enter the simulation →</small>
         </Link>
+        <Link className="study catenary-entry" href="/gallery/catenary">
+          <span className="eyebrow">Exhibit 06 / Distributed Weight</span>
+          <div className="catenary-entry-cord" aria-hidden="true"><i /><i /></div>
+          <strong>Catenary Lab</strong>
+          <small>Enter the simulation →</small>
+        </Link>
         <article className="study orbit-study"><span className="eyebrow">Study 01 / Orbit</span><div className="study-shape" /><small>Circle against field</small></article>
         <article className="study signal-study"><span className="eyebrow">Study 02 / Signal</span><div className="study-shape" /><small>Three notes held apart</small></article>
         <article className="study turn-study"><span className="eyebrow">Study 03 / Turn</span><div className="study-shape" /><small>Square refusing stillness</small></article>
