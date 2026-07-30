@@ -19,6 +19,7 @@ export function ColorIndex({ active }: { active: Room }) {
   const timer = useRef<number | null>(null);
   const [gag, setGag] = useState("");
   const [gagLabel, setGagLabel] = useState("");
+  const [randomColor, setRandomColor] = useState("");
 
   const playWoosh = useCallback(() => {
     if (!audio.current) audio.current = new Audio("/woosh.wav");
@@ -70,6 +71,13 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "upside", weight: 2.5, sound: "bonk", label: "SOUTH IS UP" },
       { id: "fall", weight: 2.2, sound: "spring", label: "GRAVITY ENABLED" },
       { id: "explode", weight: 1.5, sound: "laser", label: "BUTTON FAILURE" },
+      { id: "rgb", weight: 4.5, sound: "sparkle", label: "LOCAL COLOR SPACE MUTATION" },
+      { id: "matrix", weight: 2.2, sound: "laser", label: "TECHNOLOGY DETECTED" },
+      { id: "oblivion", weight: 1.8, sound: "spring", label: "RECEDING FROM VIEW" },
+      { id: "spaghettify", weight: 1.25, sound: "spring", label: "EXTREME TIDAL FORCE" },
+      { id: "crumple", weight: 1.15, sound: "bonk", label: "DOCUMENT COMPRESSION" },
+      { id: "where-else", weight: 7, sound: "bonk", label: "WHERE ELSE?" },
+      { id: "wherever", weight: 5, sound: "sparkle", label: "WHEREVER YOU GO, THERE YOU ARE" },
       { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
     ];
     const eligible = choices.map(choice => ({
@@ -85,13 +93,17 @@ export function ColorIndex({ active }: { active: Room }) {
     if (timer.current) window.clearTimeout(timer.current);
     setGag(choice.id);
     setGagLabel(choice.label);
+    if (choice.id === "rgb") {
+      const bytes = crypto.getRandomValues(new Uint8Array(3));
+      setRandomColor(`rgb(${bytes[0]} ${bytes[1]} ${bytes[2]})`);
+    }
     if (choice.id === "random") {
       const destinations = ["/compendium", "/music", "/gallery", "/research", "/gallery/gravity", "/gallery/lava-lamp", "/gallery/nonlinear-deq", "/gallery/moire", "/gallery/lissajous", "/gallery/catenary"];
       const target = destinations[Math.floor(random * destinations.length)];
       timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
     } else {
-      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : 1150;
-      timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); }, duration);
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : ["matrix","spaghettify","crumple"].includes(choice.id) ? 2100 : choice.id === "oblivion" ? 1800 : 1150;
+      timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); setRandomColor(""); }, duration);
     }
   }, [synth]);
 
@@ -100,7 +112,7 @@ export function ColorIndex({ active }: { active: Room }) {
   }, []);
 
   return (
-    <main className={`index-shell cotm-gag cotm-gag-${gag || "idle"}`}>
+    <main className={`index-shell cotm-gag cotm-gag-${gag || "idle"}`} style={randomColor ? {"--gag-rgb":randomColor} as React.CSSProperties : undefined}>
       <section className="index-aside">
         <div>
           <div className="eyebrow">Child of the Machine · Est. 2023</div>
@@ -128,6 +140,7 @@ export function ColorIndex({ active }: { active: Room }) {
       </nav>
       {gagLabel && <div className="gag-caption" aria-live="polite">{gagLabel}</div>}
       {gag === "explode" && <div className="gag-debris" aria-hidden="true">{Array.from({ length: 26 }, (_, i) => <i key={i} style={{ "--i": i } as React.CSSProperties} />)}</div>}
+      {gag === "matrix" && <div className="gag-matrix" aria-hidden="true">{Array.from({length:28},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}>{"01⌬Ψλ∆∷⌁101Ξµ∴Φ⊕⟟0101".repeat(3)}</i>)}</div>}
     </main>
   );
 }
