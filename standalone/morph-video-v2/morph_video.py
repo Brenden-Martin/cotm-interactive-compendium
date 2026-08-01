@@ -496,9 +496,16 @@ def render_video(
         fps=source_fps,
         codec="libx264",
         pix_fmt_in="rgb24",
-        pix_fmt_out="yuv444p",
+        pix_fmt_out="yuv420p",
         macro_block_size=1,
-        output_params=["-crf", "12", "-preset", "medium", "-tune", "animation", "-movflags", "+faststart"],
+        output_params=[
+            "-crf", "12",
+            "-preset", "medium",
+            "-tune", "animation",
+            "-profile:v", "high",
+            "-tag:v", "avc1",
+            "-movflags", "+faststart",
+        ],
     )
     writer.send(None)
     started = time.perf_counter()

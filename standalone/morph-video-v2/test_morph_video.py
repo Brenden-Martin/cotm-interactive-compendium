@@ -130,6 +130,8 @@ class TinyVideoRenderTest(unittest.TestCase):
             metadata = next(reader)
             reader.close()
             self.assertEqual(tuple(metadata["size"]), (32, 18))
+            self.assertEqual(metadata["codec"], "h264")
+            self.assertTrue(metadata["pix_fmt"].startswith("yuv420p"))
 
     def test_looped_and_held_video_keeps_time_stretched_audio(self):
         with tempfile.TemporaryDirectory() as temporary:
