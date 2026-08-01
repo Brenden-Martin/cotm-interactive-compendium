@@ -131,6 +131,8 @@ class RenderResult:
     frames: int
     width: int
     height: int
+    simulation_width: int
+    simulation_height: int
     source_fps: float
     elapsed_seconds: float
     audio_preserved: bool
@@ -368,6 +370,23 @@ def field_to_rgb(field: np.ndarray) -> np.ndarray:
     return np.rint(field.transpose(1, 2, 0) * 255).astype(np.uint8)
 
 
+def upscale_nearest(frame: np.ndarray, width: int, height: int) -> np.ndarray:
+    """Expand an RGB frame by index selection only; no values are interpolated."""
+
+    source_height, source_width = frame.shape[:2]
+    if (source_width, source_height) == (width, height):
+        return frame
+    x_indices = np.minimum(
+        ((np.arange(width, dtype=np.float64) + .5) * source_width / width).astype(np.intp),
+        source_width - 1,
+    )
+    y_indices = np.minimum(
+        ((np.arange(height, dtype=np.float64) + .5) * source_height / height).astype(np.intp),
+        source_height - 1,
+    )
+    return frame[y_indices[:, None], x_indices[None, :], :]
+
+
 def _even_dimension(value: float) -> int:
     rounded = max(2, int(round(value)))
     return rounded if rounded % 2 == 0 else rounded - 1
@@ -473,13 +492,13 @@ def render_video(
     temporary_path = _temporary_video_path(destination_path)
     writer = imageio_ffmpeg.write_frames(
         str(temporary_path),
-        (width, height),
+        (source_width, source_height),
         fps=source_fps,
         codec="libx264",
         pix_fmt_in="rgb24",
-        pix_fmt_out="yuv420p",
-        macro_block_size=2,
-        output_params=["-crf", "18", "-preset", "medium", "-movflags", "+faststart"],
+        pix_fmt_out="yuv444p",
+        macro_block_size=1,
+        output_params=["-crf", "12", "-preset", "medium", "-tune", "animation", "-movflags", "+faststart"],
     )
     writer.send(None)
     started = time.perf_counter()
@@ -500,14 +519,15 @@ def render_video(
                     assert config is not None
                     for _ in range(options.steps_per_frame):
                         field = step_boundary_field(field, weights, config, rng)
-                    output_frame = field_to_rgb(field)
+                    simulation_frame = field_to_rgb(field)
+                    output_frame = upscale_nearest(simulation_frame, source_width, source_height)
                     writer.send(output_frame.tobytes())
                     frame_count += 1
                     elapsed = time.perf_counter() - started
                     if progress_callback:
                         progress_callback(ProgressUpdate(frame_count, total_frames, elapsed, frame_count / max(elapsed, 1e-9)))
                     if preview_callback and frame_count % preview_interval == 0:
-                        preview_callback(output_frame.copy())
+                        preview_callback(simulation_frame.copy())
             active_reader.close()
             active_reader = None
     except BaseException:
@@ -533,7 +553,18 @@ def render_video(
     else:
         os.replace(temporary_path, destination_path)
     elapsed = time.perf_counter() - started
-    return RenderResult(destination_path, frame_count, width, height, source_fps, elapsed, audio_preserved, warning)
+    return RenderResult(
+        destination_path,
+        frame_count,
+        source_width,
+        source_height,
+        width,
+        height,
+        source_fps,
+        elapsed,
+        audio_preserved,
+        warning,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -603,7 +634,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (FileNotFoundError, ValueError, RenderCancelled) as exc:
         parser.exit(2, f"error: {exc}\n")
     print()
-    print(f"Saved {result.frames} frames at {result.width}×{result.height} to {result.output_path}")
+    print(
+        f"Saved {result.frames} frames at {result.width}×{result.height} "
+        f"from a {result.simulation_width}×{result.simulation_height} field to {result.output_path}"
+    )
     print(f"Render time: {result.elapsed_seconds:.1f} seconds")
     if result.warning:
         print(f"Warning: {result.warning}")

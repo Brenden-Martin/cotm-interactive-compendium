@@ -348,8 +348,16 @@ class MorphVideoApp:
                     assert isinstance(result, RenderResult)
                     self._finished()
                     audio = " · source audio copied" if result.audio_preserved else ""
-                    self.status_var.set(f"Complete · {result.frames} frames · {result.width}×{result.height}{audio}")
-                    detail = f"Saved to:\n{result.output_path}\n\nRender time: {result.elapsed_seconds:.1f} seconds"
+                    self.status_var.set(
+                        f"Complete · {result.frames} frames · {result.width}×{result.height} output "
+                        f"from {result.simulation_width}×{result.simulation_height} field{audio}"
+                    )
+                    detail = (
+                        f"Saved to:\n{result.output_path}\n\n"
+                        f"Nearest-neighbor output: {result.width}×{result.height}\n"
+                        f"Simulation grid: {result.simulation_width}×{result.simulation_height}\n\n"
+                        f"Render time: {result.elapsed_seconds:.1f} seconds"
+                    )
                     if result.warning:
                         detail += f"\n\n{result.warning}"
                     messagebox.showinfo("Render complete", detail)

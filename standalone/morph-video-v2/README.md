@@ -43,6 +43,8 @@ Looping and frame hold multiply the output duration. When audio copying is enabl
 
 ## Resolution and performance
 
+**Resolution scale controls only the simulation grid.** Every generated field frame is expanded back to the source video's exact pixel dimensions before it is encoded. The expansion is a direct nearest-neighbor index lookup: output pixels copy one simulation pixel exactly, with no bilinear, bicubic, or other interpolated values. The encoder receives full-size 4:4:4 frames, so media players do not need to enlarge the coarse simulation themselves.
+
 The renderer is vectorized with NumPy and streams frames, so it never loads the whole movie into memory. Approximate work grows with:
 
 `width × height × source frames × loops × frame hold × simulation steps`

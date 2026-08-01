@@ -18,6 +18,7 @@ from morph_video import (
     preprocess_boundary,
     render_video,
     step_boundary_field,
+    upscale_nearest,
 )
 
 
@@ -72,6 +73,23 @@ class MorphMathTests(unittest.TestCase):
         self.assertAlmostEqual(float(continuous[0, 0, 0]), 0.0)
         np.testing.assert_array_equal(quantized_low, quantized_high)
 
+    def test_nearest_upscale_introduces_no_interpolated_pixels(self):
+        frame = np.asarray(
+            [
+                [[255, 0, 0], [0, 255, 0], [0, 0, 255]],
+                [[255, 255, 0], [0, 255, 255], [255, 0, 255]],
+            ],
+            dtype=np.uint8,
+        )
+        doubled = upscale_nearest(frame, 6, 4)
+        expected = np.repeat(np.repeat(frame, 2, axis=0), 2, axis=1)
+        np.testing.assert_array_equal(doubled, expected)
+
+        uneven = upscale_nearest(frame, 8, 5)
+        source_colors = {tuple(color) for color in frame.reshape(-1, 3)}
+        output_colors = {tuple(color) for color in uneven.reshape(-1, 3)}
+        self.assertTrue(output_colors.issubset(source_colors))
+
 
 class TinyVideoRenderTest(unittest.TestCase):
     def test_end_to_end_video_render(self):
@@ -104,9 +122,14 @@ class TinyVideoRenderTest(unittest.TestCase):
                 ),
             )
             self.assertEqual(result.frames, 36)
-            self.assertEqual((result.width, result.height), (16, 8))
+            self.assertEqual((result.width, result.height), (32, 18))
+            self.assertEqual((result.simulation_width, result.simulation_height), (16, 8))
             self.assertTrue(output.is_file())
             self.assertGreater(output.stat().st_size, 0)
+            reader = imageio_ffmpeg.read_frames(str(output), pix_fmt="rgb24")
+            metadata = next(reader)
+            reader.close()
+            self.assertEqual(tuple(metadata["size"]), (32, 18))
 
     def test_looped_and_held_video_keeps_time_stretched_audio(self):
         with tempfile.TemporaryDirectory() as temporary:
