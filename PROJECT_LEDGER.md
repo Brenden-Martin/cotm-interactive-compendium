@@ -70,7 +70,7 @@ Other established systems include:
 
 ### Current test item
 
-- **OPS-001 — Testing:** Standalone Video Morph v2 crisp output. The simulation may remain deliberately low resolution, but output frames are expanded to the source video's exact dimensions by nearest-neighbor index copying before encoding. No bilinear or bicubic resize is used. Branch: `feature/standalone-video-morph-v2-crisp-output`, commit `eaa32f3`.
+- **OPS-001 — Testing:** Standalone Video Morph v2 crisp output. The simulation may remain deliberately low resolution, but output frames are expanded to the source video's exact dimensions by nearest-neighbor index copying before encoding. No bilinear or bicubic resize is used. The MP4 now uses broadly compatible H.264 High Profile 4:2:0 output after the original 4:4:4 stream proved unsupported in an ordinary media player. Branch: `feature/standalone-video-morph-v2-crisp-output`, commit `87b266a`.
 
 ## Prioritization principles
 
@@ -133,7 +133,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Operations and project memory
 
-- **OPS-001 — Testing — Standalone v2 crisp output.** Await Brenden's visual check, then merge the branch if the pixel-preserving output looks correct.
+- **OPS-001 — Testing — Standalone v2 crisp output.** Await Brenden's visual and media-player compatibility check, then merge the branch if the pixel-preserving output looks correct.
 - **OPS-002 — Done — Durable project ledger.** Keep this file current and versioned in GitHub.
 - **OPS-003 — Next — Completed-work discipline.** Every future implementation should update this ledger and cite its task IDs in the commit or pull-request description.
 - **OPS-004 — Planned — Source-material register.** When screenshots, links, stories, presets, audio, or mockups arrive, record their repository location and usage status here.
@@ -287,6 +287,7 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - `ae5e856` — Added standalone Video Boundary Morph v2 with quantization, white bias, contrast, saturation, brightness, looping, frame hold, and morph/preset controls.
 - `eaa32f3` — Made v2 encode at original source dimensions after explicit nearest-neighbor expansion from the simulation grid.
+- `87b266a` — Replaced the poorly supported H.264 4:4:4 stream with standard High Profile 4:2:0 MP4 output while preserving exact source dimensions and explicit nearest-neighbor expansion.
 
 ## Decision log
 
@@ -298,3 +299,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-07-31:** The current DEQ Curated preset bank is protected; All may continue to grow.
 - **2026-07-31:** Standalone Video Morph v1 remains unchanged; experimental media-processing features continue in v2 or later versions.
 - **2026-08-01:** Low-resolution simulation detail is an aesthetic feature. Upscaling must use nearest-neighbor pixel selection at the original media dimensions, never smoothing interpolation.
+- **2026-08-01:** Default delivery favors a widely playable H.264 High Profile 4:2:0 MP4. The renderer, not the media player, still performs the only spatial enlargement by explicit nearest-neighbor pixel selection.
