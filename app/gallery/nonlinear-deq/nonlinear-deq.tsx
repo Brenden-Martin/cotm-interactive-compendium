@@ -14,7 +14,8 @@ type FieldState = [Float32Array, Float32Array, Float32Array];
 type Preset = Config & { name: string };
 type SharedPreset = { id: number; config: Config; createdAt: string };
 type FoundryMode = "standard" | "photo" | "cursor";
-type AnchorBank = "all" | "curated";
+type AnchorBank = "all" | "curated" | "color-cycle";
+type ChannelPermutation = readonly [number, number, number];
 type AutoCursor = {
   frequencyX: number;
   frequencyY: number;
@@ -54,6 +55,31 @@ const presets: Preset[] = [
 ];
 
 const cloneConfig = (preset: Preset): Config => ({ k: [...preset.k], exponent: [...preset.exponent], dt: preset.dt, decay: preset.decay, noise: preset.noise });
+const permuteConfigChannels = (config: Config, permutation: ChannelPermutation): Config => {
+  const k = Array(45).fill(0);
+  for (let destination = 0; destination < 3; destination++) {
+    for (let source = 0; source < 3; source++) {
+      for (let template = 0; template < 5; template++) {
+        k[indexK(destination, source, template)] = config.k[indexK(permutation[destination], permutation[source], template)];
+      }
+    }
+  }
+  return {
+    ...config,
+    k,
+    exponent: permutation.map((channel) => config.exponent[channel]),
+  };
+};
+const randomColorIdentity = (config: Config) => {
+  const swapped: ChannelPermutation = Math.random() < .5 ? [1, 0, 2] : [0, 1, 2];
+  const turns = Math.floor(Math.random() * 3);
+  const permutation: ChannelPermutation = [
+    swapped[turns % 3],
+    swapped[(turns + 1) % 3],
+    swapped[(turns + 2) % 3],
+  ];
+  return permuteConfigChannels(config, permutation);
+};
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
@@ -191,7 +217,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     const anchors: Config[] = [
       ...presets.map(cloneConfig),
       ...archivedPresets.map((preset) => preset.config),
-      ...(anchorBank === "all" ? sharedPresets.map((preset) => preset.config) : []),
+      ...(anchorBank !== "curated" ? sharedPresets.map((preset) => preset.config) : []),
     ].filter((anchor) => {
       const fingerprint = JSON.stringify(anchor);
       if (seenAnchors.has(fingerprint)) return false;
@@ -207,7 +233,8 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     const from = configRef.current;
     let targetIndex = startIndex;
     while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * anchors.length);
-    const to = anchors[targetIndex];
+    const selectedAnchor = anchors[targetIndex];
+    const to = anchorBank === "color-cycle" ? randomColorIdentity(selectedAnchor) : selectedAnchor;
     const randomSigned = () => Math.random() * 2 - 1;
     const jitter: Config = {
       k: to.k.map((value) => randomSigned() * (.2 + Math.min(2, Math.abs(value) * .15))),
@@ -510,7 +537,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     return { ...current, k };
   });
   const subsequentPresets = sharedPresets.filter((preset) => !archivedFingerprints.has(JSON.stringify(preset.config)));
-  const bankSize = presets.length + archivedPresets.length + (anchorBank === "all" ? subsequentPresets.length : 0);
+  const bankSize = presets.length + archivedPresets.length + (anchorBank !== "curated" ? subsequentPresets.length : 0);
+  const bankSizeLabel = anchorBank === "color-cycle"
+    ? `${bankSize} states · 6 color identities each`
+    : `${bankSize} states`;
 
   return (
     <section className="deq-lab">
@@ -551,7 +581,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
               {(["X","Y"] as const).map((axis)=>{const values=axis==="X"?autoCursor.harmonicsX:autoCursor.harmonicsY;return <div key={axis}><b>{axis} harmonics</b>{values.map((value,index)=><label key={`${axis}-${index}`}><span>{index+1}</span><input type="range" min="-1" max="1" step=".01" value={value} onChange={(event)=>updateAutoCursor(current=>{const key=axis==="X"?"harmonicsX":"harmonicsY";const next=[...current[key]];next[index]=Number(event.target.value);return {...current,[key]:next};})}/><output>{value.toFixed(2)}</output></label>)}</div>})}
             </div>
           </div>}
-          <label className="preset-select deq-bank-select"><span className="control-label">Morph anchor bank · {bankSize} states</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="all">All · curated + future saves</option><option value="curated">Curated · locked clean set</option></select></label>
+          <label className="preset-select deq-bank-select"><span className="control-label">Morph anchor bank · {bankSizeLabel}</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="all">All · curated + future saves</option><option value="curated">Curated · locked clean set</option><option value="color-cycle">Color cycle · six RGB identities</option></select></label>
           <div className="transport deq-foundry-actions">
             <button onClick={saveCurrentState}>Save current state</button>
             <button className={morphing ? "active" : ""} onClick={() => { setAutoMutate(false); setMorphing((value) => !value); }}>{morphing ? "Hold morph" : "Morph all anchors"}</button>
@@ -560,7 +590,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
             <label><span>Traversal rate</span><output>{morphRate.toFixed(2)}×</output><input type="range" min=".15" max="3" step=".05" value={morphRate} onChange={(event) => { const value=Number(event.target.value);morphRateRef.current=value;setMorphRate(value); }} /></label>
             <label><span>Transition wildness</span><output>{Math.round(morphRandomness*100)}%</output><input type="range" min="0" max="1" step=".01" value={morphRandomness} onChange={(event) => { const value=Number(event.target.value);morphRandomnessRef.current=value;setMorphRandomness(value); }} /></label>
           </div>
-          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Curated">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Curated {String(preset.id).padStart(3, "0")}</option>)}</optgroup>{anchorBank==="all"&&<optgroup label="Subsequent saves">{subsequentPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>All {String(preset.id).padStart(3, "0")}</option>)}</optgroup>}</select></label>
+          <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Curated">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Curated {String(preset.id).padStart(3, "0")}</option>)}</optgroup>{anchorBank!=="curated"&&<optgroup label="Subsequent saves">{subsequentPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>All {String(preset.id).padStart(3, "0")}</option>)}</optgroup>}</select></label>
           <p className="deq-save-status" aria-live="polite">{saveStatus}</p>
         </div>}
         <div className="deq-top-controls">
