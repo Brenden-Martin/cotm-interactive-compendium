@@ -733,6 +733,8 @@ button { font: inherit; }
 .matrix-grid { display: grid; grid-template-columns: 27px repeat(5, minmax(43px, 1fr)); gap: 4px; align-items: center; overflow-x: auto; padding-bottom: 5px; }
 .matrix-grid b, .matrix-grid strong { font-size: 8px; text-transform: uppercase; text-align: center; }
 .matrix-grid input { width: 100%; min-width: 43px; height: 34px; border: 1px solid #8f8b7f; background: transparent; padding: 3px; font: inherit; font-size: 9px; text-align: right; }
+.deq-paint-color { display:grid;grid-template-columns:1fr 54px;gap:8px;align-items:center;margin-top:10px;font-size:9px;font-weight:800;text-transform:uppercase; }
+.deq-paint-color input { width:54px;height:30px;border:1px solid #111820;background:transparent;padding:2px;cursor:pointer; }
 .brush-size { display: grid; grid-template-columns: 42px 1fr 25px; gap: 8px; align-items: center; margin-top: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .brush-size input { width: 100%; accent-color: #111820; }
 

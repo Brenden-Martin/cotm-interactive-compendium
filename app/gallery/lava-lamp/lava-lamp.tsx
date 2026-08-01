@@ -6,6 +6,31 @@ type Particle = { x: number; y: number; vx: number; vy: number; heat: number };
 type PointerMode = "attract" | "repel";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+const SLIDER_STEPS = 1000;
+const LAVA_DEFAULTS = {
+  heaterGain: 250,
+  heatDecay: .01,
+  buoyancy: 699,
+  cohesion: .15,
+  surfaceTension: 2.65,
+  count: 180,
+};
+const LAVA_RANGES = {
+  heaterGain: { min: .1, max: 250 },
+  heatDecay: { min: .0001, max: .1 },
+  buoyancy: { min: 1, max: 1500 },
+  cohesion: { min: .005, max: .5 },
+  surfaceTension: { min: .01, max: 8 },
+  count: { min: 40, max: 1600 },
+};
+const toExponentialPosition = (value: number, min: number, max: number) =>
+  clamp(Math.log(Math.max(value, min) / min) / Math.log(max / min) * SLIDER_STEPS, 0, SLIDER_STEPS);
+const fromExponentialPosition = (position: number, min: number, max: number) =>
+  min * Math.pow(max / min, clamp(position, 0, SLIDER_STEPS) / SLIDER_STEPS);
+const roundTo = (value: number, places: number) => {
+  const scale = 10 ** places;
+  return Math.round(value * scale) / scale;
+};
 
 export function LavaLamp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -14,13 +39,13 @@ export function LavaLamp() {
   const frameRef = useRef(0);
   const pointerRef = useRef({ x: 0, y: 0, active: false, mode: "attract" as PointerMode });
   const modeRef = useRef<PointerMode>("attract");
-  const paramsRef = useRef({ heaterGain: 15, heatDecay: .035, buoyancy: 185, cohesion: 1, surfaceTension: 1, count: 110, heater: true, paused: false });
-  const [heaterGain, setHeaterGain] = useState(15);
-  const [heatDecay, setHeatDecay] = useState(.035);
-  const [buoyancy, setBuoyancy] = useState(185);
-  const [cohesion, setCohesion] = useState(1);
-  const [surfaceTension, setSurfaceTension] = useState(1);
-  const [particleCount, setParticleCount] = useState(110);
+  const paramsRef = useRef({ ...LAVA_DEFAULTS, heater: true, paused: false });
+  const [heaterGain, setHeaterGain] = useState(LAVA_DEFAULTS.heaterGain);
+  const [heatDecay, setHeatDecay] = useState(LAVA_DEFAULTS.heatDecay);
+  const [buoyancy, setBuoyancy] = useState(LAVA_DEFAULTS.buoyancy);
+  const [cohesion, setCohesion] = useState(LAVA_DEFAULTS.cohesion);
+  const [surfaceTension, setSurfaceTension] = useState(LAVA_DEFAULTS.surfaceTension);
+  const [particleCount, setParticleCount] = useState(LAVA_DEFAULTS.count);
   const [heater, setHeater] = useState(true);
   const [paused, setPaused] = useState(false);
   const [pointerMode, setPointerMode] = useState<PointerMode>("attract");
@@ -285,27 +310,27 @@ export function LavaLamp() {
         </div>
         <div className="lava-slider">
           <label><span>Heater gain</span><input className="lava-number" aria-label="Enter heater gain" type="number" min="0" max="1000" step=".5" value={heaterGain} onChange={(event) => setHeaterGain(clamp(Number(event.target.value), 0, 1000))} /></label>
-          <input type="range" min="0" max="250" step=".5" value={Math.min(heaterGain, 250)} onChange={(event) => setHeaterGain(Number(event.target.value))} />
+          <input aria-label="Adjust heater gain exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(heaterGain, LAVA_RANGES.heaterGain.min, LAVA_RANGES.heaterGain.max)} onChange={(event) => setHeaterGain(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.heaterGain.min, LAVA_RANGES.heaterGain.max), 1))} />
         </div>
         <div className="lava-slider">
-          <label><span>Heat decay</span><input className="lava-number" aria-label="Enter heat decay" type="number" min="0" max="10" step=".001" value={heatDecay} onChange={(event) => setHeatDecay(clamp(Number(event.target.value), 0, 10))} /></label>
-          <input type="range" min="0" max="1" step=".001" value={Math.min(heatDecay, 1)} onChange={(event) => setHeatDecay(Number(event.target.value))} />
+          <label><span>Heat decay</span><input className="lava-number" aria-label="Enter heat decay" type="number" min="0" max="10" step=".0001" value={heatDecay} onChange={(event) => setHeatDecay(clamp(Number(event.target.value), 0, 10))} /></label>
+          <input aria-label="Adjust heat decay exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(heatDecay, LAVA_RANGES.heatDecay.min, LAVA_RANGES.heatDecay.max)} onChange={(event) => setHeatDecay(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.heatDecay.min, LAVA_RANGES.heatDecay.max), 5))} />
         </div>
         <div className="lava-slider">
           <label><span>Buoyancy</span><input className="lava-number" aria-label="Enter buoyancy" type="number" min="0" max="10000" step="1" value={buoyancy} onChange={(event) => setBuoyancy(clamp(Number(event.target.value), 0, 10000))} /></label>
-          <input type="range" min="0" max="1500" step="1" value={Math.min(buoyancy, 1500)} onChange={(event) => setBuoyancy(Number(event.target.value))} />
+          <input aria-label="Adjust buoyancy exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(buoyancy, LAVA_RANGES.buoyancy.min, LAVA_RANGES.buoyancy.max)} onChange={(event) => setBuoyancy(Math.round(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.buoyancy.min, LAVA_RANGES.buoyancy.max)))} />
         </div>
         <div className="lava-slider">
-          <label><span>Cohesion strength</span><input className="lava-number" aria-label="Enter cohesion strength" type="number" min="0" max="20" step=".05" value={cohesion} onChange={(event) => setCohesion(clamp(Number(event.target.value), 0, 20))} /></label>
-          <input type="range" min="0" max="4" step=".05" value={Math.min(cohesion, 4)} onChange={(event) => setCohesion(Number(event.target.value))} />
+          <label><span>Cohesion strength</span><input className="lava-number" aria-label="Enter cohesion strength" type="number" min="0" max="20" step=".005" value={cohesion} onChange={(event) => setCohesion(clamp(Number(event.target.value), 0, 20))} /></label>
+          <input aria-label="Adjust cohesion strength exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(cohesion, LAVA_RANGES.cohesion.min, LAVA_RANGES.cohesion.max)} onChange={(event) => setCohesion(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.cohesion.min, LAVA_RANGES.cohesion.max), 3))} />
         </div>
         <div className="lava-slider">
-          <label><span>Surface tension</span><input className="lava-number" aria-label="Enter surface tension" type="number" min="0" max="20" step=".05" value={surfaceTension} onChange={(event) => setSurfaceTension(clamp(Number(event.target.value), 0, 20))} /></label>
-          <input type="range" min="0" max="4" step=".05" value={Math.min(surfaceTension, 4)} onChange={(event) => setSurfaceTension(Number(event.target.value))} />
+          <label><span>Surface tension</span><input className="lava-number" aria-label="Enter surface tension" type="number" min="0" max="20" step=".01" value={surfaceTension} onChange={(event) => setSurfaceTension(clamp(Number(event.target.value), 0, 20))} /></label>
+          <input aria-label="Adjust surface tension exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(surfaceTension, LAVA_RANGES.surfaceTension.min, LAVA_RANGES.surfaceTension.max)} onChange={(event) => setSurfaceTension(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.surfaceTension.min, LAVA_RANGES.surfaceTension.max), 3))} />
         </div>
         <div className="lava-slider">
           <label><span>Particles · applies on reset</span><input className="lava-number" aria-label="Enter particle count" type="number" min="20" max="4000" step="10" value={particleCount} onChange={(event) => updateCount(Number(event.target.value))} /></label>
-          <input type="range" min="40" max="1600" step="20" value={Math.min(Math.max(particleCount, 40), 1600)} onChange={(event) => updateCount(Number(event.target.value))} />
+          <input aria-label="Adjust particle count exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(particleCount, LAVA_RANGES.count.min, LAVA_RANGES.count.max)} onChange={(event) => updateCount(Math.round(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.count.min, LAVA_RANGES.count.max) / 10) * 10)} />
         </div>
         <div className="transport lava-transport">
           <button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button>

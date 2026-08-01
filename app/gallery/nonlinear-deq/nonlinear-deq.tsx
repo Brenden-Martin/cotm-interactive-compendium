@@ -27,9 +27,11 @@ type AutoCursor = {
 };
 const archivedPresets = archivedPresetData.presets as SharedPreset[];
 const archivedFingerprints = new Set(archivedPresets.map((preset) => JSON.stringify(preset.config)));
+const DEFAULT_BRUSH_RADIUS = 9;
+const DEFAULT_PAINT_COLOR = "#20d7d7";
 const initialAutoCursor: AutoCursor = {
-  frequencyX: 3,
-  frequencyY: 2,
+  frequencyX: 1,
+  frequencyY: 1,
   amplitudeX: .43,
   amplitudeY: .36,
   angularVelocity: .08,
@@ -82,6 +84,11 @@ const randomColorIdentity = (config: Config) => {
 };
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+const colorChannels = (hex: string): [number, number, number] => [
+  Number.parseInt(hex.slice(1, 3), 16) / 255,
+  Number.parseInt(hex.slice(3, 5), 16) / 255,
+  Number.parseInt(hex.slice(5, 7), 16) / 255,
+];
 
 export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -89,9 +96,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const configRef = useRef<Config>(cloneConfig(presets[0]));
   const frameRef = useRef(0);
   const pointerRef = useRef({ active: false, x: 0, y: 0 });
-  const paintModeRef = useRef<"color" | "erase">("color");
-  const selectedPaintRef = useRef<"color" | "erase">("color");
-  const brushRef = useRef(7);
+  const paintModeRef = useRef<"color" | "erase">("erase");
+  const selectedPaintRef = useRef<"color" | "erase">("erase");
+  const paintColorRef = useRef<[number, number, number]>(colorChannels(DEFAULT_PAINT_COLOR));
+  const brushRef = useRef(DEFAULT_BRUSH_RADIUS);
   const pausedRef = useRef(false);
   const autoMutateRef = useRef(true);
   const mutationTimeRef = useRef(0);
@@ -106,8 +114,9 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
-  const [paintMode, setPaintMode] = useState<"color" | "erase">("color");
-  const [brush, setBrush] = useState(7);
+  const [paintMode, setPaintMode] = useState<"color" | "erase">("erase");
+  const [paintColor, setPaintColor] = useState(DEFAULT_PAINT_COLOR);
+  const [brush, setBrush] = useState(DEFAULT_BRUSH_RADIUS);
   const [paused, setPaused] = useState(false);
   const [autoMutate, setAutoMutate] = useState(!presetFoundry);
   const [mutationCount, setMutationCount] = useState(0);
@@ -126,6 +135,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     selectedPaintRef.current = paintMode;
     paintModeRef.current = paintMode;
   }, [paintMode]);
+  useEffect(() => { paintColorRef.current = colorChannels(paintColor); }, [paintColor]);
   useEffect(() => { brushRef.current = brush; }, [brush]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { autoMutateRef.current = autoMutate; }, [autoMutate]);
@@ -174,7 +184,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       const divisor = Math.max(1, weight);
       gridContext.fillStyle = `rgb(${Math.round(red/divisor)},${Math.round(green/divisor)},${Math.round(blue/divisor)})`;
       gridContext.fillRect(0, 0, W, H);
-      const scale = Math.min(W / bitmap.width, H / bitmap.height);
+      const scale = Math.max(W / bitmap.width, H / bitmap.height);
       const drawWidth = bitmap.width * scale;
       const drawHeight = bitmap.height * scale;
       gridContext.imageSmoothingEnabled = true;
@@ -352,7 +362,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       const cx = Math.floor(pointerRef.current.x * W);
       const cy = Math.floor(pointerRef.current.y * H);
       const radius = brushRef.current;
-      const color = paintModeRef.current === "erase" ? [0,0,0] : [Math.random(), Math.random(), Math.random()];
+      const color = paintModeRef.current === "erase" ? [0,0,0] : paintColorRef.current;
       const field = fieldRef.current;
       for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) {
         if (dx * dx + dy * dy > radius * radius) continue;
@@ -564,7 +574,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
               <button className="deq-clear-input" onClick={()=>{uploadedBoundaryRef.current=null;boundaryRef.current=null;setBoundaryName("No photo loaded");}}>Clear</button>
             </div>
             <p>{boundaryName}</p>
-            <small>RGB scales gain and gradients by channel. Laplacian terms become div(RGB · grad(field)). Letterbox fill uses the photo’s average color.</small>
+            <small>RGB scales gain and gradients by channel. Laplacian terms become div(RGB · grad(field)). The photo fills the field with a centered cover crop.</small>
           </div>}
           {foundryMode==="cursor" && <div className="deq-input-panel deq-cursor-panel">
             <span className="control-label">Rotating Lissajous brush path</span>
@@ -624,6 +634,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
         <div className="control-block">
           <span className="control-label">Brush</span>
           <div className="segmented"><button className={paintMode === "color" ? "active" : ""} onClick={() => setPaintMode("color")}>Color</button><button className={paintMode === "erase" ? "active" : ""} onClick={() => setPaintMode("erase")}>Erase</button></div>
+          <label className="deq-paint-color"><span>Draw color</span><input type="color" aria-label="Select brush color" value={paintColor} onChange={(event) => setPaintColor(event.target.value)} /></label>
           <label className="brush-size"><span>Radius</span><input type="range" min="1" max="22" value={brush} onChange={(event) => setBrush(Number(event.target.value))} /><output>{brush}</output></label>
         </div>
         <p className="lab-note">Paint directly into the field. Each matrix cell maps a source color through a spatial operator into the selected destination color. Right-click erases on desktop.</p>

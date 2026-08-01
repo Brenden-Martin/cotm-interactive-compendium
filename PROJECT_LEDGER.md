@@ -68,9 +68,10 @@ Other established systems include:
 - stable mechanical FFT display, a longer grey spectral average, dB/linear display, and an audio-rate nonlinear oscillator;
 - public Git history for the museum and separate checkpoints for both standalone video renderers.
 
-### Current test item
+### Current test items
 
-- **OPS-001 — Testing:** Standalone Video Morph v2 crisp output. The simulation may remain deliberately low resolution, but output frames are expanded to the source video's exact dimensions by nearest-neighbor index copying before encoding. No bilinear or bicubic resize is used. The MP4 now uses broadly compatible H.264 High Profile 4:2:0 output after the original 4:4:4 stream proved unsupported in an ordinary media player. Branch: `feature/standalone-video-morph-v2-crisp-output`, commit `87b266a`.
+- **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to 1:1, its shared brush starts roughly 30% larger and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
+- **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 
 ## Prioritization principles
 
@@ -87,9 +88,9 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Milestone A — Stabilize the existing museum (approximately 2–4 sessions)
 
-1. Finish Brenden's check of **OPS-001** and merge the crisp standalone renderer when approved.
-2. Complete the DEQ Morph usability corrections in **DEQ-001** through **DEQ-004**.
-3. Tune exhibit defaults and ranges, beginning with Lava Lamp, under **TUNE-001** and **TUNE-002**.
+1. **OPS-001 is complete:** the approved crisp standalone renderer is preserved on `main`.
+2. Test the DEQ Morph usability corrections in **DEQ-001** through **DEQ-004**.
+3. Test the first Lava Lamp defaults/ranges pass under **TUNE-001** and **TUNE-002**, then continue tuning the remaining exhibits.
 4. Create the external inspiration/resource shelf in **REF-001** through **REF-005** as links are supplied or recovered.
 
 ### Milestone B — Make the Site a calling card and publishing home (approximately 2–4 sessions)
@@ -133,7 +134,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Operations and project memory
 
-- **OPS-001 — Testing — Standalone v2 crisp output.** Await Brenden's visual and media-player compatibility check, then merge the branch if the pixel-preserving output looks correct.
+- **OPS-001 — Done — Standalone v2 crisp output.** Brenden confirmed the compatible MP4 plays correctly and preserves the deliberately blocky pixels. The renderer and its version history are now on `main`.
 - **OPS-002 — Done — Durable project ledger.** Keep this file current and versioned in GitHub.
 - **OPS-003 — Next — Completed-work discipline.** Every future implementation should update this ledger and cite its task IDs in the commit or pull-request description.
 - **OPS-004 — Planned — Source-material register.** When screenshots, links, stories, presets, audio, or mockups arrive, record their repository location and usage status here.
@@ -148,16 +149,16 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### DEQ Morph corrections
 
-- **DEQ-001 — Next — Auto-cursor defaults.** Establish a better default configuration for the automated cursor.
-- **DEQ-002 — Next — Photo boundary fill.** Make uploaded images fill the simulation field instead of leaving black bars across roughly the outer thirds. Default to a cover/crop-style fit; preserve aspect ratio unless testing shows a deliberate stretch is more useful.
-- **DEQ-003 — Next — Eraser default.** Make the cursor default to erase.
-- **DEQ-004 — Next — Selectable drawing color.** Replace the randomized drawing-color option with a user-selectable color.
+- **DEQ-001 — Testing — Auto-cursor defaults.** X and Y frequencies start at `1`; the shared brush radius starts at `9` instead of `7`.
+- **DEQ-002 — Testing — Photo boundary fill.** Uploaded images fill the simulation field with a centered, aspect-preserving cover crop instead of letterboxing.
+- **DEQ-003 — Testing — Eraser default.** The manual and automated cursor begin in erase mode.
+- **DEQ-004 — Testing — Selectable drawing color.** Random per-frame drawing color has been replaced by a color picker, initially cyan.
 - **DEQ-005 — Safeguard — Preserve tuned behavior.** Do not disturb the established continuous morph algorithm, Curated bank, timing, all-bank presets, or color-cycle routing while making these UI/default changes.
 
 ### Gallery-wide tuning
 
-- **TUNE-001 — Next — Defaults and ranges.** Revisit the initial values and ranges for nearly every exhibit. Ask Brenden for his saved screenshots at the start of this pass, with Lava Lamp first because its present default does not read as lava and several controls are far too sensitive or insensitive.
-- **TUNE-002 — Next — Logarithmic control mapping.** For parameters spanning orders of magnitude, make the slider linear in log-space—equivalently, map slider position exponentially into the physical value. This gives fine control near small values and meaningful travel at large values. Retain manual numeric entry where available.
+- **TUNE-001 — Testing / Next — Defaults and ranges.** Lava Lamp's first test defaults are heater gain `250`, heat decay `0.01`, buoyancy `699`, cohesion `0.15`, surface tension `2.65`, and `180` particles. Its slider caps are cohesion `0.5`, surface tension `8`, and heat decay `0.1`. Continue the screenshot-driven pass for the remaining exhibits after this test.
+- **TUNE-002 — Testing / Next — Logarithmic control mapping.** Lava Lamp sliders are now linear in log-space—equivalently, slider position maps exponentially into the physical value—while manual numeric entry retains wider ranges. Apply the same pattern selectively to other parameters that span orders of magnitude after validating this interaction.
 - **TUNE-003 — Planned — Per-exhibit acceptance notes.** Record the approved default, minimum, maximum, mapping, and units for each parameter so later visual cleanup cannot silently retune the physics.
 
 ### YOU ARE HERE and homepage behavior
@@ -288,6 +289,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - `ae5e856` — Added standalone Video Boundary Morph v2 with quantization, white bias, contrast, saturation, brightness, looping, frame hold, and morph/preset controls.
 - `eaa32f3` — Made v2 encode at original source dimensions after explicit nearest-neighbor expansion from the simulation grid.
 - `87b266a` — Replaced the poorly supported H.264 4:4:4 stream with standard High Profile 4:2:0 MP4 output while preserving exact source dimensions and explicit nearest-neighbor expansion.
+- `329d29a` — Promoted the approved standalone renderers and the versioned project ledger into GitHub `main`.
 
 ## Decision log
 
