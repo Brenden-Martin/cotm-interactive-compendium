@@ -93,6 +93,12 @@ export default function Gallery() {
           <strong>Voxel Lava Volume</strong>
           <small>Enter the volume →</small>
         </Link>
+        <Link className="study boids-entry" href="/gallery/boids">
+          <span className="eyebrow">Exhibit 15 / Emergent Motion</span>
+          <div className="boids-entry-sky" aria-hidden="true"><span /><span /><i /><i /><i /><i /><i /><i /></div>
+          <strong>Boids</strong>
+          <small>Join the flock →</small>
+        </Link>
       </section>
     </main>
   );

@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The Site currently contains fourteen gallery exhibits:
+The Site currently contains fifteen gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -53,6 +53,7 @@ The Site currently contains fourteen gallery exhibits:
 12. Mirror Steering
 13. DEQ Morph Bank
 14. Voxel Lava Volume
+15. Boids
 
 The Compendium currently contains five linked theory entries:
 
@@ -75,6 +76,7 @@ Other established systems include:
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
+- **BOIDS-001 — Testing:** Boids presents alignment, cohesion, and separation as a full-screen flock of black triangular agents in a flat baby-blue cloudscape, with live controls in a Moiré-style instrument panel.
 
 ## Prioritization principles
 
@@ -174,6 +176,11 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 - **LAVA3D-001 — Testing — Three-dimensional particle volume.** Extend the tuned Lava Lamp forces into a cylindrical XYZ neighborhood and render the result as deliberately chunky, depth-sorted square voxels. Keep the first browser pass dependency-light while supporting drag orbit, wheel or keyboard zoom, auto-orbit, pause, heater control, reset, exponential parameter controls, and a visible frame-rate readout.
 - **LAVA3D-002 — Tuning — Performance and force calibration.** After hands-on testing, benchmark the useful browser particle ceiling on desktop and mobile, then tune three-dimensional cohesion, surface tension, heat, buoyancy, voxel size, and default camera framing without silently changing the established 2-D lamp.
+
+### Boids
+
+- **BOIDS-001 — Testing — Windowless flock.** Render a full-viewport wraparound sky containing simple black triangular agents and flat cartoon clouds built from white circles. The lower-right flight computer exposes alignment, cohesion, separation, neighborhood radius, cruise speed, cursor pressure, and staged flock size while preserving the graphic directness of the Moiré exhibit.
+- **BOIDS-002 — Tuning — Rule balance and scale.** After hands-on testing, tune the default flock density and rule strengths for desktop and mobile, then save any especially expressive parameter combinations as named presets.
 
 ### YOU ARE HERE and homepage behavior
 
