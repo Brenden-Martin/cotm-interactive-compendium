@@ -4,16 +4,33 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Particle = { x: number; y: number; vx: number; vy: number; heat: number };
 type PointerMode = "attract" | "repel";
+type LavaPreset = {
+  label: string;
+  heaterGain: number;
+  heatDecay: number;
+  buoyancy: number;
+  cohesion: number;
+  surfaceTension: number;
+  count: number;
+  heaterSize: number;
+  simulationWidth: number;
+  simulationHeight: number;
+};
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const SLIDER_STEPS = 1000;
+const BASE_PARTICLE_COUNT = 180;
+const LARGE_PARTICLE_COUNT = 1600;
 const LAVA_DEFAULTS = {
   heaterGain: 250,
   heatDecay: .01,
   buoyancy: 699,
   cohesion: .15,
   surfaceTension: 2.65,
-  count: 180,
+  count: BASE_PARTICLE_COUNT,
+  heaterSize: 1,
+  simulationWidth: 1,
+  simulationHeight: 1,
 };
 const LAVA_RANGES = {
   heaterGain: { min: .1, max: 250 },
@@ -22,6 +39,8 @@ const LAVA_RANGES = {
   cohesion: { min: .005, max: .5 },
   surfaceTension: { min: .01, max: 8 },
   count: { min: 40, max: 1600 },
+  heaterSize: { min: .25, max: 2 },
+  simulationDimension: { min: .5, max: 3 },
 };
 const toExponentialPosition = (value: number, min: number, max: number) =>
   clamp(Math.log(Math.max(value, min) / min) / Math.log(max / min) * SLIDER_STEPS, 0, SLIDER_STEPS);
@@ -31,12 +50,38 @@ const roundTo = (value: number, places: number) => {
   const scale = 10 ** places;
   return Math.round(value * scale) / scale;
 };
+const suggestedDimension = (count: number) => {
+  const areaScale = count <= BASE_PARTICLE_COUNT
+    ? count / BASE_PARTICLE_COUNT
+    : 1 + (count - BASE_PARTICLE_COUNT) / (LARGE_PARTICLE_COUNT - BASE_PARTICLE_COUNT);
+  return roundTo(clamp(Math.sqrt(Math.max(.25, areaScale)), LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max), 3);
+};
+const LARGE_PRESET_DIMENSION = suggestedDimension(LARGE_PARTICLE_COUNT);
+const LAVA_PRESETS: Record<string, LavaPreset> = {
+  current: {
+    label: "Current gallery tuning · 180 particles",
+    ...LAVA_DEFAULTS,
+  },
+  highDensity: {
+    label: "High-density tuning · 1,600 particles",
+    heaterGain: 81,
+    heatDecay: .00119,
+    buoyancy: 465,
+    cohesion: .125,
+    surfaceTension: 6.416,
+    count: LARGE_PARTICLE_COUNT,
+    heaterSize: LARGE_PRESET_DIMENSION,
+    simulationWidth: LARGE_PRESET_DIMENSION,
+    simulationHeight: LARGE_PRESET_DIMENSION,
+  },
+};
 
 export function LavaLamp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pixelRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const frameRef = useRef(0);
+  const worldRef = useRef({ width: LAVA_DEFAULTS.simulationWidth, height: LAVA_DEFAULTS.simulationHeight });
   const pointerRef = useRef({ x: 0, y: 0, active: false, mode: "attract" as PointerMode });
   const modeRef = useRef<PointerMode>("attract");
   const paramsRef = useRef({ ...LAVA_DEFAULTS, heater: true, paused: false });
@@ -46,25 +91,36 @@ export function LavaLamp() {
   const [cohesion, setCohesion] = useState(LAVA_DEFAULTS.cohesion);
   const [surfaceTension, setSurfaceTension] = useState(LAVA_DEFAULTS.surfaceTension);
   const [particleCount, setParticleCount] = useState(LAVA_DEFAULTS.count);
+  const [heaterSize, setHeaterSize] = useState(LAVA_DEFAULTS.heaterSize);
+  const [simulationWidth, setSimulationWidth] = useState(LAVA_DEFAULTS.simulationWidth);
+  const [simulationHeight, setSimulationHeight] = useState(LAVA_DEFAULTS.simulationHeight);
+  const [presetSelection, setPresetSelection] = useState("");
   const [heater, setHeater] = useState(true);
   const [paused, setPaused] = useState(false);
   const [pointerMode, setPointerMode] = useState<PointerMode>("attract");
 
   useEffect(() => {
-    paramsRef.current = { heaterGain, heatDecay, buoyancy, cohesion, surfaceTension, count: particleCount, heater, paused };
-  }, [heaterGain, heatDecay, buoyancy, cohesion, surfaceTension, particleCount, heater, paused]);
+    paramsRef.current = { heaterGain, heatDecay, buoyancy, cohesion, surfaceTension, count: particleCount, heaterSize, simulationWidth, simulationHeight, heater, paused };
+  }, [heaterGain, heatDecay, buoyancy, cohesion, surfaceTension, particleCount, heaterSize, simulationWidth, simulationHeight, heater, paused]);
 
   useEffect(() => {
     modeRef.current = pointerMode;
     pointerRef.current.mode = pointerMode;
   }, [pointerMode]);
 
-  const seed = useCallback((count = paramsRef.current.count) => {
+  const seed = useCallback((
+    count = paramsRef.current.count,
+    worldWidth = paramsRef.current.simulationWidth,
+    worldHeight = paramsRef.current.simulationHeight,
+  ) => {
+    const width = clamp(worldWidth, LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max);
+    const height = clamp(worldHeight, LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max);
+    worldRef.current = { width, height };
     const particles: Particle[] = [];
     for (let index = 0; index < count; index++) {
       particles.push({
-        x: .12 + Math.random() * .76,
-        y: .55 + Math.random() * .38,
+        x: (.12 + Math.random() * .76) * width,
+        y: (.55 + Math.random() * .38) * height,
         vx: (Math.random() - .5) * .08,
         vy: (Math.random() - .5) * .08,
         heat: 0,
@@ -96,8 +152,8 @@ export function LavaLamp() {
     };
     const positionPointer = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
-      pointerRef.current.x = clamp((event.clientX - rect.left) / rect.width, 0, 1);
-      pointerRef.current.y = clamp((event.clientY - rect.top) / rect.height, 0, 1);
+      pointerRef.current.x = clamp((event.clientX - rect.left) / rect.width, 0, 1) * worldRef.current.width;
+      pointerRef.current.y = clamp((event.clientY - rect.top) / rect.height, 0, 1) * worldRef.current.height;
     };
     const pointerDown = (event: PointerEvent) => {
       positionPointer(event);
@@ -120,6 +176,7 @@ export function LavaLamp() {
       const neighborX = new Float32Array(particles.length);
       const neighborY = new Float32Array(particles.length);
       const neighborCount = new Uint16Array(particles.length);
+      const world = worldRef.current;
       const rest = .031;
       const cohesionRange = .085;
       const cellSize = cohesionRange;
@@ -139,9 +196,9 @@ export function LavaLamp() {
         ax[i] -= a.vx * .2;
         ay[i] -= a.vy * .2;
         a.heat *= Math.exp(-params.heatDecay * dt * 10);
-        const hx = a.x - .5;
-        const hy = a.y - .94;
-        const heaterField = Math.exp(-(hx * hx + hy * hy) / .018);
+        const hx = a.x - world.width * .5;
+        const hy = a.y - (world.height - .06);
+        const heaterField = Math.exp(-(hx * hx + hy * hy) / (.018 * params.heaterSize * params.heaterSize));
         if (params.heater) a.heat += params.heaterGain * .0008 * heaterField * dt;
         ay[i] -= params.buoyancy * .0017 * a.heat;
 
@@ -201,9 +258,9 @@ export function LavaLamp() {
         particle.y += particle.vy * dt;
         const radius = .012;
         if (particle.x < radius) { particle.x = radius; particle.vx = Math.abs(particle.vx) * .78; }
-        if (particle.x > 1 - radius) { particle.x = 1 - radius; particle.vx = -Math.abs(particle.vx) * .78; }
+        if (particle.x > world.width - radius) { particle.x = world.width - radius; particle.vx = -Math.abs(particle.vx) * .78; }
         if (particle.y < radius) { particle.y = radius; particle.vy = Math.abs(particle.vy) * .78; }
-        if (particle.y > 1 - radius) { particle.y = 1 - radius; particle.vy = -Math.abs(particle.vy) * .78; }
+        if (particle.y > world.height - radius) { particle.y = world.height - radius; particle.vy = -Math.abs(particle.vy) * .78; }
       });
     };
 
@@ -212,10 +269,11 @@ export function LavaLamp() {
       const ph = pixelCanvas.height;
       pixelCtx.fillStyle = "#0b1015";
       pixelCtx.fillRect(0, 0, pw, ph);
+      const world = worldRef.current;
       particlesRef.current.forEach((particle) => {
         const t = clamp(particle.heat / .4, 0, 1);
         pixelCtx.fillStyle = t > .38 ? "#d66b3d" : "#20d7d7";
-        pixelCtx.fillRect(Math.floor(particle.x * pw), Math.floor(particle.y * ph), 2, 2);
+        pixelCtx.fillRect(Math.floor(particle.x / world.width * pw), Math.floor(particle.y / world.height * ph), 2, 2);
       });
     };
     const draw = (now: number) => {
@@ -234,16 +292,17 @@ export function LavaLamp() {
       ctx.fillStyle = lampGradient;
       ctx.fillRect(0, 0, width, height);
 
+      const world = worldRef.current;
       particlesRef.current.forEach((particle) => {
-        const x = particle.x * width;
-        const y = particle.y * height;
+        const x = particle.x / world.width * width;
+        const y = particle.y / world.height * height;
         const t = clamp(particle.heat / .4, 0, 1);
         const cold = { r: 32, g: 215, b: 215 };
         const hot = { r: 214, g: 107, b: 61 };
         const r = Math.round(cold.r * (1 - t) + hot.r * t);
         const g = Math.round(cold.g * (1 - t) + hot.g * t);
         const b = Math.round(cold.b * (1 - t) + hot.b * t);
-        const radius = Math.max(2.2, Math.min(10, width * .018 * Math.sqrt(110 / Math.max(40, particlesRef.current.length))));
+        const radius = Math.max(2.2, Math.min(10, width / world.width * .018 * Math.sqrt(110 / Math.max(40, particlesRef.current.length))));
         ctx.fillStyle = `rgba(${r},${g},${b},.18)`;
         ctx.beginPath(); ctx.arc(x, y, radius * 2.4, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = `rgb(${r},${g},${b})`;
@@ -251,11 +310,13 @@ export function LavaLamp() {
       });
 
       if (paramsRef.current.heater) {
-        const glow = ctx.createRadialGradient(width / 2, height * .96, 0, width / 2, height * .96, width * .26);
+        const heaterY = (world.height - .06) / world.height * height;
+        const heaterRadius = width / world.width * .26 * paramsRef.current.heaterSize;
+        const glow = ctx.createRadialGradient(width / 2, heaterY, 0, width / 2, heaterY, heaterRadius);
         glow.addColorStop(0, "rgba(247,231,0,.7)");
         glow.addColorStop(1, "rgba(247,231,0,0)");
         ctx.fillStyle = glow;
-        ctx.fillRect(0, height * .75, width, height * .25);
+        ctx.fillRect(0, Math.max(0, heaterY - heaterRadius), width, Math.min(height, heaterRadius * 1.25));
       }
       drawPixels();
       frameRef.current = requestAnimationFrame(draw);
@@ -282,8 +343,31 @@ export function LavaLamp() {
 
   const updateCount = (value: number) => {
     const next = clamp(Math.round(value), 20, 4000);
+    const nextDimension = suggestedDimension(next);
     setParticleCount(next);
+    setSimulationWidth(nextDimension);
+    setSimulationHeight(nextDimension);
     paramsRef.current.count = next;
+    paramsRef.current.simulationWidth = nextDimension;
+    paramsRef.current.simulationHeight = nextDimension;
+  };
+
+  const applyPreset = (key: string) => {
+    const preset = LAVA_PRESETS[key];
+    if (!preset) return;
+    setHeaterGain(preset.heaterGain);
+    setHeatDecay(preset.heatDecay);
+    setBuoyancy(preset.buoyancy);
+    setCohesion(preset.cohesion);
+    setSurfaceTension(preset.surfaceTension);
+    setParticleCount(preset.count);
+    setHeaterSize(preset.heaterSize);
+    setSimulationWidth(preset.simulationWidth);
+    setSimulationHeight(preset.simulationHeight);
+    setHeater(true);
+    setPaused(false);
+    paramsRef.current = { ...preset, heater: true, paused: false };
+    seed(preset.count, preset.simulationWidth, preset.simulationHeight);
   };
 
   return (
@@ -332,11 +416,39 @@ export function LavaLamp() {
           <label><span>Particles · applies on reset</span><input className="lava-number" aria-label="Enter particle count" type="number" min="20" max="4000" step="10" value={particleCount} onChange={(event) => updateCount(Number(event.target.value))} /></label>
           <input aria-label="Adjust particle count exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(particleCount, LAVA_RANGES.count.min, LAVA_RANGES.count.max)} onChange={(event) => updateCount(Math.round(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.count.min, LAVA_RANGES.count.max) / 10) * 10)} />
         </div>
+        <div className="lava-slider">
+          <label><span>Heater size</span><input className="lava-number" aria-label="Enter heater size" type="number" min=".25" max="2" step=".01" value={heaterSize} onChange={(event) => setHeaterSize(clamp(Number(event.target.value), LAVA_RANGES.heaterSize.min, LAVA_RANGES.heaterSize.max))} /></label>
+          <input aria-label="Adjust heater size exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(heaterSize, LAVA_RANGES.heaterSize.min, LAVA_RANGES.heaterSize.max)} onChange={(event) => setHeaterSize(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.heaterSize.min, LAVA_RANGES.heaterSize.max), 3))} />
+        </div>
+        <div className="lava-slider">
+          <label><span>Simulation width · reset</span><input className="lava-number" aria-label="Enter simulation width" type="number" min=".5" max="3" step=".01" value={simulationWidth} onChange={(event) => setSimulationWidth(clamp(Number(event.target.value), LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max))} /></label>
+          <input aria-label="Adjust simulation width exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(simulationWidth, LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max)} onChange={(event) => setSimulationWidth(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max), 3))} />
+        </div>
+        <div className="lava-slider">
+          <label><span>Simulation height · reset</span><input className="lava-number" aria-label="Enter simulation height" type="number" min=".5" max="3" step=".01" value={simulationHeight} onChange={(event) => setSimulationHeight(clamp(Number(event.target.value), LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max))} /></label>
+          <input aria-label="Adjust simulation height exponentially" type="range" min="0" max={SLIDER_STEPS} step="1" value={toExponentialPosition(simulationHeight, LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max)} onChange={(event) => setSimulationHeight(roundTo(fromExponentialPosition(Number(event.target.value), LAVA_RANGES.simulationDimension.min, LAVA_RANGES.simulationDimension.max), 3))} />
+        </div>
         <div className="transport lava-transport">
           <button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button>
           <button onClick={() => { setHeater((value) => !value); }}>{heater ? "Heater off" : "Heater on"}</button>
-          <button onClick={() => seed(particleCount)}>Reset fluid</button>
+          <button onClick={() => seed(particleCount, simulationWidth, simulationHeight)}>Reset fluid</button>
         </div>
+        <div className="lava-preset">
+          <label htmlFor="lava-preset-select">Preset loader</label>
+          <select
+            id="lava-preset-select"
+            value={presetSelection}
+            onChange={(event) => {
+              const next = event.target.value;
+              setPresetSelection("");
+              applyPreset(next);
+            }}
+          >
+            <option value="">Choose a preset…</option>
+            {Object.entries(LAVA_PRESETS).map(([key, preset]) => <option key={key} value={key}>{preset.label}</option>)}
+          </select>
+        </div>
+        <p className="lava-scale-note">Particle changes suggest a square-root-scaled domain. Width, height, and particle count take effect when the fluid resets.</p>
         <p className="lab-note">Desktop: left click attracts and right click repels. On touch, choose a field above and drag directly through the lamp.</p>
       </aside>
     </section>
