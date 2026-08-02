@@ -72,6 +72,7 @@ Other established systems include:
 
 - **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
+- **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 
 ## Prioritization principles
 
@@ -161,6 +162,11 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **TUNE-002 — Testing / Next — Logarithmic control mapping.** Lava Lamp sliders are now linear in log-space—equivalently, slider position maps exponentially into the physical value—while manual numeric entry retains wider ranges. Apply the same pattern selectively to other parameters that span orders of magnitude after validating this interaction.
 - **TUNE-003 — Planned — Per-exhibit acceptance notes.** Record the approved default, minimum, maximum, mapping, and units for each parameter so later visual cleanup cannot silently retune the physics.
 - **TUNE-004 — Testing — Lava domain scaling and presets.** Particle-count changes suggest a square-root-scaled simulation width and height, calibrated so the first `1,600`-particle preset has twice the two-dimensional area of the `180`-particle baseline. Width and height remain independently adjustable and apply on reset. Heater footprint is independently adjustable from `0.25×` through `2×`; the third preset records the deliberately narrow, tall `1.035 × 3` domain and `1.452×` heater from its source screenshot.
+
+### Moiré Field development
+
+- **MOIRE-001 — Testing — Red optical tabletop.** Replace the full-screen generated pattern with a stark-red table holding a draggable generated-field printout, a white four-quadrant reference printout (rings, squares, chevrons, and alternating line weights), and the existing ring/linear transparencies. The transparencies use equal-width black bars and openings, and every draggable label has a fixed white sans-serif fill with black outline.
+- **MOIRE-002 — Testing — Sampled lenses.** Preserve the title card's fortuitous blur-sampling interference and explicitly treat it as part of the exhibit. Add a top-layer draggable circular blur using the same browser backdrop sampling plus a localized canvas fisheye that inverse-maps pixels from the optical tabletop beneath it.
 
 ### YOU ARE HERE and homepage behavior
 

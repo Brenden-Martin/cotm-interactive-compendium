@@ -564,16 +564,23 @@ button { font: inherit; }
 .pol-controls select { width:100%;height:40px;border:2px solid #0b2022;background:transparent;margin:-3px 0 22px;padding:0 8px;font:700 11px monospace; }
 .pol-controls p { margin-top:22px;padding-top:13px;border-top:1px solid #0b2022;font-size:11px;line-height:1.5; }
 
-.moire-page { min-height: 100svh; position: relative; overflow: hidden; background: #000; user-select: none; }
-.moire-canvas { position: fixed; inset: 0; width: 100vw; height: 100svh; }
-.moire-chrome { position: fixed; z-index: 5; left: 24px; top: 22px; max-width: 410px; padding: 16px; color: inherit; background: color-mix(in srgb, currentColor 8%, transparent); backdrop-filter: blur(8px); mix-blend-mode: difference; }
+.moire-page { min-height: 100svh; position: relative; overflow: hidden; background: #ff1a16; color: #050505; user-select: none; }
+.moire-scene { position: fixed; z-index: 0; inset: 0; width: 100vw; height: 100svh; }
+.moire-chrome { position: fixed; z-index: 10; left: 24px; top: 22px; max-width: 410px; padding: 16px; color: #fff; background: color-mix(in srgb, currentColor 8%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); mix-blend-mode: difference; }
 .moire-chrome h1 { font-size: clamp(36px, 7vw, 92px); line-height: .82; letter-spacing: -.08em; margin: 12px 0; }
 .moire-chrome p { margin: 0; max-width: 340px; font-size: 12px; line-height: 1.5; }
-.moire-sheet { position: fixed; z-index: 3; width: clamp(210px, 27vw, 390px); aspect-ratio: 1; transform: translate(-50%, -50%); border: 1px solid currentColor; cursor: grab; touch-action: none; mix-blend-mode: difference; box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 18%, transparent); }
-.moire-sheet:active { cursor: grabbing; }
-.ring-sheet { border-radius: 50%; }
-.moire-sheet span { position: absolute; left: 10px; top: 10px; padding: 5px 7px; background: #000; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
-.moire-controls { position: fixed; z-index: 6; right: 20px; bottom: 20px; width: min(320px, calc(100vw - 40px)); background: #fff; color: #000; border: 2px solid #000; padding: 14px; box-shadow: 7px 7px 0 #000; }
+.moire-drag-target { position: fixed; z-index: 4; transform: translate(-50%, -50%); cursor: grab; touch-action: none; outline: none; }
+.moire-drag-target:active, .moire-blur-lens:active, .moire-fisheye-shell:active { cursor: grabbing; }
+.moire-drag-target:focus-visible, .moire-blur-lens:focus-visible, .moire-fisheye-shell:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.linear-target, .ring-target { width: clamp(210px, 27vw, 390px); aspect-ratio: 1; }
+.ring-target { border-radius: 50%; }
+.generated-target { z-index: 2; width: clamp(270px, 31vw, 410px); aspect-ratio: 1; }
+.reference-target { z-index: 3; width: clamp(260px, 29vw, 380px); aspect-ratio: 1; }
+.moire-sheet-label, .moire-fisheye-label { position: absolute; left: 11px; top: 10px; color: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 900; letter-spacing: .12em; white-space: nowrap; -webkit-text-stroke: 2px #000; paint-order: stroke fill; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
+.moire-blur-lens { position: fixed; z-index: 20; width: clamp(150px, 15vw, 220px); aspect-ratio: 1; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 50%; cursor: grab; touch-action: none; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); background: rgba(255,255,255,.035); box-shadow: inset 0 0 24px rgba(255,255,255,.45), 0 5px 18px rgba(0,0,0,.28), 0 0 0 1px #000; }
+.moire-fisheye-shell { position: fixed; z-index: 21; width: clamp(160px, 16vw, 230px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; cursor: grab; touch-action: none; }
+.moire-fisheye-lens { display: block; width: 100%; height: 100%; border: 2px solid #fff; border-radius: 50%; box-shadow: inset 0 0 24px rgba(255,255,255,.4), 0 5px 18px rgba(0,0,0,.3), 0 0 0 1px #000; pointer-events: none; }
+.moire-controls { position: fixed; z-index: 30; right: 20px; bottom: 20px; width: min(320px, calc(100vw - 40px)); background: #fff; color: #000; border: 2px solid #000; padding: 14px; box-shadow: 7px 7px 0 #000; }
 .moire-controls > button { width: 100%; min-height: 40px; border: 2px solid #000; background: #fff; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; cursor: pointer; margin-bottom: 10px; }
 .moire-controls > button:hover { background: #000; color: #fff; }
 .moire-controls > label { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center; font-size: 9px; font-weight: 800; text-transform: uppercase; }
