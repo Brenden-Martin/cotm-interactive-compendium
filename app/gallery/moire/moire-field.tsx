@@ -10,6 +10,13 @@ type DragKind = "linear" | "rings" | "field" | "reference" | "blur" | "fisheye";
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const TABLE_RED = "#ff1a16";
 const INK = "#050505";
+const SPACING_SLIDER_STEPS = 1200;
+const SPACING_RANGE = { sliderMin: .125, sliderMax: 48, manualMin: .05, manualMax: 100 };
+const toExponentialPosition = (value: number) =>
+  clamp(Math.log(Math.max(value, SPACING_RANGE.sliderMin) / SPACING_RANGE.sliderMin) / Math.log(SPACING_RANGE.sliderMax / SPACING_RANGE.sliderMin) * SPACING_SLIDER_STEPS, 0, SPACING_SLIDER_STEPS);
+const fromExponentialPosition = (position: number) =>
+  SPACING_RANGE.sliderMin * Math.pow(SPACING_RANGE.sliderMax / SPACING_RANGE.sliderMin, clamp(position, 0, SPACING_SLIDER_STEPS) / SPACING_SLIDER_STEPS);
+const roundSpacing = (value: number) => Math.round(value * 1000) / 1000;
 
 const seededRandom = (seed: number) => {
   let value = seed || 1;
@@ -192,7 +199,7 @@ const drawLinearSheet = (
   height: number,
 ) => {
   const origin = cardOrigin(sheet, width, height, size);
-  const period = Math.max(3, sheet.spacing);
+  const period = Math.max(SPACING_RANGE.manualMin, sheet.spacing);
   const extent = Math.hypot(size, size);
   ctx.save();
   ctx.beginPath();
@@ -220,7 +227,7 @@ const drawRingSheet = (
   const centerX = sheet.x / 100 * width;
   const centerY = sheet.y / 100 * height;
   const radius = size / 2;
-  const period = Math.max(3, sheet.spacing);
+  const period = Math.max(SPACING_RANGE.manualMin, sheet.spacing);
   ctx.save();
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -428,8 +435,8 @@ export function MoireField() {
       <aside className="moire-controls">
         <button onClick={() => setSeed(Math.floor(Math.random() * 1000000))}>Regenerate field</button>
         <label><span>Linear angle</span><input type="range" min="-90" max="90" value={linear.angle} onChange={(event) => setLinear((current) => ({ ...current, angle: Number(event.target.value) }))} /></label>
-        <label><span>Linear spacing</span><input type="range" min="3" max="22" value={linear.spacing} onChange={(event) => setLinear((current) => ({ ...current, spacing: Number(event.target.value) }))} /></label>
-        <label><span>Ring spacing</span><input type="range" min="3" max="22" value={rings.spacing} onChange={(event) => setRings((current) => ({ ...current, spacing: Number(event.target.value) }))} /></label>
+        <label className="moire-spacing-control"><span>Linear spacing</span><div><input className="moire-number" aria-label="Enter linear grating spacing in pixels" type="number" min={SPACING_RANGE.manualMin} max={SPACING_RANGE.manualMax} step=".001" value={linear.spacing} onChange={(event) => setLinear((current) => ({ ...current, spacing: clamp(Number(event.target.value), SPACING_RANGE.manualMin, SPACING_RANGE.manualMax) }))} /><input aria-label="Adjust linear grating spacing exponentially" type="range" min="0" max={SPACING_SLIDER_STEPS} step="1" value={toExponentialPosition(linear.spacing)} onChange={(event) => setLinear((current) => ({ ...current, spacing: roundSpacing(fromExponentialPosition(Number(event.target.value))) }))} /></div></label>
+        <label className="moire-spacing-control"><span>Ring spacing</span><div><input className="moire-number" aria-label="Enter ring grating spacing in pixels" type="number" min={SPACING_RANGE.manualMin} max={SPACING_RANGE.manualMax} step=".001" value={rings.spacing} onChange={(event) => setRings((current) => ({ ...current, spacing: clamp(Number(event.target.value), SPACING_RANGE.manualMin, SPACING_RANGE.manualMax) }))} /><input aria-label="Adjust ring grating spacing exponentially" type="range" min="0" max={SPACING_SLIDER_STEPS} step="1" value={toExponentialPosition(rings.spacing)} onChange={(event) => setRings((current) => ({ ...current, spacing: roundSpacing(fromExponentialPosition(Number(event.target.value))) }))} /></div></label>
         <div className="moire-colors"><label>Table<input type="color" value={background} onChange={(event) => setBackground(event.target.value)} /></label><label>Field lines<input type="color" value={foreground} onChange={(event) => setForeground(event.target.value)} /></label></div>
       </aside>
     </main>
