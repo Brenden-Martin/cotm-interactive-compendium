@@ -87,6 +87,12 @@ export default function Gallery() {
           <strong>DEQ Morph Bank</strong>
           <small>Collect a new anchor →</small>
         </Link>
+        <Link className="study lava3d-entry" href="/gallery/lava-volume">
+          <span className="eyebrow">Exhibit 14 / Volumetric Fluid</span>
+          <div className="lava3d-entry-volume" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
+          <strong>Voxel Lava Volume</strong>
+          <small>Enter the volume →</small>
+        </Link>
       </section>
     </main>
   );

@@ -86,6 +86,18 @@ const LAVA_PRESETS: Record<string, LavaPreset> = {
     simulationWidth: 1.035,
     simulationHeight: 3,
   },
+  tallPlume: {
+    label: "Tall-plume tuning · 180 particles",
+    heaterGain: 94.8,
+    heatDecay: .00119,
+    buoyancy: 701,
+    cohesion: .03,
+    surfaceTension: 3.377,
+    count: BASE_PARTICLE_COUNT,
+    heaterSize: 1,
+    simulationWidth: 1,
+    simulationHeight: 1.352,
+  },
 };
 
 export function LavaLamp() {

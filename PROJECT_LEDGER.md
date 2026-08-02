@@ -1,6 +1,6 @@
 # COTM Interactive Compendium — Project Ledger
 
-Last organized: 2026-08-01
+Last organized: 2026-08-02
 
 This is the durable source of truth for the Child of the Machine website: what has shipped, what is being tested, what is planned, what is waiting on source material, and why the work is ordered the way it is. Git preserves the history of this file, so ideas should be revised in place rather than silently discarded.
 
@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The Site currently contains thirteen gallery exhibits:
+The Site currently contains fourteen gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -52,6 +52,7 @@ The Site currently contains thirteen gallery exhibits:
 11. Perlin Noise
 12. Mirror Steering
 13. DEQ Morph Bank
+14. Voxel Lava Volume
 
 The Compendium currently contains five linked theory entries:
 
@@ -73,6 +74,7 @@ Other established systems include:
 - **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
+- **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
 
 ## Prioritization principles
 
@@ -158,7 +160,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Gallery-wide tuning
 
-- **TUNE-001 — Testing / Next — Defaults and ranges.** Lava Lamp's first test defaults are heater gain `250`, heat decay `0.01`, buoyancy `699`, cohesion `0.15`, surface tension `2.65`, and `180` particles. Its slider caps are cohesion `0.5`, surface tension `8`, and heat decay `0.1`. A second screenshot preset uses heater gain `81`, heat decay `0.00119`, buoyancy `465`, cohesion `0.125`, surface tension `6.416`, and `1,600` particles. A third tall-column preset uses heater gain `121.7`, heat decay `0.0009`, buoyancy `559`, cohesion `0.137`, surface tension `0.746`, and `1,600` particles. Continue the screenshot-driven pass for the remaining exhibits after this test.
+- **TUNE-001 — Testing / Next — Defaults and ranges.** Lava Lamp's first test defaults are heater gain `250`, heat decay `0.01`, buoyancy `699`, cohesion `0.15`, surface tension `2.65`, and `180` particles. Its slider caps are cohesion `0.5`, surface tension `8`, and heat decay `0.1`. A second screenshot preset uses heater gain `81`, heat decay `0.00119`, buoyancy `465`, cohesion `0.125`, surface tension `6.416`, and `1,600` particles. A third tall-column preset uses heater gain `121.7`, heat decay `0.0009`, buoyancy `559`, cohesion `0.137`, surface tension `0.746`, and `1,600` particles. A fourth tall-plume preset uses heater gain `94.8`, heat decay `0.00119`, buoyancy `701`, cohesion `0.03`, surface tension `3.377`, `180` particles, a `1×` heater, and a `1 × 1.352` domain. Continue the screenshot-driven pass for the remaining exhibits after this test.
 - **TUNE-002 — Testing / Next — Logarithmic control mapping.** Lava Lamp sliders are now linear in log-space—equivalently, slider position maps exponentially into the physical value—while manual numeric entry retains wider ranges. Apply the same pattern selectively to other parameters that span orders of magnitude after validating this interaction.
 - **TUNE-003 — Planned — Per-exhibit acceptance notes.** Record the approved default, minimum, maximum, mapping, and units for each parameter so later visual cleanup cannot silently retune the physics.
 - **TUNE-004 — Testing — Lava domain scaling and presets.** Particle-count changes suggest a square-root-scaled simulation width and height, calibrated so the first `1,600`-particle preset has twice the two-dimensional area of the `180`-particle baseline. Width and height remain independently adjustable and apply on reset. Heater footprint is independently adjustable from `0.25×` through `2×`; the third preset records the deliberately narrow, tall `1.035 × 3` domain and `1.452×` heater from its source screenshot.
@@ -167,6 +169,11 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 - **MOIRE-001 — Testing — Red optical tabletop.** Replace the full-screen generated pattern with a stark-red table holding a draggable generated-field printout, a white four-quadrant reference printout (rings, squares, chevrons, and alternating line weights), and the existing ring/linear transparencies. The transparencies use equal-width black bars and openings, and every draggable label has a fixed white sans-serif fill with black outline. Linear and ring spacing controls use exponential mapping from `0.125 px` through `48 px`, with manual entry down to `0.05 px`, so deliberate aliasing can beat against the display's own pixel grid.
 - **MOIRE-002 — Testing — Sampled lenses.** Preserve the title card's fortuitous blur-sampling interference and explicitly treat it as part of the exhibit. Add a top-layer draggable circular blur using the same browser backdrop sampling plus a localized canvas fisheye that inverse-maps pixels from the optical tabletop beneath it.
+
+### Voxel Lava Volume
+
+- **LAVA3D-001 — Testing — Three-dimensional particle volume.** Extend the tuned Lava Lamp forces into a cylindrical XYZ neighborhood and render the result as deliberately chunky, depth-sorted square voxels. Keep the first browser pass dependency-light while supporting drag orbit, wheel or keyboard zoom, auto-orbit, pause, heater control, reset, exponential parameter controls, and a visible frame-rate readout.
+- **LAVA3D-002 — Tuning — Performance and force calibration.** After hands-on testing, benchmark the useful browser particle ceiling on desktop and mobile, then tune three-dimensional cohesion, surface tension, heat, buoyancy, voxel size, and default camera framing without silently changing the established 2-D lamp.
 
 ### YOU ARE HERE and homepage behavior
 
