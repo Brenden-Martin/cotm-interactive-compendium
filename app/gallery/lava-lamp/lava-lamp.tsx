@@ -74,6 +74,18 @@ const LAVA_PRESETS: Record<string, LavaPreset> = {
     simulationWidth: LARGE_PRESET_DIMENSION,
     simulationHeight: LARGE_PRESET_DIMENSION,
   },
+  tallColumn: {
+    label: "Tall-column tuning · 1,600 particles",
+    heaterGain: 121.7,
+    heatDecay: .0009,
+    buoyancy: 559,
+    cohesion: .137,
+    surfaceTension: .746,
+    count: LARGE_PARTICLE_COUNT,
+    heaterSize: 1.452,
+    simulationWidth: 1.035,
+    simulationHeight: 3,
+  },
 };
 
 export function LavaLamp() {
