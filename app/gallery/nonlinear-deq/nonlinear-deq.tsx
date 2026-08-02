@@ -27,11 +27,11 @@ type AutoCursor = {
 };
 const archivedPresets = archivedPresetData.presets as SharedPreset[];
 const archivedFingerprints = new Set(archivedPresets.map((preset) => JSON.stringify(preset.config)));
-const DEFAULT_BRUSH_RADIUS = 9;
+const DEFAULT_BRUSH_RADIUS = 13;
 const DEFAULT_PAINT_COLOR = "#20d7d7";
 const initialAutoCursor: AutoCursor = {
   frequencyX: 1,
-  frequencyY: 1,
+  frequencyY: .7,
   amplitudeX: .43,
   amplitudeY: .36,
   angularVelocity: .08,

@@ -70,7 +70,7 @@ Other established systems include:
 
 ### Current test items
 
-- **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to 1:1, its shared brush starts roughly 30% larger and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
+- **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 
 ## Prioritization principles
@@ -149,7 +149,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### DEQ Morph corrections
 
-- **DEQ-001 — Testing — Auto-cursor defaults.** X and Y frequencies start at `1`; the shared brush radius starts at `9` instead of `7`.
+- **DEQ-001 — Testing — Auto-cursor defaults.** X frequency starts at `1`, Y frequency at `0.7`, and the shared brush radius starts at `13` instead of `7`.
 - **DEQ-002 — Testing — Photo boundary fill.** Uploaded images fill the simulation field with a centered, aspect-preserving cover crop instead of letterboxing.
 - **DEQ-003 — Testing — Eraser default.** The manual and automated cursor begin in erase mode.
 - **DEQ-004 — Testing — Selectable drawing color.** Random per-frame drawing color has been replaced by a color picker, initially cyan.
