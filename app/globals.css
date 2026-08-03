@@ -720,6 +720,8 @@ button { font: inherit; }
 .spectrum-presets { display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:8px; }
 .spectrum-presets button,.spectrum-actions button { min-height:38px;border:1px solid #111820;background:transparent;color:inherit;font:900 8px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.06em;cursor:pointer; }
 .spectrum-presets button+button{border-left:0}.spectrum-presets button:hover,.spectrum-actions button:hover,.spectrum-actions button.active{background:#111820;color:#f4f0df}.spectrum-actions button:disabled{opacity:.35;cursor:not-allowed}
+.spectrum-presets.blackbody-presets { grid-template-columns:repeat(3,1fr);gap:6px; }
+.spectrum-presets.blackbody-presets button+button { border-left:1px solid #111820; }
 .spectrum-actions { display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:22px; }
 .spectrum-actions.blackbody-actions { grid-template-columns:1fr;margin-bottom:14px; }
 .emitter-controls { border-top:2px solid #111820;padding-top:13px; }
@@ -727,10 +729,14 @@ button { font: inherit; }
 .emitter-controls label,.spectrum-exposure { display:grid;grid-template-columns:1fr auto;gap:5px;margin-bottom:14px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.08em; }.emitter-controls input,.spectrum-exposure input{grid-column:1/-1;width:100%;accent-color:#331d59}.emitter-controls output,.spectrum-exposure output{font-variant-numeric:tabular-nums}
 .spectrum-exposure { border-top:1px solid #111820;padding-top:13px; }
 .blackbody-controls { border-top:2px solid #111820;padding-top:13px; }
+.temperature-bands { display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:14px; }
+.temperature-bands button { min-height:34px;border:1px solid #111820;background:transparent;color:inherit;font:900 8px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.07em;cursor:pointer; }
+.temperature-bands button+button { border-left:0; }.temperature-bands button:hover,.temperature-bands button.active{background:#a94724;color:#f4f0df}
 .blackbody-controls label { display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center;margin-bottom:15px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.08em; }
 .blackbody-controls input[type="number"] { width:100%;min-height:34px;border:1px solid #111820;background:transparent;color:inherit;padding:0 8px;font:900 11px Arial,Helvetica,sans-serif;text-align:right; }
 .blackbody-controls input[type="range"] { grid-column:1/-1;width:100%;accent-color:#a94724; }
 .blackbody-wien { display:flex;justify-content:space-between;border-top:1px solid #111820;padding-top:10px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.08em; }.blackbody-wien b{color:#a94724}
+.planck-caveat { margin:10px 0 0;font-size:8px;line-height:1.45;opacity:.67; }
 .spectrum-model-note { margin-top:18px;border:2px solid #111820;padding:12px; }.spectrum-model-note>b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.1em}.spectrum-model-note p{font-size:9px;line-height:1.5}.spectrum-model-note a{display:block;color:inherit;margin-top:6px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
 
 .scope-page { min-height: 100svh; background: #d8cf9a; color: #242520; padding: clamp(18px, 3vw, 42px); }
