@@ -105,6 +105,12 @@ export default function Gallery() {
           <strong>Fortune Cookie</strong>
           <small>Consult the oracle →</small>
         </Link>
+        <Link className="study spectrum-entry" href="/gallery/spectrum-to-rgb">
+          <span className="eyebrow">Exhibit 17 / Colorimetry</span>
+          <div className="spectrum-entry-field" aria-hidden="true"><i /><i /><i /><span /></div>
+          <strong>Spectrum to RGB</strong>
+          <small>Shape the light →</small>
+        </Link>
       </section>
     </main>
   );

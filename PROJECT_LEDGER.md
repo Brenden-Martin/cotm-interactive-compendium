@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The Site currently contains sixteen gallery exhibits:
+The Site currently contains seventeen gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -55,6 +55,7 @@ The Site currently contains sixteen gallery exhibits:
 14. Voxel Lava Volume
 15. Boids
 16. Fortune Cookie
+17. Spectrum to RGB
 
 The Compendium currently contains five linked theory entries:
 
@@ -79,6 +80,7 @@ Other established systems include:
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
 - **BOIDS-001 — Testing:** Boids presents alignment, cohesion, and separation as a full-screen flock of black triangular agents in a flat baby-blue cloudscape, with live controls in a Moiré-style instrument panel.
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
+- **COLOR-001 through COLOR-007 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, and the purple challenge.
 
 ## Prioritization principles
 
@@ -93,42 +95,35 @@ Other established systems include:
 
 The estimates below are relative work sessions, not calendar promises. A session is one coherent build/review cycle.
 
-### Milestone A — Stabilize the existing museum (approximately 2–4 sessions)
+### Milestone A — Continue gallery momentum (approximately 2–4 sessions)
 
-1. **OPS-001 is complete:** the approved crisp standalone renderer is preserved on `main`.
-2. Test the DEQ Morph usability corrections in **DEQ-001** through **DEQ-004**.
-3. Test the first Lava Lamp defaults/ranges pass under **TUNE-001** and **TUNE-002**, then continue tuning the remaining exhibits.
-4. Create the external inspiration/resource shelf in **REF-001** through **REF-005** as links are supplied or recovered.
+1. **FORTUNE-001 through FORTUNE-004 are built:** continue collecting later suggestions for deliberate review.
+2. Build and test Spectrum to RGB in **COLOR-001** through **COLOR-007**.
+3. Publish its linked color-perception Compendium sequence under **COLOR-008** after the interaction is trustworthy.
 
-### Milestone B — Make the Site a calling card and publishing home (approximately 2–4 sessions)
+### Milestone B — Build the external reference shelf (approximately 1–2 sessions)
 
-1. Build the About/portfolio section and homepage QR path in **ABOUT-001** through **ABOUT-004**.
-2. Establish the pinned Recommended Reading and Tales from the Ruliad structures in **READ-001** and **RULIAD-001** through **RULIAD-003**.
-3. Add selected contact, biography, story, and reading content as Brenden supplies it.
+1. Publish the reaction–diffusion, Particle Lenia, and phase-change resources in **REF-001**, **REF-002**, and **REF-004**.
+2. Recover the exact Wolfram rule and other must-include links under **REF-003** and **REF-005** rather than guessing.
 
-### Milestone C — Alternate a quick exhibit with a deep exhibit (approximately 4–7 sessions)
+### Milestone C — Tune and accept existing exhibits (approximately 2–4 sessions)
 
-1. Build Fortune Cookie as the quick, content-expandable exhibit in **FORTUNE-001** through **FORTUNE-003**.
-2. Design and build Spectrum to RGB in **COLOR-001** through **COLOR-008**.
-3. Publish its linked color-perception Compendium sequence after the interaction is trustworthy.
+1. Finish hands-on checks for the DEQ Morph corrections in **DEQ-001** through **DEQ-004**.
+2. Continue screenshot-driven parameter tuning and write stable acceptance notes under **TUNE-001** through **TUNE-004**.
+3. Tune Moiré, Voxel Lava Volume, Boids, and Fortune Cookie without silently replacing their first approved behavior.
 
-### Milestone D — Give Music a persistent instrument architecture (approximately 3–6 sessions)
+### Milestone D — Rebalance homepage delight (approximately 1–2 sessions)
 
-1. Prototype playback that survives normal internal navigation.
-2. Add the Spotify/profile and selected recordings.
-3. Add synth, sequencer, generator, and musical-toy entries on top of the persistent audio shell.
+1. Rebalance substantial YOU ARE HERE effects under **YAH-002**.
+2. Explore novelty-weighted selection under **YAH-003** without creating a fixed cycle.
 
-### Milestone E — Add Private Research interest signals responsibly (approximately 3–5 sessions)
+### Milestone E — Major expansions, with identity first (ongoing)
 
-1. Create device concept cards and cartoon mockups.
-2. Agree on the three price/interest choices and exactly what is stored.
-3. Add anonymous aggregation and abuse prevention without retaining raw IP addresses by default.
-
-### Milestone F — Open the labyrinth gradually (ongoing)
-
-1. Design the hidden-area route and counter architecture.
-2. Ship one discoverable anomaly and one complete puzzle room, probably the warp-zone spoof.
-3. Expand into server-checked passcodes, surreal rooms, and cross-page clues only after the first route is fun and maintainable.
+1. **First priority when returning to major architecture:** build the About/portfolio section and homepage QR path in **ABOUT-001** through **ABOUT-004**. This was deliberately deferred from the earlier sequence to preserve gallery momentum.
+2. Establish Recommended Reading and Tales from the Ruliad structures in **READ-001** and **RULIAD-001** through **RULIAD-003**.
+3. Build persistent Music playback before adding instruments and recordings.
+4. Add Private Research interest signals only after the privacy and retention design is explicit.
+5. Open the hidden puzzle labyrinth gradually, beginning with one discoverable anomaly and one complete room.
 
 ### Recurring cadence
 
@@ -229,13 +224,13 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Spectrum to RGB exhibit and color Compendium sequence
 
-- **COLOR-001 — Planned — Physical color calculator.** Compute a displayed RGB value from the overlap integral between a user-defined spectrum and human color-matching/sensitivity functions. Choose and cite the exact observer model and RGB color space before treating the result as quantitative.
-- **COLOR-002 — Planned — Overlayed sensitivities.** Plot the sensitivity or color-matching curves over the editable spectrum.
-- **COLOR-003 — Planned — Multiple Lorentzian sources.** Let the user add several Lorentzian peaks.
-- **COLOR-004 — Planned — Peak gesture.** Drag a point at a peak left/right to change wavelength and up/down to change amplitude, in the spirit of FL Studio Parametric EQ 2.
-- **COLOR-005 — Planned — Width gesture.** Drag a second point on a resonance flank left/right to control linewidth.
-- **COLOR-006 — Planned — Emission presets.** Build examples that approximate recognizable real emission spectra.
-- **COLOR-007 — Planned — Purple challenge.** Invite users to try producing purple from a single spectral wavelength, then use the failure as the bridge into perception.
+- **COLOR-001 — Testing — Physical color calculator.** Integrate the user-defined spectral power distribution against the official CIE 1931 2° standard-observer table sampled at 5 nm, then convert XYZ to D65 sRGB. Normalize exposure for display, report chromaticity, and state when gamut clipping occurs.
+- **COLOR-002 — Testing — Overlayed sensitivities.** Plot x̄, ȳ, and z̄ over the editable spectrum with a live visibility toggle.
+- **COLOR-003 — Testing — Multiple Lorentzian sources.** Support one through six additive Lorentzian emitters.
+- **COLOR-004 — Testing — Peak gesture.** Drag a circular peak handle left/right for wavelength and up/down for amplitude, in the spirit of FL Studio Parametric EQ 2.
+- **COLOR-005 — Testing — Width gesture.** Drag a square half-maximum handle to control FWHM linewidth.
+- **COLOR-006 — Testing — Emission presets.** Provide intuitive approximate sodium, mercury, hydrogen, and warm-white spectral examples without presenting them as calibrated lamp measurements.
+- **COLOR-007 — Testing — Purple challenge.** Contrast a single violet line with a two-line red-plus-blue/violet mixture to demonstrate why purple is non-spectral.
 - **COLOR-008 — Planned — Linked writing.** Cover non-spectral and contextual colors such as pink, purple, and brown; color gamuts; why RGB displays struggle with some cyans and purples; white-light continuum generation; and optical parametric amplifiers.
 
 ### Recommended Reading
@@ -315,6 +310,15 @@ This is a human-readable summary of the repository history, not a substitute for
 - `87b266a` — Replaced the poorly supported H.264 4:4:4 stream with standard High Profile 4:2:0 MP4 output while preserving exact source dimensions and explicit nearest-neighbor expansion.
 - `329d29a` — Promoted the approved standalone renderers and the versioned project ledger into GitHub `main`.
 
+### 2026-08-02
+
+- `0ef7a41`, `3432e80` — Rebuilt Moiré Field as a red optical tabletop with sampled lenses and subpixel grating controls.
+- `ef9ebc8` through `1849d31` — Expanded and tuned Lava Lamp controls, scaling, logarithmic mappings, and screenshot presets.
+- `dd5c282` — Added the true three-dimensional Voxel Lava Volume exhibit.
+- `58bc5a8` — Added the windowless Boids cloudscape and promoted it after approval.
+- `dbf93e0`, `585efee` — Added Fortune Cookie, its durable review queue, and the approved initial owner batch.
+- **COLOR-001 through COLOR-007** — Built the first Spectrum to RGB laboratory using official CIE observer data and explicit sRGB conversion.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
@@ -326,3 +330,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-07-31:** Standalone Video Morph v1 remains unchanged; experimental media-processing features continue in v2 or later versions.
 - **2026-08-01:** Low-resolution simulation detail is an aesthetic feature. Upscaling must use nearest-neighbor pixel selection at the original media dimensions, never smoothing interpolation.
 - **2026-08-01:** Default delivery favors a widely playable H.264 High Profile 4:2:0 MP4. The renderer, not the media player, still performs the only spatial enlargement by explicit nearest-neighbor pixel selection.
+- **2026-08-02:** Preserve gallery momentum through Spectrum to RGB, references, tuning, and homepage delight. Move About/portfolio into the later major-expansion milestone, where it becomes the first architectural priority.
