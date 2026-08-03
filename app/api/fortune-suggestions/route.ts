@@ -1,10 +1,18 @@
-import { saveFortuneSuggestion } from "../../../db/fortune-suggestions";
+import { listApprovedFortunes, saveFortuneSuggestion } from "../../../db/fortune-suggestions";
 
 export const dynamic = "force-dynamic";
 
 const headers = { "Cache-Control": "no-store" };
 
 type SuggestionInput = { fortune?: unknown; website?: unknown };
+
+export async function GET() {
+  try {
+    return Response.json({ fortunes: await listApprovedFortunes() }, { headers });
+  } catch {
+    return Response.json({ fortunes: [], error: "The approved fortune bank is warming up." }, { status: 503, headers });
+  }
+}
 
 export async function POST(request: Request) {
   try {

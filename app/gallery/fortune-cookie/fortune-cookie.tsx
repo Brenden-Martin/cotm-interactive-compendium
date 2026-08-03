@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-const FORTUNES = [
+const STARTER_FORTUNES = [
   "The shortest path will develop an unexpected scenic route.",
   "A small machine is thinking fondly of you.",
   "Your next useful mistake is already warming up.",
@@ -29,15 +29,16 @@ const FORTUNES = [
   "Congratulations: the bug has become an exhibit.",
 ];
 
-function nextFortune(previous: number) {
-  if (FORTUNES.length < 2) return 0;
-  let next = Math.floor(Math.random() * FORTUNES.length);
-  if (next === previous) next = (next + 1 + Math.floor(Math.random() * (FORTUNES.length - 1))) % FORTUNES.length;
+function nextFortune(previous: number, bankSize: number) {
+  if (bankSize < 2) return 0;
+  let next = Math.floor(Math.random() * bankSize);
+  if (next === previous) next = (next + 1 + Math.floor(Math.random() * (bankSize - 1))) % bankSize;
   return next;
 }
 
 export function FortuneCookie() {
   const [fortuneIndex, setFortuneIndex] = useState(0);
+  const [fortunes, setFortunes] = useState<string[]>(STARTER_FORTUNES);
   const [open, setOpen] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [trap, setTrap] = useState("");
@@ -49,16 +50,33 @@ export function FortuneCookie() {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    fetch("/api/fortune-suggestions", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((result: { fortunes?: unknown }) => {
+        if (!active || !Array.isArray(result.fortunes)) return;
+        const unique = new Set(STARTER_FORTUNES);
+        const approved = result.fortunes.filter((fortune): fortune is string =>
+          typeof fortune === "string" && fortune.length >= 3 && fortune.length <= 240
+        );
+        for (const fortune of approved) unique.add(fortune);
+        setFortunes(Array.from(unique));
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
   const crackCookie = () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     if (!open) {
-      setFortuneIndex((current) => nextFortune(current));
+      setFortuneIndex((current) => nextFortune(current, fortunes.length));
       setOpen(true);
       return;
     }
     setOpen(false);
     timerRef.current = window.setTimeout(() => {
-      setFortuneIndex((current) => nextFortune(current));
+      setFortuneIndex((current) => nextFortune(current, fortunes.length));
       setOpen(true);
       timerRef.current = null;
     }, 420);
@@ -102,7 +120,7 @@ export function FortuneCookie() {
           onClick={crackCookie}
           aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"}
         >
-          <span className="fortune-paper"><b>{FORTUNES[fortuneIndex]}</b><i>Child of the Machine</i></span>
+          <span className="fortune-paper"><b>{fortunes[fortuneIndex] ?? STARTER_FORTUNES[0]}</b><i>Child of the Machine</i></span>
           <span className="cookie-half cookie-left"><i /></span>
           <span className="cookie-half cookie-right"><i /></span>
         </button>

@@ -39,3 +39,8 @@ export const fortuneSuggestions = sqliteTable(
     index("fortune_suggestions_status_created_idx").on(table.status, table.createdAt),
   ],
 );
+
+export const fortunePromotionBatches = sqliteTable("fortune_promotion_batches", {
+  batchKey: text("batch_key").primaryKey(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
