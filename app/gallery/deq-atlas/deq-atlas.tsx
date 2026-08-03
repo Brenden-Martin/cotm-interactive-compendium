@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, KeyboardEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import atlasData from "../../../analysis/deq-preset-space/output/atlas-model.json";
 
 const W = 160;
@@ -76,7 +76,7 @@ function atlasState(position: number, excursion: number): AtlasState {
 }
 
 function coordinateSeed(position: number, excursion: number) {
-  const text = `${position.toFixed(4)}:${excursion.toFixed(4)}:COTM-ATLAS`;
+  const text = `${position.toFixed(5)}:${excursion.toFixed(5)}:COTM-ATLAS`;
   let hash = 2166136261;
   for (let index = 0; index < text.length; index++) {
     hash ^= text.charCodeAt(index);
@@ -85,58 +85,39 @@ function coordinateSeed(position: number, excursion: number) {
   return hash >>> 0;
 }
 
-function Dial({ label, value, onChange, accent }: { label: string; value: number; onChange: (value: number) => void; accent: string }) {
-  const dialRef = useRef<HTMLDivElement>(null);
-  const setFromPointer = (event: PointerEvent<HTMLDivElement>) => {
-    const dial = dialRef.current;
-    if (!dial) return;
-    const bounds = dial.getBoundingClientRect();
-    let angle = Math.atan2(event.clientY - (bounds.top + bounds.height / 2), event.clientX - (bounds.left + bounds.width / 2)) * 180 / Math.PI;
-    if (angle < 0) angle += 360;
-    if (angle < 135) angle += 360;
-    onChange(clamp((angle - 135) / 270, 0, 1));
-  };
+function CoordinateControl({
+  label, tone, value, coarse, fine, onCoarse, onFine, onDirect,
+}: {
+  label: string;
+  tone: "position" | "chaos";
+  value: number;
+  coarse: number;
+  fine: number;
+  onCoarse: (value: number) => void;
+  onFine: (value: number) => void;
+  onDirect: (value: number) => void;
+}) {
   const commitInput = (input: HTMLInputElement) => {
     const parsed = Number(input.value);
-    if (Number.isFinite(parsed)) onChange(clamp(parsed, 0, 1));
-    else input.value = value.toFixed(3);
+    if (Number.isFinite(parsed)) onDirect(clamp(parsed, 0, 1));
+    else input.value = value.toFixed(5);
   };
-  const key = (event: KeyboardEvent<HTMLDivElement>) => {
-    const amount = event.shiftKey ? .01 : .001;
-    if (["ArrowRight", "ArrowUp"].includes(event.key)) { event.preventDefault(); onChange(clamp(value + amount, 0, 1)); }
-    if (["ArrowLeft", "ArrowDown"].includes(event.key)) { event.preventDefault(); onChange(clamp(value - amount, 0, 1)); }
-    if (event.key === "Home") { event.preventDefault(); onChange(0); }
-    if (event.key === "End") { event.preventDefault(); onChange(1); }
-  };
-  const style = { "--atlas-angle": `${-135 + value * 270}deg`, "--atlas-accent": accent } as CSSProperties;
   return (
-    <label className="atlas-dial-group">
-      <span>{label}</span>
-      <div
-        ref={dialRef}
-        className="atlas-dial"
-        style={style}
-        role="slider"
-        tabIndex={0}
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={1}
-        aria-valuenow={Number(value.toFixed(3))}
-        onKeyDown={key}
-        onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setFromPointer(event); }}
-        onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) setFromPointer(event); }}
-      ><i /></div>
-      <input
-        key={value.toFixed(3)}
-        type="number"
-        min="0"
-        max="1"
-        step=".001"
-        defaultValue={value.toFixed(3)}
-        onBlur={(event) => commitInput(event.currentTarget)}
-        onKeyDown={(event) => { if (event.key === "Enter") { commitInput(event.currentTarget); event.currentTarget.blur(); } }}
-      />
-    </label>
+    <section className={`atlas-coordinate atlas-coordinate-${tone}`}>
+      <header><span>{label}</span><output>{value.toFixed(5)}</output></header>
+      <label className="atlas-range-row">
+        <span>Coarse · full route</span><b>{coarse.toFixed(3)}</b>
+        <input aria-label={`${label} coarse adjustment`} type="range" min="0" max="1" step=".001" value={coarse} onChange={(event) => onCoarse(Number(event.target.value))} />
+      </label>
+      <label className="atlas-range-row atlas-fine-row">
+        <span>Fine · ±0.02000</span><b>{fine >= 0 ? "+" : ""}{fine.toFixed(5)}</b>
+        <input aria-label={`${label} fine adjustment`} type="range" min="-.02" max=".02" step=".00001" value={fine} onChange={(event) => onFine(Number(event.target.value))} />
+      </label>
+      <div className="atlas-coordinate-entry">
+        <label><span>Exact value</span><input key={value.toFixed(5)} type="number" min="0" max="1" step=".00001" defaultValue={value.toFixed(5)} onBlur={(event) => commitInput(event.currentTarget)} onKeyDown={(event) => { if (event.key === "Enter") { commitInput(event.currentTarget); event.currentTarget.blur(); } }} /></label>
+        <button onClick={() => onFine(0)}>Center fine</button>
+      </div>
+    </section>
   );
 }
 
@@ -146,11 +127,15 @@ export function DeqAtlas() {
   const configRef = useRef<Config>(atlasState(INITIAL_POSITION, INITIAL_EXCURSION).config);
   const coordinatesRef = useRef({ position: INITIAL_POSITION, excursion: INITIAL_EXCURSION });
   const pausedRef = useRef(false);
-  const [position, setPosition] = useState(INITIAL_POSITION);
-  const [excursion, setExcursion] = useState(INITIAL_EXCURSION);
+  const [positionCoarse, setPositionCoarse] = useState(INITIAL_POSITION);
+  const [positionFine, setPositionFine] = useState(0);
+  const [excursionCoarse, setExcursionCoarse] = useState(INITIAL_EXCURSION);
+  const [excursionFine, setExcursionFine] = useState(0);
   const [paused, setPaused] = useState(false);
   const [resetToken, setResetToken] = useState(0);
   const [copyStatus, setCopyStatus] = useState("Two numbers · one repeatable field");
+  const position = clamp(positionCoarse + positionFine, 0, 1);
+  const excursion = clamp(excursionCoarse + excursionFine, 0, 1);
   const derived = useMemo(() => atlasState(position, excursion), [position, excursion]);
 
   useEffect(() => { configRef.current = derived.config; }, [derived]);
@@ -264,7 +249,7 @@ export function DeqAtlas() {
   }, [derived, position]);
 
   const copyCoordinates = async () => {
-    const text = `DEQ Atlas · position ${position.toFixed(3)} · excursion ${excursion.toFixed(3)}`;
+    const text = `DEQ Atlas · position ${position.toFixed(5)} · excursion ${excursion.toFixed(5)}`;
     try { await navigator.clipboard.writeText(text); setCopyStatus("Coordinates copied"); }
     catch { setCopyStatus(text); }
   };
@@ -273,7 +258,7 @@ export function DeqAtlas() {
     <section className="atlas-lab">
       <div className="atlas-stage">
         <canvas ref={canvasRef} width={W} height={H} className="atlas-field" aria-label="A deterministic nonlinear three-channel field selected by atlas position and excursion." />
-        <div className="atlas-readout"><b>{paused ? "FIELD HELD" : "FIELD RUNNING"}</b><span>S {position.toFixed(3)} · X {excursion.toFixed(3)}</span></div>
+        <div className="atlas-readout"><b>{paused ? "FIELD HELD" : "FIELD RUNNING"}</b><span>S {position.toFixed(5)} · X {excursion.toFixed(5)}</span></div>
       </div>
       <aside className="atlas-console">
         <div className="atlas-console-head">
@@ -281,14 +266,14 @@ export function DeqAtlas() {
           <strong>{Math.round(model.fit.explainedVariance * 100)}% variance retained</strong>
         </div>
         <canvas ref={mapRef} width={420} height={185} className="atlas-map" aria-label="Two-dimensional projection of the seven-dimensional atlas route and current point." />
-        <div className="atlas-dials">
-          <Dial label="Route position" value={position} onChange={setPosition} accent="#20d7d7" />
-          <Dial label="Deterministic chaos" value={excursion} onChange={setExcursion} accent="#e74731" />
+        <div className="atlas-coordinate-controls">
+          <CoordinateControl label="Route position" tone="position" value={position} coarse={positionCoarse} fine={positionFine} onCoarse={setPositionCoarse} onFine={setPositionFine} onDirect={(value) => { setPositionCoarse(value); setPositionFine(0); }} />
+          <CoordinateControl label="Deterministic chaos" tone="chaos" value={excursion} coarse={excursionCoarse} fine={excursionFine} onCoarse={setExcursionCoarse} onFine={setExcursionFine} onDirect={(value) => { setExcursionCoarse(value); setExcursionFine(0); }} />
         </div>
         <div className="atlas-actions">
           <button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Hold"}</button>
           <button onClick={() => setResetToken((value) => value + 1)}>Restart exact field</button>
-          <button onClick={() => setExcursion(0)}>Return to curve</button>
+          <button onClick={() => { setExcursionCoarse(0); setExcursionFine(0); }}>Return to curve</button>
           <button onClick={copyCoordinates}>Copy coordinates</button>
         </div>
         <div className="atlas-metrics">

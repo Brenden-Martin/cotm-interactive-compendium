@@ -921,14 +921,21 @@ button { font: inherit; }
 .atlas-console-head { display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:12px; }
 .atlas-console-head strong { max-width:140px;text-align:right;font:800 9px monospace;text-transform:uppercase;letter-spacing:.06em; }
 .atlas-map { width:100%;height:185px;display:block;border:2px solid #0b111a; }
-.atlas-dials { display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 0; }
-.atlas-dial-group { display:grid;justify-items:center;gap:8px;font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em; }
-.atlas-dial { --atlas-angle:0deg;--atlas-accent:#20d7d7;position:relative;width:min(142px,34vw);aspect-ratio:1;border:2px solid #0b111a;border-radius:50%;background:repeating-conic-gradient(from -137deg,#0b111a 0 1deg,transparent 1deg 10deg) content-box,radial-gradient(circle at 40% 34%,#3b4650,#151c25 62%,#080c12 63%);padding:12px;box-shadow:inset 0 0 0 9px #f4f0df,5px 6px 0 rgba(11,17,26,.18);cursor:grab;touch-action:none; }
-.atlas-dial:active { cursor:grabbing; }
-.atlas-dial:focus-visible { outline:3px solid var(--atlas-accent);outline-offset:3px; }
-.atlas-dial i { position:absolute;z-index:2;width:4px;height:42%;left:calc(50% - 2px);top:10%;border-radius:4px;background:var(--atlas-accent);transform-origin:50% 95%;transform:rotate(var(--atlas-angle));box-shadow:0 0 8px var(--atlas-accent); }
-.atlas-dial::after { content:"";position:absolute;width:22%;aspect-ratio:1;border-radius:50%;left:39%;top:39%;background:#0b111a;border:3px solid #75808a; }
-.atlas-dial-group input { width:86px;border:1px solid #0b111a;background:#f4f0df;padding:7px;text-align:center;font:800 11px monospace; }
+.atlas-coordinate-controls { display:grid;gap:12px;padding:16px 0; }
+.atlas-coordinate { --atlas-accent:#20d7d7;border:2px solid #0b111a;background:#f4f0df; }
+.atlas-coordinate-chaos { --atlas-accent:#e74731; }
+.atlas-coordinate>header { display:flex;justify-content:space-between;align-items:center;padding:10px 11px;background:#0b111a;color:#f4f0df;font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em; }
+.atlas-coordinate>header output { color:var(--atlas-accent);font-size:13px;letter-spacing:.03em; }
+.atlas-range-row { display:grid;grid-template-columns:1fr auto;gap:5px;padding:10px 11px 8px;font:800 8px monospace;text-transform:uppercase;letter-spacing:.06em; }
+.atlas-range-row+ .atlas-range-row { border-top:1px solid #0b111a; }
+.atlas-range-row b { color:var(--atlas-accent); }
+.atlas-range-row input { grid-column:1/-1;width:100%;height:22px;margin:0;accent-color:var(--atlas-accent);cursor:ew-resize; }
+.atlas-fine-row { background:color-mix(in srgb,var(--atlas-accent) 10%,#f4f0df); }
+.atlas-coordinate-entry { display:grid;grid-template-columns:1fr auto;border-top:1px solid #0b111a; }
+.atlas-coordinate-entry label { display:grid;grid-template-columns:auto minmax(78px,1fr);align-items:center;gap:8px;padding:7px 10px;font:800 8px monospace;text-transform:uppercase; }
+.atlas-coordinate-entry input { width:100%;min-width:0;border:1px solid #0b111a;background:#f4f0df;padding:6px;text-align:right;font:800 10px monospace; }
+.atlas-coordinate-entry button { border:0;border-left:1px solid #0b111a;background:transparent;padding:0 10px;font:800 8px monospace;text-transform:uppercase;cursor:pointer; }
+.atlas-coordinate-entry button:hover,.atlas-coordinate-entry button:focus-visible { background:#0b111a;color:var(--atlas-accent);outline:none; }
 .atlas-actions { display:grid;grid-template-columns:1fr 1fr;border:1px solid #0b111a; }
 .atlas-actions button { min-height:42px;border:0;border-right:1px solid #0b111a;border-bottom:1px solid #0b111a;background:transparent;color:inherit;font:800 8px monospace;text-transform:uppercase;letter-spacing:.06em;cursor:pointer; }
 .atlas-actions button:nth-child(2n) { border-right:0; }.atlas-actions button:nth-last-child(-n+2) { border-bottom:0; }
