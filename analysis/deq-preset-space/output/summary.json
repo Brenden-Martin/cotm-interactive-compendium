@@ -1,0 +1,162 @@
+{
+  "dataset": {
+    "core_named": 7,
+    "curated_named": 26,
+    "shared_named": 280,
+    "named_total": 313,
+    "unique_exact": 283,
+    "exact_duplicate_memberships": 30,
+    "snapshot_reported_total": 280
+  },
+  "source_snapshot": "analysis\\deq-preset-space\\data\\shared-presets.json",
+  "feature_space": {
+    "raw_dimensions": 51,
+    "effective_dimensions": 50,
+    "exact_gauge_removed": "dt multiplied into all 45 coupling coefficients",
+    "color_group": "S3 (six simultaneous source/destination/exponent relabelings)",
+    "spatial_group_removed": "none",
+    "block_scales": {
+      "effective_k": 0.43095671242490874,
+      "exponent_delta": 0.45448529987457076,
+      "decay": 0.4169102261572372,
+      "noise": 0.002010500743901871
+    }
+  },
+  "alignment": {
+    "reference_medoid": "shared:286",
+    "iterations": 5,
+    "permutation_histogram": {
+      "0": 21,
+      "1": 166,
+      "2": 7,
+      "3": 14,
+      "4": 9,
+      "5": 66
+    }
+  },
+  "pca": {
+    "participation_rank": 2.594875371004968,
+    "dimensions_80_percent": 4,
+    "dimensions_90_percent": 7,
+    "dimensions_95_percent": 12,
+    "explained_variance": [
+      0.602599848265435,
+      0.10612301016450885,
+      0.07770870356225798,
+      0.04570720752364881,
+      0.03918674350978048,
+      0.024136363882874913,
+      0.014882497260752671,
+      0.013564036400513855,
+      0.009725411282076412,
+      0.00719656953796865,
+      0.006852564679220296,
+      0.005695516222838974,
+      0.004571015054123299,
+      0.004132609068473819,
+      0.003934420893391849,
+      0.0028794806671571605,
+      0.0026288314434780836,
+      0.0024737077497540318,
+      0.0023348936981134366,
+      0.0022222108390084236,
+      0.0020385699098199018,
+      0.0019384456956421138,
+      0.0017576889762158376,
+      0.0014051985199316909,
+      0.0013203859206637118,
+      0.0012406790167686092,
+      0.0011451387022078715,
+      0.0009702353134011414,
+      0.0008934364630517322,
+      0.0008650345092126747,
+      0.0008250387029579852,
+      0.0007823000928144057,
+      0.0006317728703586963,
+      0.0005876557200708298,
+      0.0005403944908250281,
+      0.0004892205490609782,
+      0.00047304741533525543,
+      0.0004385118717751919,
+      0.0004159431756357221,
+      0.0003810728548395994,
+      0.0003034254625857262,
+      0.0002971462828674825,
+      0.00028540929831907797,
+      0.00026883131361318845,
+      0.0002566649260755219,
+      0.00024060610540050363,
+      0.00020253479090947692,
+      0.00016897319992335326,
+      0.00016191761449343994,
+      0.00011907852984638988
+    ]
+  },
+  "intrinsic_dimension": {
+    "5": {
+      "median": 2.600742639458292,
+      "mean": 8.018485384762895,
+      "samples": 283
+    },
+    "10": {
+      "median": 2.986378144171624,
+      "mean": 5.461944403109728,
+      "samples": 283
+    },
+    "20": {
+      "median": 3.991645463013837,
+      "mean": 5.316682573662583,
+      "samples": 283
+    }
+  },
+  "exploratory_partition": {
+    "method": "farthest-first k-medoids on exact S3 quotient distances",
+    "chosen_clusters": 2,
+    "silhouette_scores": {
+      "2": 0.6973753577460756,
+      "3": 0.6926306741907556,
+      "4": 0.5969174270154032,
+      "5": 0.5757725694698241,
+      "6": 0.5645856097852944,
+      "7": 0.4625988117590899,
+      "8": 0.46575391353152623,
+      "9": 0.27861104870651043,
+      "10": 0.296861590754221,
+      "11": 0.29421522585620147,
+      "12": 0.2817151631685122
+    },
+    "cluster_sizes": [
+      263,
+      20
+    ],
+    "medoids": [
+      "shared:221",
+      "shared:116"
+    ],
+    "profiles": [
+      {
+        "cluster": 1,
+        "members": 263,
+        "medoid": "shared:221",
+        "median_dt": 0.8437184522330229,
+        "median_effective_k_rms": 0.27045202821774494,
+        "median_active_coefficients": 45.0,
+        "median_exponent": 0.98702279157161,
+        "median_decay": 0.17352277286585993,
+        "median_noise": 0.0011894717525868727
+      },
+      {
+        "cluster": 2,
+        "members": 20,
+        "medoid": "shared:116",
+        "median_dt": 1.3781418176292657,
+        "median_effective_k_rms": 1.338318776553408,
+        "median_active_coefficients": 45.0,
+        "median_exponent": 1.0,
+        "median_decay": 0.6716990507259955,
+        "median_noise": 0.0010220064520398754
+      }
+    ],
+    "caveat": "Parameter neighborhoods are not validated visual behavior classes."
+  }
+}

@@ -1,6 +1,6 @@
 # COTM Interactive Compendium — Project Ledger
 
-Last organized: 2026-08-02
+Last organized: 2026-08-03
 
 This is the durable source of truth for the Child of the Machine website: what has shipped, what is being tested, what is planned, what is waiting on source material, and why the work is ordered the way it is. Git preserves the history of this file, so ideas should be revised in place rather than silently discarded.
 
@@ -74,7 +74,8 @@ Other established systems include:
 
 ### Current test items
 
-- **DEQ-001 through DEQ-004 and DEQ-006 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, photo boundaries use a centered cover crop, and the complete shared preset collection loads through cursor pagination instead of stopping at 256 rows.
+- **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
+- **DEQ-007 — Testing:** The local symmetry-aware preset observatory snapshots all 280 shared rows, combines them with the protected core and Curated anchors, removes exact `dt × k` and six-way RGB redundancies, and exports reproducible PCA, intrinsic-dimension, neighborhood, cluster, and nearest-neighbor reports.
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
@@ -156,9 +157,9 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **DEQ-003 — Testing — Eraser default.** The manual and automated cursor begin in erase mode.
 - **DEQ-004 — Testing — Selectable drawing color.** Random per-frame drawing color has been replaced by a color picker, initially cyan.
 - **DEQ-005 — Safeguard — Preserve tuned behavior.** Do not disturb the established continuous morph algorithm, Curated bank, timing, all-bank presets, or color-cycle routing while making these UI/default changes.
-- **DEQ-006 — Testing — Complete preset retrieval.** Replace the oldest-first 256-row ceiling with stable ID-cursor pagination, return the database total, load and deduplicate every page in the browser, keep newly saved anchors ordered, and visibly confirm when the complete shared bank is loaded. Preserve every stored row and the protected Curated bank.
-- **DEQ-007 — Next — Symmetry-aware preset observatory.** Analyze effective couplings `dt × k` rather than treating `dt` and `k` as independent; quotient distances by all six RGB permutations and, where orientation is irrelevant, the square-grid rotations/reflections acting on `dx` and `dy`. Build a durable complete-bank snapshot before fitting any manifold.
-- **DEQ-008 — Planned — Behavioral descriptors and candidate generation.** Simulate anchors from controlled common seeds, measure spatial and temporal spectra, entropy, persistence, channel correlation, saturation, motion, and perturbation sensitivity, then learn positive-state neighborhoods and generate candidates locally along their tangent directions. Add explicit interesting/dull/broken feedback before training a discriminative acceptance model.
+- **DEQ-006 — Done — Complete preset retrieval.** Stable ID-cursor pagination now returns and loads all 280 shared rows across two pages, alongside a true database total and visible complete-bank status. Every stored row and the protected Curated bank remain intact.
+- **DEQ-007 — Testing — Symmetry-aware preset observatory.** The local analysis represents the tensor through effective couplings `dt × k`, quotients exact distances by all six RGB permutations, preserves the forward-difference distinction between `dx` and `dy`, snapshots the complete bank, and exports PCA, intrinsic-dimension, k-medoids, cluster-profile, and nearest-neighbor artifacts. The first snapshot contains 313 named anchors and 283 exact unique configurations.
+- **DEQ-008 — Next — Behavioral descriptors and candidate generation.** Simulate anchors from controlled common seeds, measure spatial and temporal spectra, entropy, persistence, channel correlation, saturation, motion, and perturbation sensitivity, then learn positive-state neighborhoods and generate candidates locally along their tangent directions. Add explicit interesting/dull/broken feedback before training a discriminative acceptance model.
 
 ### Gallery-wide tuning
 
@@ -325,7 +326,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 ### 2026-08-03
 
-- **DEQ-006** — Replaced the shared preset bank's hidden 256-row ceiling with complete cursor pagination, a true database count, and visible full-bank loading status without altering morph dynamics or Curated anchors.
+- **DEQ-006** — Deployed the removal of the shared preset bank's hidden 256-row ceiling. Production verification collected all 280 rows across two ordered pages with no duplicate IDs, without altering morph dynamics or Curated anchors.
+- **DEQ-007** — Added a reproducible local analysis workspace and frozen complete-bank snapshot. The first symmetry-aware pass reduces 313 named anchors to 283 exact unique states, finds a 263-state main body plus a 20-state high-coupling/high-decay outer family, and exports the data needed for deeper behavioral analysis.
 
 ## Decision log
 
