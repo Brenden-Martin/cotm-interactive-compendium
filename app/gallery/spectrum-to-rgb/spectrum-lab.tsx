@@ -145,6 +145,7 @@ export function SpectrumLab() {
   const wienPeak = WIEN_WAVELENGTH_CONSTANT / temperature * 1e9;
   const activeTemperatureBand = TEMPERATURE_BANDS[temperatureBand];
   const temperaturePosition = Math.log(temperature / activeTemperatureBand.min) / Math.log(activeTemperatureBand.max / activeTemperatureBand.min) * 1000;
+  const blackbodyUsesLogScale = mode === "blackbody" && temperatureBand !== "thermal";
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -155,27 +156,27 @@ export function SpectrumLab() {
     let height = 0;
     const padding = { left: 48, right: 24, top: 24, bottom: 60 };
     const blackbodyPeakWavelength = WIEN_WAVELENGTH_CONSTANT / temperature * 1e9;
-    const blackbodyPlotMinimum = Math.min(100, blackbodyPeakWavelength / 30);
-    const blackbodyPlotMaximum = Math.max(10000, blackbodyPeakWavelength * 30);
+    const blackbodyPlotMinimum = blackbodyUsesLogScale ? Math.min(100, blackbodyPeakWavelength / 30) : 0;
+    const blackbodyPlotMaximum = blackbodyUsesLogScale ? Math.max(10000, blackbodyPeakWavelength * 30) : Math.max(5000, blackbodyPeakWavelength * 6);
     const plotMinimum = mode === "blackbody" ? blackbodyPlotMinimum : MIN_WAVELENGTH;
     const plotMaximum = mode === "blackbody" ? blackbodyPlotMaximum : MAX_WAVELENGTH;
-    const logPlotMinimum = Math.log10(plotMinimum);
+    const logPlotMinimum = Math.log10(Math.max(plotMinimum, Number.MIN_VALUE));
     const logPlotMaximum = Math.log10(plotMaximum);
     const blackbodyPlotPeak = blackbodyRadianceAt(blackbodyPeakWavelength, temperature);
 
-    const xFor = (wavelength: number) => padding.left + (mode === "blackbody"
+    const xFor = (wavelength: number) => padding.left + (blackbodyUsesLogScale
       ? (Math.log10(wavelength) - logPlotMinimum) / (logPlotMaximum - logPlotMinimum)
-      : (wavelength - MIN_WAVELENGTH) / (MAX_WAVELENGTH - MIN_WAVELENGTH)) * (width - padding.left - padding.right);
+      : (wavelength - plotMinimum) / (plotMaximum - plotMinimum)) * (width - padding.left - padding.right);
     const yFor = (amplitude: number) => height - padding.bottom - clamp(amplitude / MAX_AMPLITUDE, 0, 1) * (height - padding.top - padding.bottom);
     const wavelengthFor = (x: number) => {
       const position = clamp((x - padding.left) / (width - padding.left - padding.right), 0, 1);
-      return mode === "blackbody"
+      return blackbodyUsesLogScale
         ? Math.pow(10, logPlotMinimum + position * (logPlotMaximum - logPlotMinimum))
-        : MIN_WAVELENGTH + position * (MAX_WAVELENGTH - MIN_WAVELENGTH);
+        : plotMinimum + position * (plotMaximum - plotMinimum);
     };
     const amplitudeFor = (y: number) => clamp((height - padding.bottom - y) / (height - padding.top - padding.bottom) * MAX_AMPLITUDE, 0, MAX_AMPLITUDE);
     const plottedPowerAt = (wavelength: number) => mode === "blackbody"
-      ? blackbodyRadianceAt(wavelength, temperature) / blackbodyPlotPeak * 1.25
+      ? wavelength <= 0 ? 0 : blackbodyRadianceAt(wavelength, temperature) / blackbodyPlotPeak * 1.25
       : spectrumAt(wavelength, peaks);
 
     const draw = () => {
@@ -211,14 +212,27 @@ export function SpectrumLab() {
       context.fillStyle = "rgba(244,240,223,.7)";
       context.textAlign = "center";
       if (mode === "blackbody") {
-        const firstExponent = Math.ceil(logPlotMinimum);
-        const lastExponent = Math.floor(logPlotMaximum);
-        const exponentStride = Math.max(1, Math.ceil((lastExponent - firstExponent + 1) / 7));
-        for (let exponent = firstExponent; exponent <= lastExponent; exponent += exponentStride) {
-          const wavelength = Math.pow(10, exponent);
-          const x = Math.round(xFor(wavelength)) + .5;
-          context.beginPath();context.moveTo(x,plotTop);context.lineTo(x,plotBottom);context.stroke();
-          context.fillText(formatAxisWavelength(wavelength), x, height - 35);
+        if (blackbodyUsesLogScale) {
+          const firstExponent = Math.ceil(logPlotMinimum);
+          const lastExponent = Math.floor(logPlotMaximum);
+          const exponentStride = Math.max(1, Math.ceil((lastExponent - firstExponent + 1) / 7));
+          for (let exponent = firstExponent; exponent <= lastExponent; exponent += exponentStride) {
+            const wavelength = Math.pow(10, exponent);
+            const x = Math.round(xFor(wavelength)) + .5;
+            context.beginPath();context.moveTo(x,plotTop);context.lineTo(x,plotBottom);context.stroke();
+            context.fillText(formatAxisWavelength(wavelength), x, height - 35);
+          }
+        } else {
+          const roughTickSpacing = (plotMaximum - plotMinimum) / 7;
+          const tickPower = Math.pow(10, Math.floor(Math.log10(roughTickSpacing)));
+          const tickFraction = roughTickSpacing / tickPower;
+          const tickSpacing = (tickFraction <= 1 ? 1 : tickFraction <= 2 ? 2 : tickFraction <= 5 ? 5 : 10) * tickPower;
+          context.fillText("0", plotLeft, height - 35);
+          for (let wavelength = tickSpacing; wavelength <= plotMaximum; wavelength += tickSpacing) {
+            const x = Math.round(xFor(wavelength)) + .5;
+            context.beginPath();context.moveTo(x,plotTop);context.lineTo(x,plotBottom);context.stroke();
+            context.fillText(formatAxisWavelength(wavelength), x, height - 35);
+          }
         }
         context.setLineDash([4, 4]);
         context.strokeStyle = "rgba(244,214,75,.7)";
@@ -313,7 +327,7 @@ export function SpectrumLab() {
         context.fillRect(widthX - 6, widthY - 6, 12, 12);context.strokeRect(widthX - 6, widthY - 6, 12, 12);
       }
       context.fillStyle = "rgba(244,240,223,.64)";
-      context.fillText(mode === "blackbody" ? "WAVELENGTH / LOG SCALE" : "WAVELENGTH / nm", (padding.left + width - padding.right) / 2, height - 10);
+      context.fillText(mode === "blackbody" ? `WAVELENGTH / ${blackbodyUsesLogScale ? "LOG" : "LINEAR"} SCALE` : "WAVELENGTH / nm", (padding.left + width - padding.right) / 2, height - 10);
       context.textAlign = "start";
     };
 
@@ -357,7 +371,7 @@ export function SpectrumLab() {
     const pointerUp = () => { dragRef.current = null; };
     resize();window.addEventListener("resize",resize);canvas.addEventListener("pointerdown",pointerDown);canvas.addEventListener("pointermove",pointerMove);canvas.addEventListener("pointerup",pointerUp);canvas.addEventListener("pointercancel",pointerUp);
     return () => { window.removeEventListener("resize",resize);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",pointerMove);canvas.removeEventListener("pointerup",pointerUp);canvas.removeEventListener("pointercancel",pointerUp); };
-  }, [mode, peaks, selectedId, showCurves, temperature]);
+  }, [blackbodyUsesLogScale, mode, peaks, selectedId, showCurves, temperature]);
 
   const updateSelected = (key: "center" | "amplitude" | "width", value: number) => {
     if (!selected) return;
@@ -398,13 +412,13 @@ export function SpectrumLab() {
           <button role="tab" aria-selected={mode === "blackbody"} className={mode === "blackbody" ? "active" : ""} onClick={() => setMode("blackbody")}>Blackbody radiation</button>
         </div>
         <div className="spectrum-plot-head"><span>{mode === "blackbody" ? "Relative blackbody spectral radiance" : "Relative spectral power"}</span><span><i className="cmf-x" /> x̄ <i className="cmf-y" /> ȳ <i className="cmf-z" /> z̄</span></div>
-        <canvas ref={canvasRef} className={`spectrum-canvas ${mode === "blackbody" ? "passive" : ""}`} aria-label={mode === "blackbody" ? `Logarithmic blackbody spectrum at ${formatTemperature(temperature)}, including ultraviolet, visible, and infrared wavelengths. Wien peak ${formatWavelength(wienPeak)}.` : "Editable emission spectrum from 380 to 780 nanometers. Drag circular peak handles and square width handles."} />
-        <div className="spectrum-gesture-key">{mode === "emitters" ? <><b>● Drag peak</b><b>■ Drag half-width</b></> : <><b>{formatTemperature(temperature)}</b><b>λmax {formatWavelength(wienPeak)}</b></>}<span>{mode === "blackbody" ? "Log wavelength keeps the full thermal curve and its narrow visible overlap in view." : "The background rainbow is an orientation guide; the calculation uses CIE data."}</span></div>
+        <canvas ref={canvasRef} className={`spectrum-canvas ${mode === "blackbody" ? "passive" : ""}`} aria-label={mode === "blackbody" ? `${blackbodyUsesLogScale ? "Logarithmic" : "Linear"} blackbody spectrum at ${formatTemperature(temperature)}, including ultraviolet, visible, and infrared wavelengths. Wien peak ${formatWavelength(wienPeak)}.` : "Editable emission spectrum from 380 to 780 nanometers. Drag circular peak handles and square width handles."} />
+        <div className="spectrum-gesture-key">{mode === "emitters" ? <><b>● Drag peak</b><b>■ Drag half-width</b></> : <><b>{formatTemperature(temperature)}</b><b>λmax {formatWavelength(wienPeak)}</b></>}<span>{mode === "blackbody" ? blackbodyUsesLogScale ? "Log wavelength keeps the tiny Wien peak and visible overlap on one cosmic-scale plot." : "Linear wavelength preserves the iconic blackbody rise, rounded peak, and long infrared tail." : "The background rainbow is an orientation guide; the calculation uses CIE data."}</span></div>
         {mode === "emitters" ? <div className="purple-challenge">
           <div><span className="eyebrow">The purple challenge</span><p>{challenge}</p></div>
           <button onClick={singlePurpleAttempt}>Try one line</button><button onClick={revealPurple}>Reveal mixture</button>
         </div> : <div className="blackbody-summary">
-          <div><span className="eyebrow">Heat becomes color</span><p>The logarithmic axis follows the entire Planck curve through ultraviolet, the rainbow-colored visible band, and infrared—even when its peak travels far beyond human sight.</p></div>
+          <div><span className="eyebrow">Heat becomes color</span><p>Thermal temperatures use the classic linear wavelength view; Stellar and Cosmic scales switch to logarithmic wavelength so the Wien peak and rainbow-colored visible overlap can remain together.</p></div>
           <strong>{formatTemperature(temperature)}</strong><span>Peak ≈ {formatWavelength(wienPeak)}</span>
         </div>}
       </div>
@@ -431,7 +445,7 @@ export function SpectrumLab() {
           <label><span>FWHM linewidth</span><output>{Math.round(selected.width)} nm</output><input type="range" min="2" max="140" step="1" value={selected.width} onChange={(event)=>updateSelected("width",Number(event.target.value))}/></label>
         </div>}
         <label className="spectrum-exposure"><span>Display exposure</span><output>{exposure.toFixed(2)}×</output><input type="range" min=".08" max="1.3" step=".01" value={exposure} onChange={(event)=>setExposure(Number(event.target.value))}/></label>
-        <div className="spectrum-model-note"><b>{mode === "blackbody" ? "Planck → CIE 1931 2° → D65 sRGB" : "CIE 1931 2° → D65 sRGB"}</b><p>{mode === "blackbody" ? "The full plotted curve is normalized at its Wien peak on a dynamic logarithmic wavelength axis. Only its 380–780 nm overlap is integrated against the CIE observer, then passed through the same signed linear-sRGB transform as the emitter lab." : "Tristimulus values are integrated from the official CIE color-matching table at 5 nm intervals, then normalized for display exposure and gamut-mapped by clipping. Screens cannot reproduce every spectral color."}</p><a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer" target="_blank" rel="noreferrer">CIE observer data ↗</a><a href="https://www.w3.org/TR/css-color-4/" target="_blank" rel="noreferrer">sRGB conversion reference ↗</a>{mode === "blackbody" && <a href="https://physics.nist.gov/cuu/pdf/JPCRD2022CODATA.pdf" target="_blank" rel="noreferrer">NIST / CODATA constants ↗</a>}</div>
+        <div className="spectrum-model-note"><b>{mode === "blackbody" ? "Planck → CIE 1931 2° → D65 sRGB" : "CIE 1931 2° → D65 sRGB"}</b><p>{mode === "blackbody" ? `The full plotted curve is normalized at its Wien peak on a dynamic ${blackbodyUsesLogScale ? "logarithmic" : "linear"} wavelength axis. Only its 380–780 nm overlap is integrated against the CIE observer, then passed through the same signed linear-sRGB transform as the emitter lab.` : "Tristimulus values are integrated from the official CIE color-matching table at 5 nm intervals, then normalized for display exposure and gamut-mapped by clipping. Screens cannot reproduce every spectral color."}</p><a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer" target="_blank" rel="noreferrer">CIE observer data ↗</a><a href="https://www.w3.org/TR/css-color-4/" target="_blank" rel="noreferrer">sRGB conversion reference ↗</a>{mode === "blackbody" && <a href="https://physics.nist.gov/cuu/pdf/JPCRD2022CODATA.pdf" target="_blank" rel="noreferrer">NIST / CODATA constants ↗</a>}</div>
       </aside>
     </section>
   );
