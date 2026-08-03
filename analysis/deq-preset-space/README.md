@@ -34,6 +34,7 @@ Generated files go to `analysis/deq-preset-space/output/`:
 - `coordinates.csv` — aligned PCA coordinates and exploratory cluster assignments.
 - `nearest-neighbors.csv` — closest symmetry-aware neighbors for every anchor.
 - `cluster-profiles.csv` — compact parameter summaries for the exploratory neighborhoods.
+- `atlas-model.json` — the frozen seven-dimensional principal-curve model consumed by the DEQ Atlas exhibit.
 - `pca-map.svg` — first two quotient-space principal components.
 - `scree.svg` — explained and cumulative variance.
 - `cluster-silhouette.svg` — exploratory partition score versus cluster count.

@@ -158,5 +158,12 @@
       }
     ],
     "caveat": "Parameter neighborhoods are not validated visual behavior classes."
+  },
+  "atlas_model": {
+    "dimensions": 7,
+    "main_family": 263,
+    "outer_family_excluded": 20,
+    "path_samples": 257,
+    "explained_variance": 0.9103443742
   }
 }

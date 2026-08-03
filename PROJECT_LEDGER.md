@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The Site currently contains seventeen gallery exhibits:
+The next Site version contains eighteen gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -56,6 +56,7 @@ The Site currently contains seventeen gallery exhibits:
 15. Boids
 16. Fortune Cookie
 17. Spectrum to RGB
+18. DEQ Atlas
 
 The Compendium currently contains five linked theory entries:
 
@@ -76,6 +77,7 @@ Other established systems include:
 
 - **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
 - **DEQ-007 — Testing:** The local symmetry-aware preset observatory snapshots all 280 shared rows, combines them with the protected core and Curated anchors, removes exact `dt × k` and six-way RGB redundancies, and exports reproducible PCA, intrinsic-dimension, neighborhood, cluster, and nearest-neighbor reports.
+- **DEQ-009 — Testing:** DEQ Atlas presents the 263-state main family as a seven-dimensional, arc-length-parameterized principal curve controlled by Route Position and deterministic transverse Chaos coordinates. Identical numeric coordinates and a restart reproduce the same seeded evolution; the existing Morph Bank remains unchanged.
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
@@ -160,6 +162,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **DEQ-006 — Done — Complete preset retrieval.** Stable ID-cursor pagination now returns and loads all 280 shared rows across two pages, alongside a true database total and visible complete-bank status. Every stored row and the protected Curated bank remain intact.
 - **DEQ-007 — Testing — Symmetry-aware preset observatory.** The local analysis represents the tensor through effective couplings `dt × k`, quotients exact distances by all six RGB permutations, preserves the forward-difference distinction between `dx` and `dy`, snapshots the complete bank, and exports PCA, intrinsic-dimension, k-medoids, cluster-profile, and nearest-neighbor artifacts. The first snapshot contains 313 named anchors and 283 exact unique configurations.
 - **DEQ-008 — Next — Behavioral descriptors and candidate generation.** Simulate anchors from controlled common seeds, measure spatial and temporal spectra, entropy, persistence, channel correlation, saturation, motion, and perturbation sensitivity, then learn positive-state neighborhoods and generate candidates locally along their tangent directions. Add explicit interesting/dull/broken feedback before training a discriminative acceptance model.
+- **DEQ-009 — Testing — Two-coordinate DEQ Atlas.** Add an independent gallery entry that navigates a frozen seven-dimensional principal curve through the 263-state main preset family. One exact numeric coordinate selects arc length; the second applies a smooth deterministic transverse displacement scaled by local preset support. Preserve repeatable seeded restarts, keep the 20-state outer family out of the first fitted trunk, and do not alter the original Morph Bank.
 
 ### Gallery-wide tuning
 
@@ -328,6 +331,7 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **DEQ-006** — Deployed the removal of the shared preset bank's hidden 256-row ceiling. Production verification collected all 280 rows across two ordered pages with no duplicate IDs, without altering morph dynamics or Curated anchors.
 - **DEQ-007** — Added a reproducible local analysis workspace and frozen complete-bank snapshot. The first symmetry-aware pass reduces 313 named anchors to 283 exact unique states, finds a 263-state main body plus a 20-state high-coupling/high-decay outer family, and exports the data needed for deeper behavioral analysis.
+- **DEQ-009** — Fitted the 263-state main family with a smoothed seven-dimensional principal curve retaining 91% of aligned variance, sampled it uniformly by arc length, and built the independent DEQ Atlas exhibit with two repeatable numeric coordinates and deterministic restarts.
 
 ## Decision log
 

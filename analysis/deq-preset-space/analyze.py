@@ -203,13 +203,80 @@ def align_orbits(orbits: np.ndarray, distances: np.ndarray) -> tuple[np.ndarray,
     return orbits[np.arange(orbits.shape[0]), choices], choices, medoid, iterations
 
 
-def principal_components(aligned: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    centered = aligned - np.mean(aligned, axis=0, keepdims=True)
+def principal_components(aligned: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    mean = np.mean(aligned, axis=0)
+    centered = aligned - mean[None, :]
     _, singular_values, right_vectors = np.linalg.svd(centered, full_matrices=False)
     coordinates = centered @ right_vectors.T
     eigenvalues = singular_values ** 2 / max(1, aligned.shape[0] - 1)
     explained = eigenvalues / max(float(np.sum(eigenvalues)), 1e-15)
-    return coordinates, eigenvalues, explained
+    return coordinates, eigenvalues, explained, mean, right_vectors
+
+
+def catmull_rom(control_points: np.ndarray, parameters: np.ndarray) -> np.ndarray:
+    """Evaluate an open Catmull-Rom spline for parameters in [0, 1]."""
+
+    segments = len(control_points) - 1
+    scaled = np.clip(parameters, 0, 1) * segments
+    indices = np.minimum(np.floor(scaled).astype(int), segments - 1)
+    local = (scaled - indices)[:, None]
+    p0 = control_points[np.maximum(indices - 1, 0)]
+    p1 = control_points[indices]
+    p2 = control_points[np.minimum(indices + 1, segments)]
+    p3 = control_points[np.minimum(indices + 2, segments)]
+    return .5 * (
+        2 * p1
+        + (-p0 + p2) * local
+        + (2 * p0 - 5 * p1 + 4 * p2 - p3) * local ** 2
+        + (-p0 + 3 * p1 - 3 * p2 + p3) * local ** 3
+    )
+
+
+def fit_atlas_path(coordinates: np.ndarray, labels: np.ndarray, control_count: int = 18) -> tuple[np.ndarray, np.ndarray, np.ndarray, int]:
+    """Fit and arc-length sample a seven-dimensional principal-curve approximation."""
+
+    main_cluster = int(np.argmax(np.bincount(labels)))
+    data = coordinates[labels == main_cluster, :7]
+    order = np.argsort(data[:, 0])
+    bins = np.array_split(order, control_count)
+    controls = np.stack([np.median(data[indexes], axis=0) for indexes in bins])
+
+    for _ in range(8):
+        dense_parameters = np.linspace(0, 1, 900)
+        dense_curve = catmull_rom(controls, dense_parameters)
+        squared = np.sum((data[:, None, :] - dense_curve[None, :, :]) ** 2, axis=2)
+        assignments = dense_parameters[np.argmin(squared, axis=1)]
+        updated = []
+        bandwidth = 1.7 / max(2, control_count - 1)
+        for target in np.linspace(0, 1, control_count):
+            weights = np.exp(-.5 * ((assignments - target) / bandwidth) ** 2)
+            weights /= max(float(np.sum(weights)), 1e-15)
+            updated.append(np.sum(data * weights[:, None], axis=0))
+        updated = np.stack(updated)
+        updated[1:-1] = (updated[:-2] + 2 * updated[1:-1] + updated[2:]) / 4
+        controls = updated
+
+    dense_parameters = np.linspace(0, 1, 5000)
+    dense_curve = catmull_rom(controls, dense_parameters)
+    segment_lengths = np.linalg.norm(np.diff(dense_curve, axis=0), axis=1)
+    cumulative = np.concatenate(([0.0], np.cumsum(segment_lengths)))
+    cumulative /= max(float(cumulative[-1]), 1e-15)
+    targets = np.linspace(0, 1, 257)
+    path = np.stack([np.interp(targets, cumulative, dense_curve[:, dimension]) for dimension in range(7)], axis=1)
+    tangents = np.gradient(path, axis=0)
+    tangents /= np.maximum(np.linalg.norm(tangents, axis=1, keepdims=True), 1e-15)
+
+    radii = []
+    for point, tangent in zip(path, tangents):
+        differences = data - point
+        nearest = np.argsort(np.linalg.norm(differences, axis=1))[:24]
+        local = differences[nearest]
+        normal = local - (local @ tangent)[:, None] * tangent[None, :]
+        radii.append(float(np.quantile(np.linalg.norm(normal, axis=1), .65)))
+    radii_array = np.asarray(radii)
+    low, high = np.quantile(radii_array, [.12, .88])
+    radii_array = np.clip(radii_array, max(float(low), .02), max(float(high), .03))
+    return path, tangents, radii_array, main_cluster
 
 
 def dimension_at(explained: np.ndarray, threshold: float) -> int:
@@ -390,6 +457,50 @@ def write_silhouette(path: Path, scores: dict[str, float]) -> None:
     path.write_text(svg_frame(width, height, "".join(parts), "Silhouette scores for exploratory DEQ partitions"), encoding="utf-8")
 
 
+def write_atlas_model(
+    path: Path,
+    records: list[dict[str, Any]],
+    counts: dict[str, int],
+    scales: dict[str, float],
+    coordinates: np.ndarray,
+    explained: np.ndarray,
+    mean: np.ndarray,
+    components: np.ndarray,
+    labels: np.ndarray,
+) -> dict[str, Any]:
+    curve, tangents, radii, main_cluster = fit_atlas_path(coordinates, labels)
+    round_vector = lambda vector: [round(float(value), 10) for value in vector]
+    model = {
+        "schemaVersion": 1,
+        "title": "DEQ Atlas",
+        "dimensions": 7,
+        "dataset": {
+            **counts,
+            "mainFamily": int(np.sum(labels == main_cluster)),
+            "outerFamily": int(np.sum(labels != main_cluster)),
+        },
+        "fit": {
+            "method": "seven-dimensional smoothed principal curve with Catmull-Rom arc-length sampling",
+            "explainedVariance": round(float(np.sum(explained[:7])), 10),
+            "sampleCount": len(curve),
+            "excursionScale": .68,
+        },
+        "featureSpace": {
+            "layout": ["effective_k[45]", "exponent_delta[3]", "decay", "noise"],
+            "scales": {key: round(float(value), 12) for key, value in scales.items()},
+            "mean": round_vector(mean),
+            "components": [round_vector(component) for component in components[:7]],
+        },
+        "curve": {
+            "points": [round_vector(point) for point in curve],
+            "tangents": [round_vector(tangent) for tangent in tangents],
+            "radii": [round(float(radius), 10) for radius in radii],
+        },
+    }
+    path.write_text(json.dumps(model, separators=(",", ":")) + "\n", encoding="utf-8")
+    return model
+
+
 def write_outputs(
     output: Path,
     records: list[dict[str, Any]],
@@ -398,6 +509,8 @@ def write_outputs(
     coordinates: np.ndarray,
     eigenvalues: np.ndarray,
     explained: np.ndarray,
+    pca_mean: np.ndarray,
+    pca_components: np.ndarray,
     permutation_choices: np.ndarray,
     medoid: int,
     alignment_iterations: int,
@@ -433,6 +546,10 @@ def write_outputs(
             "median_decay": float(np.median([config["decay"] for config in configs])),
             "median_noise": float(np.median([config["noise"] for config in configs])),
         })
+    atlas_model = write_atlas_model(
+        output / "atlas-model.json", records, counts, scales, coordinates, explained,
+        pca_mean, pca_components, labels,
+    )
 
     summary = {
         "dataset": counts,
@@ -466,6 +583,13 @@ def write_outputs(
             "medoids": [records[index]["key"] for index in cluster_medoids],
             "profiles": cluster_profiles,
             "caveat": "Parameter neighborhoods are not validated visual behavior classes.",
+        },
+        "atlas_model": {
+            "dimensions": atlas_model["dimensions"],
+            "main_family": atlas_model["dataset"]["mainFamily"],
+            "outer_family_excluded": atlas_model["dataset"]["outerFamily"],
+            "path_samples": atlas_model["fit"]["sampleCount"],
+            "explained_variance": atlas_model["fit"]["explainedVariance"],
         },
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -593,10 +717,10 @@ def main() -> None:
     orbits, scales = make_orbits(records)
     distances = quotient_distances(orbits)
     aligned, choices, medoid, iterations = align_orbits(orbits, distances)
-    coordinates, eigenvalues, explained = principal_components(aligned)
+    coordinates, eigenvalues, explained, pca_mean, pca_components = principal_components(aligned)
     labels, cluster_medoids, silhouette_scores = choose_partition(distances)
     write_outputs(
-        arguments.output, records, counts, scales, coordinates, eigenvalues, explained, choices,
+        arguments.output, records, counts, scales, coordinates, eigenvalues, explained, pca_mean, pca_components, choices,
         medoid, iterations, distances, labels, cluster_medoids, silhouette_scores, arguments.shared,
     )
     print(

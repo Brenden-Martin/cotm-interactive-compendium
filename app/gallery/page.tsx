@@ -111,6 +111,12 @@ export default function Gallery() {
           <strong>Spectrum to RGB</strong>
           <small>Shape the light →</small>
         </Link>
+        <Link className="study deq-atlas-entry" href="/gallery/deq-atlas">
+          <span className="eyebrow">Exhibit 18 / Learned Systems</span>
+          <div className="deq-atlas-entry-route" aria-hidden="true"><span /><i /><i /><i /><i /><b /></div>
+          <strong>DEQ Atlas</strong>
+          <small>Navigate the learned field →</small>
+        </Link>
       </section>
     </main>
   );
