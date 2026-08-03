@@ -99,6 +99,12 @@ export default function Gallery() {
           <strong>Boids</strong>
           <small>Join the flock →</small>
         </Link>
+        <Link className="study fortune-entry" href="/gallery/fortune-cookie">
+          <span className="eyebrow">Exhibit 16 / Dubious Prognostication</span>
+          <div className="fortune-entry-cookie" aria-hidden="true"><i /><span /></div>
+          <strong>Fortune Cookie</strong>
+          <small>Consult the oracle →</small>
+        </Link>
       </section>
     </main>
   );

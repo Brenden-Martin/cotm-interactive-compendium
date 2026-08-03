@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The Site currently contains fifteen gallery exhibits:
+The Site currently contains sixteen gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -54,6 +54,7 @@ The Site currently contains fifteen gallery exhibits:
 13. DEQ Morph Bank
 14. Voxel Lava Volume
 15. Boids
+16. Fortune Cookie
 
 The Compendium currently contains five linked theory entries:
 
@@ -77,6 +78,7 @@ Other established systems include:
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
 - **BOIDS-001 — Testing:** Boids presents alignment, cohesion, and separation as a full-screen flock of black triangular agents in a flat baby-blue cloudscape, with live controls in a Moiré-style instrument panel.
+- **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box whose pending submissions never enter the public bank automatically.
 
 ## Prioritization principles
 
@@ -209,9 +211,10 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Fortune Cookie exhibit
 
-- **FORTUNE-001 — Planned — Core interaction.** A flat-color cartoon fortune cookie cracks open when clicked and reveals a paper fortune.
-- **FORTUNE-002 — Waiting — Fortune corpus.** Seed it from Brenden's extensive collection, then add deliberately ridiculous fortunes, botched philosophy, mixed metaphors, and bad advice.
-- **FORTUNE-003 — Planned — Repeat delight.** Make repeated openings quick and varied; preserve room for rare visual or textual surprises without requiring persistence or visitor data.
+- **FORTUNE-001 — Testing — Core interaction.** A flat-color cartoon fortune cookie cracks into two animated halves and reveals a paper fortune.
+- **FORTUNE-002 — Testing / Waiting — Fortune corpus.** Begin with an original COTM-flavored starter bank, then curate Brenden's extensive collection and selected pending suggestions into the public bank. Never publish a suggestion automatically.
+- **FORTUNE-003 — Testing — Repeat delight.** Repeated openings quickly fold the cookie shut, select a different fortune, and crack it again. Preserve room for rarer visual or textual surprises in a later pass.
+- **FORTUNE-004 — Testing — Durable suggestion queue.** Accept a proposed fortune of 3–240 characters into a D1-backed pending-review table. Store the text, duplicate-prevention hash, review status, and timestamp only; expose submission but no public listing endpoint.
 
 ### Private Research and hypothetical devices
 

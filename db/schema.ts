@@ -25,3 +25,17 @@ export const siteCounterEvents = sqliteTable(
     index("site_counter_events_key_created_idx").on(table.counterKey, table.createdAt),
   ],
 );
+
+export const fortuneSuggestions = sqliteTable(
+  "fortune_suggestions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    fortuneText: text("fortune_text").notNull(),
+    fortuneHash: text("fortune_hash").notNull().unique(),
+    status: text("status").notNull().default("pending"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("fortune_suggestions_status_created_idx").on(table.status, table.createdAt),
+  ],
+);
