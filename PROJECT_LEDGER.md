@@ -74,7 +74,7 @@ Other established systems include:
 
 ### Current test items
 
-- **DEQ-001 through DEQ-004 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, and photo boundaries use a centered cover crop.
+- **DEQ-001 through DEQ-004 and DEQ-006 — Testing:** Auto-cursor frequencies now default to `1 × 0.7`, its shared brush starts at radius `13` and in erase mode, drawing uses a selected color, photo boundaries use a centered cover crop, and the complete shared preset collection loads through cursor pagination instead of stopping at 256 rows.
 - **TUNE-001 and TUNE-002 — Testing:** Lava Lamp now starts from Brenden's first approved screenshot values and uses exponential physical-value mapping for all sliders. The cohesion slider caps at `0.5`, surface tension at `8`, and heat decay at `0.1`; manual entry retains wider experimental ranges.
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
@@ -156,6 +156,9 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **DEQ-003 — Testing — Eraser default.** The manual and automated cursor begin in erase mode.
 - **DEQ-004 — Testing — Selectable drawing color.** Random per-frame drawing color has been replaced by a color picker, initially cyan.
 - **DEQ-005 — Safeguard — Preserve tuned behavior.** Do not disturb the established continuous morph algorithm, Curated bank, timing, all-bank presets, or color-cycle routing while making these UI/default changes.
+- **DEQ-006 — Testing — Complete preset retrieval.** Replace the oldest-first 256-row ceiling with stable ID-cursor pagination, return the database total, load and deduplicate every page in the browser, keep newly saved anchors ordered, and visibly confirm when the complete shared bank is loaded. Preserve every stored row and the protected Curated bank.
+- **DEQ-007 — Next — Symmetry-aware preset observatory.** Analyze effective couplings `dt × k` rather than treating `dt` and `k` as independent; quotient distances by all six RGB permutations and, where orientation is irrelevant, the square-grid rotations/reflections acting on `dx` and `dy`. Build a durable complete-bank snapshot before fitting any manifold.
+- **DEQ-008 — Planned — Behavioral descriptors and candidate generation.** Simulate anchors from controlled common seeds, measure spatial and temporal spectra, entropy, persistence, channel correlation, saturation, motion, and perturbation sensitivity, then learn positive-state neighborhoods and generate candidates locally along their tangent directions. Add explicit interesting/dull/broken feedback before training a discriminative acceptance model.
 
 ### Gallery-wide tuning
 
@@ -319,6 +322,10 @@ This is a human-readable summary of the repository history, not a substitute for
 - `58bc5a8` — Added the windowless Boids cloudscape and promoted it after approval.
 - `dbf93e0`, `585efee` — Added Fortune Cookie, its durable review queue, and the approved initial owner batch.
 - **COLOR-001 through COLOR-007 and COLOR-009** — Built the Spectrum to RGB laboratory using official CIE observer data, explicit signed sRGB conversion, editable emission spectra, and a matched Planck-law blackbody tab spanning UV through IR and temperatures through the Planck scale.
+
+### 2026-08-03
+
+- **DEQ-006** — Replaced the shared preset bank's hidden 256-row ceiling with complete cursor pagination, a true database count, and visible full-bank loading status without altering morph dynamics or Curated anchors.
 
 ## Decision log
 

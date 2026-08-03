@@ -30,11 +30,18 @@ function validatedConfig(input: ConfigInput) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    return Response.json({ presets: await listDeqPresets() });
+    const url = new URL(request.url);
+    const after = Number(url.searchParams.get("after") ?? 0);
+    const limit = Number(url.searchParams.get("limit") ?? 128);
+    const page = await listDeqPresets(
+      Number.isFinite(after) && after >= 0 ? after : 0,
+      Number.isFinite(limit) && limit > 0 ? limit : 128,
+    );
+    return Response.json(page);
   } catch {
-    return Response.json({ presets: [], error: "The shared bank is warming up." }, { status: 503 });
+    return Response.json({ presets: [], total: 0, nextCursor: null, error: "The shared bank is warming up." }, { status: 503 });
   }
 }
 

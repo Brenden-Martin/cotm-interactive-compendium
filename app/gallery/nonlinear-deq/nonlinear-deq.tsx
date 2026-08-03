@@ -13,6 +13,7 @@ type Config = { k: number[]; exponent: number[]; dt: number; decay: number; nois
 type FieldState = [Float32Array, Float32Array, Float32Array];
 type Preset = Config & { name: string };
 type SharedPreset = { id: number; config: Config; createdAt: string };
+type SharedPresetPage = { presets?: SharedPreset[]; total?: number; nextCursor?: number | null; error?: string };
 type FoundryMode = "standard" | "photo" | "cursor";
 type AnchorBank = "all" | "curated" | "color-cycle";
 type ChannelPermutation = readonly [number, number, number];
@@ -121,6 +122,8 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const [autoMutate, setAutoMutate] = useState(!presetFoundry);
   const [mutationCount, setMutationCount] = useState(0);
   const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>([]);
+  const [sharedPresetTotal, setSharedPresetTotal] = useState(0);
+  const [bankLoadStatus, setBankLoadStatus] = useState("Loading complete bank…");
   const [morphing, setMorphing] = useState(false);
   const [morphRate, setMorphRate] = useState(1);
   const [morphRandomness, setMorphRandomness] = useState(.18);
@@ -209,16 +212,38 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
 
   useEffect(() => {
     if (!presetFoundry) return;
-    let active = true;
-    fetch("/api/deq-presets")
-      .then((response) => response.json())
-      .then((data: { presets?: SharedPreset[] }) => {
-        if (active) setSharedPresets(Array.isArray(data.presets) ? data.presets : []);
-      })
-      .catch(() => {
-        if (active) setSaveStatus("Shared bank temporarily unavailable");
-      });
-    return () => { active = false; };
+    const controller = new AbortController();
+    const loadCompleteBank = async () => {
+      try {
+        const collected: SharedPreset[] = [];
+        let cursor = 0;
+        let total = 0;
+        do {
+          const response = await fetch(`/api/deq-presets?after=${cursor}&limit=200`, { signal: controller.signal });
+          const data = await response.json() as SharedPresetPage;
+          if (!response.ok) throw new Error(data.error);
+          const page = Array.isArray(data.presets) ? data.presets : [];
+          collected.push(...page);
+          total = typeof data.total === "number" ? data.total : collected.length;
+          if (typeof data.nextCursor !== "number") break;
+          if (data.nextCursor <= cursor) throw new Error("The preset cursor did not advance.");
+          cursor = data.nextCursor;
+          setBankLoadStatus(`Loading ${Math.min(collected.length, total)} of ${total} anchors…`);
+        } while (!controller.signal.aborted);
+        if (controller.signal.aborted) return;
+        const unique = Array.from(new Map(collected.map((preset) => [preset.id, preset])).values()).sort((left, right) => left.id - right.id);
+        setSharedPresets(unique);
+        setSharedPresetTotal(total);
+        setBankLoadStatus(`All ${unique.length} shared anchors loaded`);
+      } catch {
+        if (!controller.signal.aborted) {
+          setBankLoadStatus("Complete bank temporarily unavailable");
+          setSaveStatus("Shared bank temporarily unavailable");
+        }
+      }
+    };
+    loadCompleteBank();
+    return () => controller.abort();
   }, [presetFoundry]);
 
   useEffect(() => {
@@ -322,7 +347,12 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       });
       const data = await response.json() as { preset?: SharedPreset; error?: string };
       if (!response.ok || !data.preset) throw new Error(data.error);
-      setSharedPresets((current) => current.some((item) => item.id === data.preset!.id) ? current : [...current, data.preset!]);
+      const alreadyLoaded = sharedPresets.some((item) => item.id === data.preset!.id);
+      setSharedPresets((current) => current.some((item) => item.id === data.preset!.id) ? current : [...current, data.preset!].sort((left, right) => left.id - right.id));
+      if (!alreadyLoaded) {
+        setSharedPresetTotal((current) => current + 1);
+        setBankLoadStatus((current) => current.startsWith("All ") ? `All ${sharedPresets.length + 1} shared anchors loaded` : current);
+      }
       setSaveStatus(`Saved as shared anchor ${String(data.preset.id).padStart(3, "0")}`);
     } catch {
       setSaveStatus("Could not reach the shared bank");
@@ -560,8 +590,8 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       </div>
       <aside className="deq-controls">
         {presetFoundry && <div className="control-block deq-foundry">
-          <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{archivedPresets.length} archived · {sharedPresets.length} live</b></div>
-          <b className="deq-bank-summary">{archivedPresets.length} curated · {subsequentPresets.length} subsequent</b>
+          <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{archivedPresets.length} archived · {sharedPresets.length}/{sharedPresetTotal || "?"} live</b></div>
+          <b className="deq-bank-summary">{archivedPresets.length} curated · {subsequentPresets.length} subsequent · {bankLoadStatus}</b>
           <div className="deq-foundry-tabs" role="tablist" aria-label="Field input mode">
             <button role="tab" aria-selected={foundryMode==="standard"} className={foundryMode==="standard"?"active":""} onClick={()=>switchFoundryMode("standard")}>Standard field</button>
             <button role="tab" aria-selected={foundryMode==="photo"} className={foundryMode==="photo"?"active":""} onClick={()=>switchFoundryMode("photo")}>Photo boundary</button>
