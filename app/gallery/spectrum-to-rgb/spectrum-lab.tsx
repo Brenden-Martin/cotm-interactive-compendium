@@ -5,10 +5,15 @@ import { CIE_1931_2DEG_5NM } from "./cie-1931";
 
 type Peak = { id: number; center: number; amplitude: number; width: number };
 type DragMode = { id: number; kind: "peak" | "width" } | null;
+type SpectrumMode = "emitters" | "blackbody";
 
 const MIN_WAVELENGTH = 380;
 const MAX_WAVELENGTH = 780;
 const MAX_AMPLITUDE = 1.5;
+const MIN_TEMPERATURE = 800;
+const MAX_TEMPERATURE = 20000;
+const SECOND_RADIATION_CONSTANT = 1.438776877e-2;
+const WIEN_WAVELENGTH_CONSTANT = 2.897771955e-3;
 
 const PRESETS: Record<string, Peak[]> = {
   sodium: [{ id: 1, center: 589, amplitude: 1.2, width: 4 }],
@@ -36,18 +41,33 @@ const spectrumAt = (wavelength: number, peaks: Peak[]) => peaks.reduce((sum, pea
   return sum + peak.amplitude / (1 + 4 * offset * offset);
 }, 0);
 
+const blackbodyRadianceAt = (wavelength: number, temperature: number) => {
+  const wavelengthMetres = wavelength * 1e-9;
+  return 1 / (Math.pow(wavelengthMetres, 5) * Math.expm1(SECOND_RADIATION_CONSTANT / (wavelengthMetres * temperature)));
+};
+
+const blackbodyVisibleMaximum = (temperature: number) => Math.max(
+  ...CIE_1931_2DEG_5NM.map(([wavelength]) => blackbodyRadianceAt(wavelength, temperature)),
+  Number.MIN_VALUE,
+);
+
+const relativePowerAt = (wavelength: number, peaks: Peak[], mode: SpectrumMode, temperature: number, blackbodyMaximum: number) => mode === "blackbody"
+  ? blackbodyRadianceAt(wavelength, temperature) / blackbodyMaximum * 1.25
+  : spectrumAt(wavelength, peaks);
+
 const encodeSrgb = (linear: number) => linear <= .0031308
   ? linear * 12.92
   : 1.055 * Math.pow(linear, 1 / 2.4) - .055;
 
 const toHex = (values: number[]) => `#${values.map((value) => Math.round(value * 255).toString(16).padStart(2, "0")).join("")}`;
 
-function calculateColor(peaks: Peak[], exposure: number) {
+function calculateColor(peaks: Peak[], exposure: number, mode: SpectrumMode, temperature: number) {
   let X = 0;
   let Y = 0;
   let Z = 0;
+  const blackbodyMaximum = blackbodyVisibleMaximum(temperature);
   for (const [wavelength, xBar, yBar, zBar] of CIE_1931_2DEG_5NM) {
-    const power = spectrumAt(wavelength, peaks);
+    const power = relativePowerAt(wavelength, peaks, mode, temperature, blackbodyMaximum);
     X += power * xBar * 5;
     Y += power * yBar * 5;
     Z += power * zBar * 5;
@@ -86,12 +106,16 @@ export function SpectrumLab() {
   const dragRef = useRef<DragMode>(null);
   const nextIdRef = useRef(4);
   const [peaks, setPeaks] = useState<Peak[]>(PRESETS.warmWhite);
+  const [mode, setMode] = useState<SpectrumMode>("emitters");
+  const [temperature, setTemperature] = useState(5778);
   const [selectedId, setSelectedId] = useState(2);
   const [showCurves, setShowCurves] = useState(true);
   const [exposure, setExposure] = useState(1);
   const [challenge, setChallenge] = useState("Try to make purple with one spectral line.");
-  const color = useMemo(() => calculateColor(peaks, exposure), [exposure, peaks]);
+  const color = useMemo(() => calculateColor(peaks, exposure, mode, temperature), [exposure, mode, peaks, temperature]);
   const selected = peaks.find((peak) => peak.id === selectedId) ?? peaks[0];
+  const wienPeak = WIEN_WAVELENGTH_CONSTANT / temperature * 1e9;
+  const temperaturePosition = Math.log(temperature / MIN_TEMPERATURE) / Math.log(MAX_TEMPERATURE / MIN_TEMPERATURE) * 1000;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,7 +124,8 @@ export function SpectrumLab() {
     if (!context) return;
     let width = 0;
     let height = 0;
-    const padding = { left: 48, right: 24, top: 24, bottom: 42 };
+    const padding = { left: 48, right: 24, top: 24, bottom: 60 };
+    const blackbodyMaximum = blackbodyVisibleMaximum(temperature);
 
     const xFor = (wavelength: number) => padding.left + (wavelength - MIN_WAVELENGTH) / (MAX_WAVELENGTH - MIN_WAVELENGTH) * (width - padding.left - padding.right);
     const yFor = (amplitude: number) => height - padding.bottom - clamp(amplitude / MAX_AMPLITUDE, 0, 1) * (height - padding.top - padding.bottom);
@@ -123,10 +148,11 @@ export function SpectrumLab() {
       context.lineWidth = 1;
       context.font = "800 9px Arial";
       context.fillStyle = "rgba(244,240,223,.7)";
+      context.textAlign = "center";
       for (let wavelength = 400; wavelength <= 750; wavelength += 50) {
         const x = Math.round(xFor(wavelength)) + .5;
         context.beginPath();context.moveTo(x,padding.top);context.lineTo(x,height-padding.bottom);context.stroke();
-        context.fillText(`${wavelength}`, x - 13, height - 18);
+        context.fillText(`${wavelength}`, x, height - 35);
       }
       for (let level = 0; level <= 3; level++) {
         const y = Math.round(yFor(level * .5)) + .5;
@@ -155,7 +181,7 @@ export function SpectrumLab() {
       context.beginPath();
       for (let x = padding.left; x <= width - padding.right; x += 2) {
         const wavelength = wavelengthFor(x);
-        const y = yFor(spectrumAt(wavelength, peaks));
+        const y = yFor(relativePowerAt(wavelength, peaks, mode, temperature, blackbodyMaximum));
         if (x === padding.left) context.moveTo(x, y); else context.lineTo(x, y);
       }
       context.lineTo(width - padding.right, height - padding.bottom);
@@ -169,14 +195,14 @@ export function SpectrumLab() {
       context.fill();
       context.beginPath();
       for (let x = padding.left; x <= width - padding.right; x += 2) {
-        const y = yFor(spectrumAt(wavelengthFor(x), peaks));
+        const y = yFor(relativePowerAt(wavelengthFor(x), peaks, mode, temperature, blackbodyMaximum));
         if (x === padding.left) context.moveTo(x, y); else context.lineTo(x, y);
       }
       context.strokeStyle = "#f4f0df";
       context.lineWidth = 3;
       context.stroke();
 
-      for (const peak of peaks) {
+      if (mode === "emitters") for (const peak of peaks) {
         const selectedPeak = peak.id === selectedId;
         const peakX = xFor(peak.center);
         const peakY = yFor(spectrumAt(peak.center, peaks));
@@ -189,7 +215,8 @@ export function SpectrumLab() {
         context.fillRect(widthX - 6, widthY - 6, 12, 12);context.strokeRect(widthX - 6, widthY - 6, 12, 12);
       }
       context.fillStyle = "rgba(244,240,223,.64)";
-      context.fillText("WAVELENGTH / nm", width - 120, height - 18);
+      context.fillText("WAVELENGTH / nm", (padding.left + width - padding.right) / 2, height - 10);
+      context.textAlign = "start";
     };
 
     const resize = () => {
@@ -204,6 +231,7 @@ export function SpectrumLab() {
       return { x: event.clientX - rect.left, y: event.clientY - rect.top };
     };
     const pointerDown = (event: PointerEvent) => {
+      if (mode !== "emitters") return;
       const point = pointerCoordinates(event);
       let nearest: { distance: number; drag: Exclude<DragMode, null> } | null = null;
       for (const peak of peaks) {
@@ -231,7 +259,7 @@ export function SpectrumLab() {
     const pointerUp = () => { dragRef.current = null; };
     resize();window.addEventListener("resize",resize);canvas.addEventListener("pointerdown",pointerDown);canvas.addEventListener("pointermove",pointerMove);canvas.addEventListener("pointerup",pointerUp);canvas.addEventListener("pointercancel",pointerUp);
     return () => { window.removeEventListener("resize",resize);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",pointerMove);canvas.removeEventListener("pointerup",pointerUp);canvas.removeEventListener("pointercancel",pointerUp); };
-  }, [peaks, selectedId, showCurves]);
+  }, [mode, peaks, selectedId, showCurves, temperature]);
 
   const updateSelected = (key: "center" | "amplitude" | "width", value: number) => {
     if (!selected) return;
@@ -247,31 +275,52 @@ export function SpectrumLab() {
     setPeaks((current) => [...current,{ id, center: 500 + Math.random() * 150, amplitude: .7, width: 24 }]);setSelectedId(id);
   };
   const singlePurpleAttempt = () => { setPeaks([{ id:1,center:420,amplitude:1.2,width:5 }]);setSelectedId(1);nextIdRef.current=2;setChallenge("Violet is spectral; display purple needs a non-spectral mixture. Add red, or reveal the solution."); };
-  const revealPurple = () => { setPeaks([{id:1,center:440,amplitude:1,width:12},{id:2,center:650,amplitude:1.15,width:16}]);setSelectedId(1);nextIdRef.current=3;setChallenge("Two separated spectral regions bridge the line of purples: additive red plus blue/violet."); };
+  const revealPurple = () => { setPeaks([{id:1,center:440,amplitude:1,width:12},{id:2,center:650,amplitude:1.15,width:16}]);setSelectedId(1);setExposure(.16);nextIdRef.current=3;setChallenge("Two separated spectral regions bridge the line of purples: additive red plus blue/violet."); };
+  const updateTemperaturePosition = (position: number) => {
+    setTemperature(Math.round(MIN_TEMPERATURE * Math.pow(MAX_TEMPERATURE / MIN_TEMPERATURE, position / 1000)));
+  };
+  const updateTemperature = (value: number) => setTemperature(clamp(Math.round(value), MIN_TEMPERATURE, MAX_TEMPERATURE));
 
   return (
     <section className="spectrum-lab">
       <div className="spectrum-workbench">
-        <div className="spectrum-plot-head"><span>Relative spectral power</span><span><i className="cmf-x" /> x̄ <i className="cmf-y" /> ȳ <i className="cmf-z" /> z̄</span></div>
-        <canvas ref={canvasRef} className="spectrum-canvas" aria-label="Editable emission spectrum from 380 to 780 nanometers. Drag circular peak handles and square width handles." />
-        <div className="spectrum-gesture-key"><b>● Drag peak</b><b>■ Drag half-width</b><span>The background rainbow is an orientation guide; the calculation uses CIE data.</span></div>
-        <div className="purple-challenge">
+        <div className="spectrum-mode-tabs" role="tablist" aria-label="Spectrum source">
+          <button role="tab" aria-selected={mode === "emitters"} className={mode === "emitters" ? "active" : ""} onClick={() => setMode("emitters")}>Line emitters</button>
+          <button role="tab" aria-selected={mode === "blackbody"} className={mode === "blackbody" ? "active" : ""} onClick={() => setMode("blackbody")}>Blackbody radiation</button>
+        </div>
+        <div className="spectrum-plot-head"><span>{mode === "blackbody" ? "Relative blackbody spectral radiance" : "Relative spectral power"}</span><span><i className="cmf-x" /> x̄ <i className="cmf-y" /> ȳ <i className="cmf-z" /> z̄</span></div>
+        <canvas ref={canvasRef} className={`spectrum-canvas ${mode === "blackbody" ? "passive" : ""}`} aria-label={mode === "blackbody" ? `Blackbody spectrum at ${temperature} kelvin from 380 to 780 nanometers.` : "Editable emission spectrum from 380 to 780 nanometers. Drag circular peak handles and square width handles."} />
+        <div className="spectrum-gesture-key">{mode === "emitters" ? <><b>● Drag peak</b><b>■ Drag half-width</b></> : <><b>{temperature.toLocaleString()} K</b><b>λmax {Math.round(wienPeak)} nm</b></>}<span>The background rainbow is an orientation guide; the calculation uses CIE data.</span></div>
+        {mode === "emitters" ? <div className="purple-challenge">
           <div><span className="eyebrow">The purple challenge</span><p>{challenge}</p></div>
           <button onClick={singlePurpleAttempt}>Try one line</button><button onClick={revealPurple}>Reveal mixture</button>
-        </div>
+        </div> : <div className="blackbody-summary">
+          <div><span className="eyebrow">Heat becomes color</span><p>The curve is Planck&apos;s ideal thermal spectrum. Its wavelength peak follows Wien&apos;s law and may sit beyond this visible window.</p></div>
+          <strong>{temperature.toLocaleString()} K</strong><span>Peak ≈ {Math.round(wienPeak)} nm</span>
+        </div>}
       </div>
       <aside className="spectrum-controls">
         <div className="spectrum-result" style={{ backgroundColor: color.hex }}><span>Displayed sRGB</span><strong>{color.hex}</strong></div>
         <div className="spectrum-readout"><span>RGB <b>{color.display.map((channel) => Math.round(channel * 255)).join(" · ")}</b></span><span>xy <b>{color.chromaticity.x.toFixed(3)} · {color.chromaticity.y.toFixed(3)}</b></span><span className={color.outOfGamut ? "warning" : ""}>{color.outOfGamut ? "Gamut clipped" : "Inside sRGB"}</span></div>
-        <div className="spectrum-presets"><button onClick={() => applyPreset("sodium")}>Sodium</button><button onClick={() => applyPreset("mercury")}>Mercury</button><button onClick={() => applyPreset("hydrogen")}>Hydrogen</button><button onClick={() => applyPreset("warmWhite")}>Warm white</button></div>
-        <div className="spectrum-actions"><button onClick={addPeak} disabled={peaks.length >= 6}>+ Add emitter</button><button onClick={() => { if (peaks.length <= 1 || !selected) return;const remaining=peaks.filter((peak)=>peak.id!==selected.id);setPeaks(remaining);setSelectedId(remaining[0].id); }}>Remove selected</button><button className={showCurves?"active":""} onClick={() => setShowCurves((value)=>!value)}>Observer curves</button></div>
-        {selected && <div className="emitter-controls"><div className="emitter-title"><span>Selected emitter</span><b>{Math.round(selected.center)} nm</b></div>
+        {mode === "emitters" ? <>
+          <div className="spectrum-presets"><button onClick={() => applyPreset("sodium")}>Sodium</button><button onClick={() => applyPreset("mercury")}>Mercury</button><button onClick={() => applyPreset("hydrogen")}>Hydrogen</button><button onClick={() => applyPreset("warmWhite")}>Warm white</button></div>
+          <div className="spectrum-actions"><button onClick={addPeak} disabled={peaks.length >= 6}>+ Add emitter</button><button onClick={() => { if (peaks.length <= 1 || !selected) return;const remaining=peaks.filter((peak)=>peak.id!==selected.id);setPeaks(remaining);setSelectedId(remaining[0].id); }}>Remove selected</button><button className={showCurves?"active":""} onClick={() => setShowCurves((value)=>!value)}>Observer curves</button></div>
+        </> : <>
+          <div className="spectrum-presets blackbody-presets"><button onClick={() => setTemperature(1800)}>Candle</button><button onClick={() => setTemperature(2856)}>Tungsten</button><button onClick={() => setTemperature(5778)}>Sun</button><button onClick={() => setTemperature(10000)}>Blue star</button></div>
+          <div className="spectrum-actions blackbody-actions"><button className={showCurves?"active":""} onClick={() => setShowCurves((value)=>!value)}>Observer curves</button></div>
+          <div className="blackbody-controls">
+            <div className="emitter-title"><span>Blackbody temperature</span><b>{temperature.toLocaleString()} K</b></div>
+            <label><span>Temperature</span><input type="number" min={MIN_TEMPERATURE} max={MAX_TEMPERATURE} step="1" value={temperature} onChange={(event)=>updateTemperature(Number(event.target.value))}/><input type="range" min="0" max="1000" step="1" value={temperaturePosition} onChange={(event)=>updateTemperaturePosition(Number(event.target.value))}/></label>
+            <div className="blackbody-wien"><span>Wien peak</span><b>{Math.round(wienPeak)} nm</b></div>
+          </div>
+        </>}
+        {mode === "emitters" && selected && <div className="emitter-controls"><div className="emitter-title"><span>Selected emitter</span><b>{Math.round(selected.center)} nm</b></div>
           <label><span>Center wavelength</span><output>{Math.round(selected.center)} nm</output><input type="range" min="380" max="780" step="1" value={selected.center} onChange={(event)=>updateSelected("center",Number(event.target.value))}/></label>
           <label><span>Amplitude</span><output>{selected.amplitude.toFixed(2)}</output><input type="range" min="0" max={MAX_AMPLITUDE} step=".01" value={selected.amplitude} onChange={(event)=>updateSelected("amplitude",Number(event.target.value))}/></label>
           <label><span>FWHM linewidth</span><output>{Math.round(selected.width)} nm</output><input type="range" min="2" max="140" step="1" value={selected.width} onChange={(event)=>updateSelected("width",Number(event.target.value))}/></label>
         </div>}
         <label className="spectrum-exposure"><span>Display exposure</span><output>{exposure.toFixed(2)}×</output><input type="range" min=".08" max="1.3" step=".01" value={exposure} onChange={(event)=>setExposure(Number(event.target.value))}/></label>
-        <div className="spectrum-model-note"><b>CIE 1931 2° → D65 sRGB</b><p>Tristimulus values are integrated from the official CIE color-matching table at 5 nm intervals, then normalized for display exposure and gamut-mapped by clipping. Screens cannot reproduce every spectral color.</p><a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer" target="_blank" rel="noreferrer">CIE observer data ↗</a><a href="https://www.w3.org/TR/css-color-4/" target="_blank" rel="noreferrer">sRGB conversion reference ↗</a></div>
+        <div className="spectrum-model-note"><b>{mode === "blackbody" ? "Planck → CIE 1931 2° → D65 sRGB" : "CIE 1931 2° → D65 sRGB"}</b><p>{mode === "blackbody" ? "Planck spectral radiance is evaluated with the NIST/CODATA second radiation constant, normalized over the visible plot, and passed through the same CIE observer and signed linear-sRGB transform as the emitter lab." : "Tristimulus values are integrated from the official CIE color-matching table at 5 nm intervals, then normalized for display exposure and gamut-mapped by clipping. Screens cannot reproduce every spectral color."}</p><a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer" target="_blank" rel="noreferrer">CIE observer data ↗</a><a href="https://www.w3.org/TR/css-color-4/" target="_blank" rel="noreferrer">sRGB conversion reference ↗</a>{mode === "blackbody" && <a href="https://physics.nist.gov/cuu/pdf/all.pdf" target="_blank" rel="noreferrer">NIST / CODATA constants ↗</a>}</div>
       </aside>
     </section>
   );

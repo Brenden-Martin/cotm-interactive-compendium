@@ -80,7 +80,7 @@ Other established systems include:
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
 - **BOIDS-001 — Testing:** Boids presents alignment, cohesion, and separation as a full-screen flock of black triangular agents in a flat baby-blue cloudscape, with live controls in a Moiré-style instrument panel.
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
-- **COLOR-001 through COLOR-007 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, and the purple challenge.
+- **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with temperature presets and a Wien-peak readout.
 
 ## Prioritization principles
 
@@ -98,7 +98,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 ### Milestone A — Continue gallery momentum (approximately 2–4 sessions)
 
 1. **FORTUNE-001 through FORTUNE-004 are built:** continue collecting later suggestions for deliberate review.
-2. Build and test Spectrum to RGB in **COLOR-001** through **COLOR-007**.
+2. Build and test Spectrum to RGB in **COLOR-001** through **COLOR-007** and **COLOR-009**.
 3. Publish its linked color-perception Compendium sequence under **COLOR-008** after the interaction is trustworthy.
 
 ### Milestone B — Build the external reference shelf (approximately 1–2 sessions)
@@ -232,6 +232,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **COLOR-006 — Testing — Emission presets.** Provide intuitive approximate sodium, mercury, hydrogen, and warm-white spectral examples without presenting them as calibrated lamp measurements.
 - **COLOR-007 — Testing — Purple challenge.** Contrast a single violet line with a two-line red-plus-blue/violet mixture to demonstrate why purple is non-spectral.
 - **COLOR-008 — Planned — Linked writing.** Cover non-spectral and contextual colors such as pink, purple, and brown; color gamuts; why RGB displays struggle with some cyans and purples; white-light continuum generation; and optical parametric amplifiers.
+- **COLOR-009 — Testing — Blackbody radiation tab.** Evaluate Planck spectral radiance from 800–20,000 K using the NIST/CODATA radiation constants, pass the visible spectrum through the same CIE observer and signed sRGB pipeline, provide thermal-source presets, and expose the Wien wavelength peak alongside the live rendered color.
 
 ### Recommended Reading
 
@@ -317,7 +318,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - `dd5c282` — Added the true three-dimensional Voxel Lava Volume exhibit.
 - `58bc5a8` — Added the windowless Boids cloudscape and promoted it after approval.
 - `dbf93e0`, `585efee` — Added Fortune Cookie, its durable review queue, and the approved initial owner batch.
-- **COLOR-001 through COLOR-007** — Built the first Spectrum to RGB laboratory using official CIE observer data and explicit sRGB conversion.
+- **COLOR-001 through COLOR-007 and COLOR-009** — Built the Spectrum to RGB laboratory using official CIE observer data, explicit signed sRGB conversion, editable emission spectra, and a matched Planck-law blackbody tab.
 
 ## Decision log
 
