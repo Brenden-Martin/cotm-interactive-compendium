@@ -125,10 +125,11 @@ The estimates below are relative work sessions, not calendar promises. A session
 ### Milestone E — Major expansions, with identity first (ongoing)
 
 1. **First priority when returning to major architecture:** build the About/portfolio section and homepage QR path in **ABOUT-001** through **ABOUT-004**. This was deliberately deferred from the earlier sequence to preserve gallery momentum.
-2. Establish Recommended Reading and Tales from the Ruliad structures in **READ-001** and **RULIAD-001** through **RULIAD-003**.
-3. Build persistent Music playback before adding instruments and recordings.
-4. Add Private Research interest signals only after the privacy and retention design is explicit.
-5. Open the hidden puzzle labyrinth gradually, beginning with one discoverable anomaly and one complete room.
+2. Design the gallery Hall/Wing navigation layer under **HALL-001** through **HALL-005**, while preserving the current gallery index as **See All**.
+3. Establish Recommended Reading and Tales from the Ruliad structures in **READ-001** and **RULIAD-001** through **RULIAD-003**.
+4. Build persistent Music playback before adding instruments and recordings.
+5. Add Private Research interest signals only after the privacy and retention design is explicit.
+6. Open the hidden puzzle labyrinth gradually, beginning with one discoverable anomaly and one complete room.
 
 ### Recurring cadence
 
@@ -252,6 +253,14 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **GOLF-003 — Exploration — Manifold Pool.** Reuse the geodesic integrator for multiple balls and resolve ball-ball impacts in the local tangent plane before projecting outgoing velocities back onto the surface. Add surface-aware rails and pockets, a fixed simulation timestep, and swept collision checks so fast shots do not tunnel through balls or boundaries.
 - **GOLF-004 — Technical plan — Browser renderer.** Use WebGL for the surface and balls with a deterministic fixed-step physics core; keep a Canvas fallback for the UV minimap and lower-power devices. The torus version is comfortably browser-feasible, while non-orientable courses need explicit coordinate charts and seam/orientation handling rather than only visual mesh tricks.
 
+### Gallery halls and wayfinding
+
+- **HALL-001 — Planned — Preserve See All.** Keep the current gallery page as the complete, unfiltered **See All** index when category navigation arrives. The new layer organizes discovery without hiding, deleting, or replacing exhibits.
+- **HALL-002 — Exploration — Wings or Halls taxonomy.** Group exhibits into a small set of useful themed destinations, allow an exhibit to appear in more than one destination when appropriate, and decide whether the public name is “Wings,” “Halls,” or another museum term only after the categories and visual language are clear.
+- **HALL-003 — Exploration — Perspective selection scene.** Present the destinations as playful hallways in one-point perspective rather than ordinary category cards. Develop themed architectural graphics with small environmental details such as waving potted plants and framed paintings of orbitals, telescopes, and other exhibit-adjacent curiosities.
+- **HALL-004 — Exploration — Living preview ensembles.** Give each destination icon or vignette a tiny self-contained interaction or physics system—such as torsion-coupled rotating rings—that idles gently and responds to hover, keyboard focus, click, or touch perturbations. Each preview should suggest the hall's character without duplicating a full exhibit.
+- **HALL-005 — Technical plan — Whimsy within a budget.** Isolate and suspend preview simulations when offscreen, cap their aggregate frame cost, provide reduced-motion behavior, and make every destination fully usable by keyboard and touch so the point-and-click layer remains charming rather than obstructive.
+
 ### Recommended Reading
 
 - **READ-001 — Waiting — Source list.** Brenden will supply the Recommended Reading list spanning inspiration for Tales from the Ruliad plus movies, shows, songs, video games, and other works.
@@ -359,3 +368,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-01:** Low-resolution simulation detail is an aesthetic feature. Upscaling must use nearest-neighbor pixel selection at the original media dimensions, never smoothing interpolation.
 - **2026-08-01:** Default delivery favors a widely playable H.264 High Profile 4:2:0 MP4. The renderer, not the media player, still performs the only spatial enlargement by explicit nearest-neighbor pixel selection.
 - **2026-08-02:** Preserve gallery momentum through Spectrum to RGB, references, tuning, and homepage delight. Move About/portfolio into the later major-expansion milestone, where it becomes the first architectural priority.
+- **2026-08-03:** When themed gallery navigation is introduced, retain the current gallery index as **See All**. Treat “Wings” versus “Halls” as an open naming decision and make the selection screen a one-point-perspective, physics-reactive museum scene rather than a static category menu.
