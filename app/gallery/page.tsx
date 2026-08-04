@@ -117,6 +117,12 @@ export default function Gallery() {
           <strong>DEQ Atlas</strong>
           <small>Navigate the learned field →</small>
         </Link>
+        <Link className="study manifold-entry" href="/gallery/manifold-golf">
+          <span className="eyebrow">Exhibit 19 / Differential Geometry</span>
+          <div className="manifold-entry-course" aria-hidden="true"><span /><i /><i /><b /></div>
+          <strong>Manifold Golf</strong>
+          <small>Putt through curved space →</small>
+        </Link>
       </section>
     </main>
   );

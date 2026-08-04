@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The next Site version contains eighteen gallery exhibits:
+The next Site version contains nineteen gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -57,6 +57,7 @@ The next Site version contains eighteen gallery exhibits:
 16. Fortune Cookie
 17. Spectrum to RGB
 18. DEQ Atlas
+19. Manifold Golf
 
 The Compendium currently contains five linked theory entries:
 
@@ -85,6 +86,7 @@ Other established systems include:
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
 - **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with a full UV-to-IR spectrum, an iconic linear wavelength view for Thermal temperatures, logarithmic Stellar/Cosmic views, tiered controls reaching the Planck scale, source presets, and a Wien-peak readout.
 - **HOME-001 — Testing:** The homepage now introduces COTM as “An interactive museum of emergent phenomenon in physics and art.”
+- **GOLF-001 through GOLF-005 — Testing:** Manifold Golf ports the recovered Pygame/OpenGL lineage into a browser laboratory with torus, sphere, Möbius-strip, and Klein-bottle courses; Golf and Pool modes; seam-aware trails and UV maps; equal-mass ball collisions; Gaussian torus/sphere terrain; world-down gravity; and a local normal-field experiment that makes the orientability obstruction visible.
 
 ## Prioritization principles
 
@@ -248,10 +250,11 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Manifold Golf
 
-- **GOLF-001 — Exploration — Browser geodesic putter.** Port the earlier UV-space Pygame prototype into a browser exhibit with a synchronized three-dimensional surface and flat parameter-space minimap, correct seam wrapping, an uninterrupted trajectory trail, aim and power controls, and reproducible course resets.
-- **GOLF-002 — Exploration — Curved course family.** Begin with the torus and its normal-displaced Gaussian bump map, preserving the earlier distinction between visual bump height and metric perturbation. Expand later to carefully presented Möbius-strip, Klein-bottle, and real-projective-plane courses, explaining when the view is an immersion or edge identification rather than an ordinary embedded surface.
-- **GOLF-003 — Exploration — Manifold Pool.** Reuse the geodesic integrator for multiple balls and resolve ball-ball impacts in the local tangent plane before projecting outgoing velocities back onto the surface. Add surface-aware rails and pockets, a fixed simulation timestep, and swept collision checks so fast shots do not tunnel through balls or boundaries.
-- **GOLF-004 — Technical plan — Browser renderer.** Use WebGL for the surface and balls with a deterministic fixed-step physics core; keep a Canvas fallback for the UV minimap and lower-power devices. The torus version is comfortably browser-feasible, while non-orientable courses need explicit coordinate charts and seam/orientation handling rather than only visual mesh tricks.
+- **GOLF-001 — Testing — Browser geodesic putter.** The recovered UV-space Pygame prototype now has a browser-native parametric-surface renderer, synchronized flat parameter-space minimap, correct seam transformations, continuous trajectory trails, aim and power controls, camera orbit, holes, and reproducible resets.
+- **GOLF-002 — Testing — Curved course family.** The first browser pass includes torus, sphere, Möbius-strip, and immersed Klein-bottle courses. Torus and sphere accept Gaussian normal-displacement terrain directly in the metric; non-orientable courses explicitly identify their orientation-flipping seams rather than pretending they have a global outward side. Real projective plane and additional surfaces remain later course candidates.
+- **GOLF-003 — Testing — Manifold Pool.** Pool reuses the geodesic integrator for three through ten balls, resolves equal-mass impacts in a local metric tangent frame, provides point pockets on closed surfaces, and uses a fixed 150 Hz physics step to reduce fast-shot tunneling.
+- **GOLF-004 — Testing — Browser renderer.** A dependency-light Canvas surface painter keeps the exhibit available in the existing Sites runtime, with touch/keyboard controls, a separate UV map, offscreen-safe animation cleanup, and no change to the recovered original archive.
+- **GOLF-005 — Testing — Gravity interpretations.** Compare force-free geodesic motion with a uniform world-down force projected into the tangent plane. A separate normal-well mode and Pop control demonstrate that a purely normal force cannot steer a surface-constrained putt, while Möbius and Klein courses expose why no continuous global “negative normal” or universal “above” exists on a non-orientable surface.
 
 ### Gallery halls and wayfinding
 
@@ -355,6 +358,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - **DEQ-009 controls** — Replaced the difficult rotary dials with full-range coarse sliders and high-resolution `±0.02` fine sliders for both route position and deterministic chaos while preserving exact numeric coordinates.
 - **HOME-001** — Replaced the long homepage cabinet description with the concise museum identity line.
 - **GOLF-001 through GOLF-004** — Recovered the Manifold Golf concept from the indexed local conversation catalogue and recorded the browser geodesic-putter, curved-course, and collision-aware pool directions without claiming the original prototype source has been recovered.
+- **GOLF-001 through GOLF-005 browser pass** — Recovered the original ten-file Pygame/OpenGL prototype archive and built the first browser exhibit with four course surfaces, Golf and Pool, metric collisions, UV trails, Gaussian terrain, and explicit world-versus-normal gravity experiments.
 
 ## Decision log
 
