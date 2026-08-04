@@ -84,6 +84,7 @@ Other established systems include:
 - **BOIDS-001 — Testing:** Boids presents alignment, cohesion, and separation as a full-screen flock of black triangular agents in a flat baby-blue cloudscape, with live controls in a Moiré-style instrument panel.
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
 - **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with a full UV-to-IR spectrum, an iconic linear wavelength view for Thermal temperatures, logarithmic Stellar/Cosmic views, tiered controls reaching the Planck scale, source presets, and a Wien-peak readout.
+- **HOME-001 — Testing:** The homepage now introduces COTM as “An interactive museum of emergent phenomenon in physics and art.”
 
 ## Prioritization principles
 
@@ -101,8 +102,9 @@ The estimates below are relative work sessions, not calendar promises. A session
 ### Milestone A — Continue gallery momentum (approximately 2–4 sessions)
 
 1. **FORTUNE-001 through FORTUNE-004 are built:** continue collecting later suggestions for deliberate review.
-2. Build and test Spectrum to RGB in **COLOR-001** through **COLOR-007** and **COLOR-009**.
-3. Publish its linked color-perception Compendium sequence under **COLOR-008** after the interaction is trustworthy.
+2. Finish testing Spectrum to RGB in **COLOR-001** through **COLOR-007** and **COLOR-009**.
+3. Add the sRGB gamut explorer as a third Spectrum to RGB tab under **COLOR-010**.
+4. Publish its linked color-perception Compendium sequence under **COLOR-008** after the interaction is trustworthy.
 
 ### Milestone B — Build the external reference shelf (approximately 1–2 sessions)
 
@@ -188,6 +190,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### YOU ARE HERE and homepage behavior
 
+- **HOME-001 — Testing — Museum identity line.** Replace the longer “evolving cabinet” introduction with the concise homepage statement “An interactive museum of emergent phenomenon in physics and art.”
 - **YAH-001 — Planned — Daily gag proposals.** Generate a few candidates daily, sometimes informed by the connected conversation archive and sometimes by slapstick, absurdity, or fitting pop-culture references. The routine proposes; Brenden chooses what ships.
 - **YAH-002 — Next — Probability rebalance.** Make full visual/physical effects more common, text-or-sound-only outcomes less common, and the rarest events less vanishingly rare.
 - **YAH-003 — Exploration — Novelty-weighted selection.** As the gag library grows, prefer a recent-history/novelty system over rigid rarity tiers so repeat clicks remain surprising without forcing users through a fixed cycle.
@@ -240,6 +243,14 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **COLOR-007 — Testing — Purple challenge.** Contrast a single violet line with a two-line red-plus-blue/violet mixture to demonstrate why purple is non-spectral.
 - **COLOR-008 — Planned — Linked writing.** Cover non-spectral and contextual colors such as pink, purple, and brown; color gamuts; why RGB displays struggle with some cyans and purples; white-light continuum generation; and optical parametric amplifiers.
 - **COLOR-009 — Testing — Blackbody radiation tab.** Evaluate Planck spectral radiance from 800 K through the CODATA Planck temperature using thermal, stellar, and cosmic logarithmic temperature-control bands. Plot the complete dynamically framed UV/visible/IR curve on a linear wavelength axis in the Thermal band to preserve its iconic shape, switching to a logarithmic wavelength axis for Stellar and Cosmic scales where a linear view cannot retain both the Wien peak and visible overlap. Highlight 380–780 nm, pass that visible portion through the same CIE observer and signed sRGB pipeline, provide source presets, and expose the Wien wavelength peak alongside the live rendered color. Label the Planck temperature as a conventional quantum-gravity scale rather than a proven hard ceiling.
+- **COLOR-010 — Planned — sRGB gamut explorer tab.** Add a third Spectrum to RGB tab centered on the CIE chromaticity diagram and the sRGB gamut triangle. Let the user drag or enter a target chromaticity, inspect its linear and encoded sRGB coordinates, see whether it lies inside the display gamut, and compare explicit clipping or gamut-mapping behavior without confusing displayed approximations for physically reproducible colors.
+
+### Manifold Golf
+
+- **GOLF-001 — Exploration — Browser geodesic putter.** Port the earlier UV-space Pygame prototype into a browser exhibit with a synchronized three-dimensional surface and flat parameter-space minimap, correct seam wrapping, an uninterrupted trajectory trail, aim and power controls, and reproducible course resets.
+- **GOLF-002 — Exploration — Curved course family.** Begin with the torus and its normal-displaced Gaussian bump map, preserving the earlier distinction between visual bump height and metric perturbation. Expand later to carefully presented Möbius-strip, Klein-bottle, and real-projective-plane courses, explaining when the view is an immersion or edge identification rather than an ordinary embedded surface.
+- **GOLF-003 — Exploration — Manifold Pool.** Reuse the geodesic integrator for multiple balls and resolve ball-ball impacts in the local tangent plane before projecting outgoing velocities back onto the surface. Add surface-aware rails and pockets, a fixed simulation timestep, and swept collision checks so fast shots do not tunnel through balls or boundaries.
+- **GOLF-004 — Technical plan — Browser renderer.** Use WebGL for the surface and balls with a deterministic fixed-step physics core; keep a Canvas fallback for the UV minimap and lower-power devices. The torus version is comfortably browser-feasible, while non-orientable courses need explicit coordinate charts and seam/orientation handling rather than only visual mesh tricks.
 
 ### Recommended Reading
 
@@ -333,6 +344,8 @@ This is a human-readable summary of the repository history, not a substitute for
 - **DEQ-007** — Added a reproducible local analysis workspace and frozen complete-bank snapshot. The first symmetry-aware pass reduces 313 named anchors to 283 exact unique states, finds a 263-state main body plus a 20-state high-coupling/high-decay outer family, and exports the data needed for deeper behavioral analysis.
 - **DEQ-009** — Fitted the 263-state main family with a smoothed seven-dimensional principal curve retaining 91% of aligned variance, sampled it uniformly by arc length, and built the independent DEQ Atlas exhibit with two repeatable numeric coordinates and deterministic restarts.
 - **DEQ-009 controls** — Replaced the difficult rotary dials with full-range coarse sliders and high-resolution `±0.02` fine sliders for both route position and deterministic chaos while preserving exact numeric coordinates.
+- **HOME-001** — Replaced the long homepage cabinet description with the concise museum identity line.
+- **GOLF-001 through GOLF-004** — Recovered the Manifold Golf concept from the indexed local conversation catalogue and recorded the browser geodesic-putter, curved-course, and collision-aware pool directions without claiming the original prototype source has been recovered.
 
 ## Decision log
 

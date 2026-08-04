@@ -219,9 +219,7 @@ export function ColorIndex({ active }: { active: Room }) {
           <h1 className="brand">COTM</h1>
         </div>
         <p className="intro">
-          Child of the Machine is an evolving cabinet of interactive exhibits:
-          sound, visual systems, private experiments, and whatever refuses to
-          fit neatly elsewhere.
+          An interactive museum of emergent phenomenon in physics and art.
         </p>
       </section>
       <nav className={`index-nav menu-dance menu-dance-${gag ? "idle" : (dance || "idle")}`} aria-label="Main collection">
