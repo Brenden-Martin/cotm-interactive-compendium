@@ -246,7 +246,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **COLOR-007 — Testing — Purple challenge.** Contrast a single violet line with a two-line red-plus-blue/violet mixture to demonstrate why purple is non-spectral.
 - **COLOR-008 — Planned — Linked writing.** Cover non-spectral and contextual colors such as pink, purple, and brown; color gamuts; why RGB displays struggle with some cyans and purples; white-light continuum generation; and optical parametric amplifiers.
 - **COLOR-009 — Testing — Blackbody radiation tab.** Evaluate Planck spectral radiance from 800 K through the CODATA Planck temperature using thermal, stellar, and cosmic logarithmic temperature-control bands. Plot the complete dynamically framed UV/visible/IR curve on a linear wavelength axis in the Thermal band to preserve its iconic shape, switching to a logarithmic wavelength axis for Stellar and Cosmic scales where a linear view cannot retain both the Wien peak and visible overlap. Highlight 380–780 nm, pass that visible portion through the same CIE observer and signed sRGB pipeline, provide source presets, and expose the Wien wavelength peak alongside the live rendered color. Label the Planck temperature as a conventional quantum-gravity scale rather than a proven hard ceiling.
-- **COLOR-010 — Planned — sRGB gamut explorer tab.** Add a third Spectrum to RGB tab centered on the CIE chromaticity diagram and the sRGB gamut triangle. Let the user drag or enter a target chromaticity, inspect its linear and encoded sRGB coordinates, see whether it lies inside the display gamut, and compare explicit clipping or gamut-mapping behavior without confusing displayed approximations for physically reproducible colors.
+- **COLOR-010 — Testing — sRGB gamut explorer tab.** The third Spectrum to RGB tab centers the CIE chromaticity diagram and sRGB gamut triangle. A draggable or numeric target reports normalized linear and encoded sRGB coordinates, identifies out-of-gamut chromaticities, and compares negative-channel clipping with hue-preserving compression toward D65 white. The interface explicitly labels diagram colors as orientation aids rather than physically faithful previews.
 
 ### Manifold Golf
 
@@ -359,6 +359,10 @@ This is a human-readable summary of the repository history, not a substitute for
 - **HOME-001** — Replaced the long homepage cabinet description with the concise museum identity line.
 - **GOLF-001 through GOLF-004** — Recovered the Manifold Golf concept from the indexed local conversation catalogue and recorded the browser geodesic-putter, curved-course, and collision-aware pool directions without claiming the original prototype source has been recovered.
 - **GOLF-001 through GOLF-005 browser pass** — Recovered the original ten-file Pygame/OpenGL prototype archive and built the first browser exhibit with four course surfaces, Golf and Pool, metric collisions, UV trails, Gaussian terrain, and explicit world-versus-normal gravity experiments.
+
+### 2026-08-04
+
+- **COLOR-010** — Added a draggable CIE 1931 xy diagram, the sRGB primary triangle, numeric chromaticity entry, linear/encoded RGB readouts, and an explicit comparison between channel clipping and D65-directed gamut compression.
 
 ## Decision log
 

@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CIE_1931_2DEG_5NM } from "./cie-1931";
+import { GamutExplorer } from "./gamut-explorer";
 
 type Peak = { id: number; center: number; amplitude: number; width: number };
 type DragMode = { id: number; kind: "peak" | "width" } | null;
-type SpectrumMode = "emitters" | "blackbody";
+export type SpectrumMode = "emitters" | "blackbody" | "gamut";
 type TemperatureBand = "thermal" | "stellar" | "cosmic";
 
 const MIN_WAVELENGTH = 380;
@@ -404,12 +405,15 @@ export function SpectrumLab() {
     setTemperature(clamp(temperature, range.min, range.max));
   };
 
+  if (mode === "gamut") return <GamutExplorer onModeChange={setMode} />;
+
   return (
     <section className="spectrum-lab">
       <div className="spectrum-workbench">
         <div className="spectrum-mode-tabs" role="tablist" aria-label="Spectrum source">
           <button role="tab" aria-selected={mode === "emitters"} className={mode === "emitters" ? "active" : ""} onClick={() => setMode("emitters")}>Line emitters</button>
           <button role="tab" aria-selected={mode === "blackbody"} className={mode === "blackbody" ? "active" : ""} onClick={() => setMode("blackbody")}>Blackbody radiation</button>
+          <button role="tab" aria-selected={false} onClick={() => setMode("gamut")}>sRGB gamut</button>
         </div>
         <div className="spectrum-plot-head"><span>{mode === "blackbody" ? "Relative blackbody spectral radiance" : "Relative spectral power"}</span><span><i className="cmf-x" /> x̄ <i className="cmf-y" /> ȳ <i className="cmf-z" /> z̄</span></div>
         <canvas ref={canvasRef} className={`spectrum-canvas ${mode === "blackbody" ? "passive" : ""}`} aria-label={mode === "blackbody" ? `${blackbodyUsesLogScale ? "Logarithmic" : "Linear"} blackbody spectrum at ${formatTemperature(temperature)}, including ultraviolet, visible, and infrared wavelengths. Wien peak ${formatWavelength(wienPeak)}.` : "Editable emission spectrum from 380 to 780 nanometers. Drag circular peak handles and square width handles."} />
