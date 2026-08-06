@@ -6,6 +6,24 @@ This register preserves the story-image collection independently from its eventu
 
 | Asset | Current room | Use |
 | --- | --- | --- |
+| `public/ruliad/assumptions.jpg` | Assumptions | Main preview and hero image |
+| `public/ruliad/assumptions-yarn-illustration.jpg` | Assumptions | Prominent opening archive plate |
+| `public/ruliad/assumptions-white-knot-object.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-bread-knot.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-painted-knot-study.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-knot-transformation.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-rainbow-knot-in-progress.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-handheld-rainbow-knot.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-yarn-mushroom-workbench.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-yarn-orbits-01.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-yarn-orbits-02.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-yarn-orbits-03.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-yarn-terrariums.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-soft-sculpture-console-01.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-soft-sculpture-table.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-soft-sculpture-console-02.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/inside-the-machine-09.jpg` | The Machine and the XASER / Assumptions | Shared field plate: cable canopy and yarn topology |
+| `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER / Assumptions | Shared field plate: yarn-crowned operator inside The Machine |
 | `public/ruliad/hands.jpg` | Hands | Hero illustration |
 | `public/ruliad/lobotomy.jpg` | Lobotomy | Main preview and hero mark |
 | `public/ruliad/kind-eyed-stranger.jpg` | Kind-Eyed Stranger | Hero illustration |

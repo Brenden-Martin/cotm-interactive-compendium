@@ -407,6 +407,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - **FORTUNE-007 — Physical fortune archive, second import.** Transcribed and approved 16 further readable slips. None exactly duplicates the 97-entry public approved bank or the first 27-line photographed collection; both similar email fortunes remain because they are distinct physical texts.
 - **RULIAD-015 — The belly of The Machine.** Added five explicitly identified views to *The Machine and the XASER* field archive: the assembled CRT-and-instrument cabinet, suspended cable canopy, low console view, blue adjoining room, and violet mixing-desk portrait.
 - **RULIAD-016 — Lobotomy preview mark.** Installed the plainer white rat drawing on black as the main *Lobotomy* preview and hero image. Preserved the colored, crossed-bones variation as a labeled alternate without using it as the primary mark.
+- **RULIAD-017 — Assumptions knot and yarn archive.** Installed the four knitted knots on the white sketch-covered field as the unmistakable main *Assumptions* image. Built a seventeen-plate supporting collection led by the colorful yarn illustration and spanning physical knot studies, bread, works in progress, yarn orbits, soft-sculpture habitats, and two deliberately shared views of The Machine where its cables and operator become part of the same topology. Checksum-identical Machine photographs were referenced in place rather than copied again.
 
 ## Decision log
 
