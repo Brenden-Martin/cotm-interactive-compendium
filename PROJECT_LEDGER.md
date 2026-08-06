@@ -277,6 +277,12 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **MUSIC-003 — Planned — Interactive instruments.** Add playful musical gadgets, experimental generators, goofy web synths, and sequencers.
 - **MUSIC-004 — Architecture first — Persistent playback.** Let explicitly opted-in synth/sequencer audio continue across internal navigation. Put the audio engine in a persistent top-level client shell; expect a full reload, browser autoplay policy, or tab closure to stop it.
 - **MUSIC-005 — Planned — Global transport.** Provide a visible way to pause/stop background audio from every page and never start persistent sound without a user gesture.
+- **MUSIC-006 — Testing — Music-room index.** The Music page now uses the Gallery's collection-selector logic in its existing orange palette. The original four-button instrument remains intact on its own **Four Small Signals** subpage.
+- **MUSIC-007 — Testing — Sold As Is {No Returns}.** Use this exact curly-brace title for the unreleased-recording collection. The first published shelf item is **Moog Preset Alternate 4**, paired with the supplied calculator artwork and original MP3.
+- **MUSIC-008 — Testing — Visit-specific band mark.** On each visit to the Sold As Is collection, select one of the supplied `COTM_<variant>` marks with browser cryptographic randomness. Do not publish every supplied picture or recording merely because it exists in the source-assets folder.
+- **MUSIC-009 — Testing — Audio-linked Glitch Goo monitor.** The first listening room places a cover-bound, pixel-preserving three-channel field inside a mock CRT. The cover's RGB values weight channel diffusion, and a Web Audio amplitude envelope increases transition wildness after the visitor explicitly presses play.
+- **MUSIC-010 — Planned — Per-song morph direction.** Give each later track an intentionally chosen subset of the full Glitch Goo preset bank; analyze tempo offline, store a beat/measure grid with the track, and let each song specify whether anchor changes happen every beat, measure, phrase, or another authored interval. Preserve amplitude-to-wildness as an independent, tunable mapping rather than conflating it with the beat clock.
+- **MUSIC-011 — Planned — Track-derived art direction.** Let individual song pages borrow their palette, CRT boundary image, logo, typography, and control styling from the selected band/album assets while preserving the common player and field architecture.
 
 ### Easter-egg labyrinth
 
@@ -364,6 +370,10 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **COLOR-010** — Added a draggable CIE 1931 xy diagram, the sRGB primary triangle, numeric chromaticity entry, linear/encoded RGB readouts, and an explicit comparison between channel clipping and D65-directed gamut compression.
 
+### 2026-08-05
+
+- **MUSIC-006 through MUSIC-011** — Reorganized Music into collection rooms, preserved Four Small Signals on its own route, opened **Sold As Is {No Returns}**, and added **Moog Preset Alternate 4** with its calculator cover, randomized COTM collection mark, native player, and first audio-reactive cover-bound CRT field.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
@@ -377,3 +387,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-01:** Default delivery favors a widely playable H.264 High Profile 4:2:0 MP4. The renderer, not the media player, still performs the only spatial enlargement by explicit nearest-neighbor pixel selection.
 - **2026-08-02:** Preserve gallery momentum through Spectrum to RGB, references, tuning, and homepage delight. Move About/portfolio into the later major-expansion milestone, where it becomes the first architectural priority.
 - **2026-08-03:** When themed gallery navigation is introduced, retain the current gallery index as **See All**. Treat “Wings” versus “Halls” as an open naming decision and make the selection screen a one-point-perspective, physics-reactive museum scene rather than a static category menu.
+- **2026-08-05:** The unreleased-music collection's canonical display title is **Sold As Is {No Returns}**. Curly braces are intentional typography and must not be normalized to parentheses.
