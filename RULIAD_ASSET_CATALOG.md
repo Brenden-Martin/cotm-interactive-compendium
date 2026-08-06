@@ -69,6 +69,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/grotto-waterfall.jpg` | Exact repeat of the grotto-waterfall asset from batch three; catalog reference retained without a second file | Unassigned |
 | `public/ruliad/vault/woodland-yurts.jpg` | Three round, conical-roofed cabins arranged in a wooded clearing | Unassigned |
 
+## Intake vault — 2026-08-06, batch six
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/optical-breadboard-components-01.jpg` | Optical mounts, posts, stages, and adapters arranged across a perforated breadboard | Unassigned |
+| `public/ruliad/vault/optical-breadboard-components-02.jpg` | Larger plates, blocks, and wrapped mounts arranged on the same optical breadboard | Unassigned |
+| `public/ruliad/vault/optical-breadboard-components-03.jpg` | Circular stages, apertures, and rectangular optical hardware arranged as a third breadboard view | Unassigned |
+| `public/ruliad/vault/vintage-circuit-board-closeup-01.jpg` | Tight view of a vintage circuit board with orange capacitors and radial transistor packages | Unassigned |
+| `public/ruliad/vault/vintage-circuit-board-closeup-02.jpg` | Wider closeup of a densely populated vintage board with coils, resistors, capacitors, and integrated circuits | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
