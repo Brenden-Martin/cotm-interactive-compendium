@@ -29,6 +29,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/dashboard-terrarium.jpg` | Glass terrarium on a dashboard facing a wooded clearing | Unassigned |
 | `public/ruliad/vault/red-table-field-kit.jpg` | Small tools and objects arranged on a round table under red light | Unassigned |
 
+## Intake vault — 2026-08-06, batch two
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Synthesizers, a projection dome, and a small plant packed into a car's front passenger seat | Unassigned |
+| `public/ruliad/vault/car-seat-cable-looms.jpg` | Long blue, black, and white cable looms draped across a car's back seat | Unassigned |
+| `public/ruliad/vault/mushroom-still-life.jpg` | Handmade mushroom tableaux, notebook, and drawing arranged on green cloth | Unassigned |
+| `public/ruliad/vault/workbench-cube-field-note.jpg` | Color cube, tools, and a folded handwritten field note on a crowded workbench | Unassigned |
+| `public/ruliad/vault/vintage-tube-layout.jpg` | Printed vacuum-tube chassis layout and connection diagram | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
