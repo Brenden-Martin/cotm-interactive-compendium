@@ -12,6 +12,10 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/assumptions-bread-knot.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-painted-knot-study.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-knot-transformation.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-flowering-line-study.jpg` | Assumptions | Knot and drawing field archive |
+| `public/ruliad/assumptions-pocket-knot-notes.jpg` | Assumptions | Knot and drawing field archive |
+| `public/ruliad/assumptions-dense-ink-cosmos.jpg` | Assumptions | Knot and drawing field archive |
+| `public/ruliad/assumptions-geometric-hive-study.jpg` | Assumptions | Knot and drawing field archive |
 | `public/ruliad/assumptions-rainbow-knot-in-progress.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-handheld-rainbow-knot.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-mushroom-workbench.jpg` | Assumptions | Knot and yarn field archive |
