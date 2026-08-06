@@ -49,14 +49,15 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/doc-pop.jpg` | The Legend of Doc Pop | Hero illustration |
 | `public/ruliad/end-of-time.jpg` | The End of Time | Main preview and hero illustration |
 | `public/ruliad/end-of-time-crt-pattern.jpg` | The End of Time | Paired hero photograph |
-| `public/ruliad/inside-the-machine-01.jpg` | The Machine and the XASER | Hero archive pair |
-| `public/ruliad/inside-the-machine-02.jpg` | The Machine and the XASER | Hero archive pair |
+| `public/ruliad/vault/magenta-machine-room-crt.jpg` | The Machine and the XASER | Main preview and hero photograph |
+| `public/ruliad/inside-the-machine-01.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-02.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-03.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-04.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-05.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-06.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-07.jpg` | The Machine and the XASER | Field archive |
-| `public/ruliad/inside-the-machine-08.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-08.jpg` | The End of Time | Signals at the End archive plate |
 | `public/ruliad/inside-the-machine-09.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-10.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-11.jpg` | The Machine and the XASER | Field archive |
@@ -73,7 +74,7 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | --- | --- | --- |
 | `public/ruliad/vault/yin-yang-beans.jpg` | Hand-drawn yin–yang formed from nested bean shapes | Unassigned |
 | `public/ruliad/vault/magenta-machine-room-yin-yang.jpg` | Wide magenta instrument room with yin–yang images on two CRTs | Unassigned |
-| `public/ruliad/vault/magenta-machine-room-crt.jpg` | Low-angle magenta instrument room with CRT color bars | Unassigned |
+| `public/ruliad/vault/magenta-machine-room-crt.jpg` | Low-angle magenta instrument room with CRT color bars | The Machine and the XASER hero |
 | `public/ruliad/vault/dashboard-terrarium.jpg` | Glass terrarium on a dashboard facing a wooded clearing | Assumptions archive |
 | `public/ruliad/vault/red-table-field-kit.jpg` | Small tools and objects arranged on a round table under red light | Unassigned |
 

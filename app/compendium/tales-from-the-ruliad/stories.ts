@@ -112,20 +112,18 @@ export const ruliadStories: readonly RuliadStory[] = [
     slug: "the-machine-and-the-xaser",
     title: "The Machine and the XASER",
     pitch: "Humanity democratically builds its own ending while The Machine watches annihilation become reasonable.",
-    art: [
-      { src: "/ruliad/inside-the-machine-01.jpg", alt: "A red-lit room inside The Machine filled with instruments, wires, books, and paintings", fit: "contain", ratio: "1280 / 960" },
-      { src: "/ruliad/inside-the-machine-02.jpg", alt: "Another red and green interior view of The Machine with synthesizers, lights, and cables", fit: "contain", ratio: "1280 / 960" },
-    ],
+    art: [{ src: "/ruliad/vault/magenta-machine-room-crt.jpg", alt: "The Machine glowing magenta beneath a green star field, with two CRTs showing color bars among its instruments", fit: "contain", ratio: "1280 / 960" }],
     archive: {
       title: "Inside The Machine",
       note: "Further views from the instrument rooms, the signal tower, the gathered equipment, the XASER laboratory, its imagined architecture, the weather above it, and the cable-filled belly of The Machine.",
       images: [
+        { src: "/ruliad/inside-the-machine-01.jpg", alt: "A red-lit room inside The Machine filled with instruments, wires, books, and paintings", fit: "contain", ratio: "1280 / 960" },
+        { src: "/ruliad/inside-the-machine-02.jpg", alt: "Another red and green interior view of The Machine with synthesizers, lights, and cables", fit: "contain", ratio: "1280 / 960" },
         { src: "/ruliad/inside-the-machine-03.jpg", alt: "A hand holding a glowing Brownie Reflex camera in deep red light", fit: "contain", ratio: "960 / 1280" },
         { src: "/ruliad/inside-the-machine-04.jpg", alt: "A red-lit instrument room with modular synthesizers, an oscilloscope, and a small keyboard", fit: "contain", ratio: "1280 / 960" },
         { src: "/ruliad/inside-the-machine-05.jpg", alt: "A tall console of synthesizers and keyboards under a projected pattern", fit: "contain", ratio: "960 / 1280" },
         { src: "/ruliad/inside-the-machine-06.jpg", alt: "A telecommunications tower rising over a field beneath a blue sky", fit: "contain", ratio: "960 / 1280" },
         { src: "/ruliad/inside-the-machine-07.jpg", alt: "The open trunk of a car filled with vintage electronic instruments and test equipment", fit: "contain", ratio: "1280 / 960" },
-        { src: "/ruliad/inside-the-machine-08.jpg", alt: "The Machine assembled from glowing CRT cabinets, synthesizers, controllers, and suspended notes under green and violet light", fit: "contain", ratio: "1280 / 960" },
         { src: "/ruliad/inside-the-machine-09.jpg", alt: "A blue-green ceiling view of The Machine's hanging cables, braided cords, and suspended fragments", fit: "contain", ratio: "1280 / 960" },
         { src: "/ruliad/inside-the-machine-10.jpg", alt: "A low green-lit view across The Machine's CRT cabinets, static-filled screens, guitar, and hanging wires", fit: "contain", ratio: "1280 / 960" },
         { src: "/ruliad/inside-the-machine-11.jpg", alt: "A blue room adjacent to The Machine with a green-lit doorway, CRT, books, and bean illustration", fit: "contain", ratio: "1280 / 1029" },
@@ -143,6 +141,13 @@ export const ruliadStories: readonly RuliadStory[] = [
       { src: "/ruliad/end-of-time.jpg", alt: "A dense pencil drawing of an overgrown technological landscape suspended beneath an immense circular structure", fit: "contain", ratio: "1280 / 991" },
       { src: "/ruliad/end-of-time-crt-pattern.jpg", alt: "A curved CRT filled edge to edge with a dense blue, green, white, and amber computational pattern", fit: "contain", ratio: "1280 / 960" },
     ],
+    archive: {
+      title: "Signals at the End",
+      note: "A surviving view of The Machine assembled beneath its canopy of notes and cables, filed here as a terminal image rather than an interior XASER study.",
+      images: [
+        { src: "/ruliad/inside-the-machine-08.jpg", alt: "The Machine assembled from glowing CRT cabinets, synthesizers, controllers, and suspended notes under green and violet light", fit: "contain", ratio: "1280 / 960" },
+      ],
+    },
     pitch: "At heat death, the last human and the last Machine solve every remaining riddle—and finally learn how to mourn.",
   },
 ];
