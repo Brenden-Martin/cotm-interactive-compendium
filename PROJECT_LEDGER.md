@@ -423,6 +423,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-025 — Machine hero and terminal plate reassignment.** Promoted the magenta CRT-and-starfield room to the sole main photograph for *The Machine and the XASER*, retained its former hero pair as uncropped supporting plates, and moved the former Machine plate six into a new *The End of Time* collection titled *Signals at the End*.
 
+- **RULIAD-026 — Machine and XASER field-study expansion.** Added five uncropped supporting plates to *The Machine and the XASER*: two speculative drawings, two refinery landscapes, and a mist-filled mountain valley. The existing magenta CRT-room hero remains unchanged, and every new plate preserves its measured native aspect ratio.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.

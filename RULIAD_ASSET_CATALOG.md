@@ -164,6 +164,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | --- | --- | --- |
 | `public/ruliad/vault/lobotomy-rat-mark-bones.jpg` | Elaborated rat mark with colored cranial stem and crossed bones | Lobotomy alternate; not the main preview |
 
+## The Machine and the XASER — 2026-08-06, field studies
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/machine-xaser-object-studies.jpg` | Notebook study of strange instruments, fibrous forms, assembled objects, and floating hexagons | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-portal-study.jpg` | Tall architectural portal opening onto a table, machine, and distant landscape | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-refinery-01.jpg` | Industrial refinery landscape of tanks, pipes, towers, and distant stacks | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-refinery-02.jpg` | Second refinery view with pipe racks, chimneys, cooling structures, and lattice towers | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-mountain-valley.jpg` | Mist-filled mountain valley with forested slopes, green fields, and distant ridgelines | The Machine and the XASER archive |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
