@@ -42,6 +42,9 @@ export const ruliadStories: readonly RuliadStory[] = [
         { src: "/ruliad/assumptions-field-mushrooms.jpg", alt: "A loose constellation of white mushrooms rising from green grass", fit: "cover" },
         { src: "/ruliad/assumptions-crocheted-mushroom-field.jpg", alt: "A striped crocheted mushroom planted upright in a field of grass", fit: "cover" },
         { src: "/ruliad/assumptions-mushroom-terrarium-sketch.jpg", alt: "A colored-pencil study of mushrooms and moss enclosed inside a round glass terrarium", fit: "contain", ratio: "960 / 1280" },
+        { src: "/ruliad/assumptions-chanterelle-study.jpg", alt: "A colored-pencil study of a chanterelle-like mushroom on a spiral-bound sketchbook page", fit: "contain", ratio: "960 / 1280" },
+        { src: "/ruliad/assumptions-mushroom-vessel-study.jpg", alt: "A colored-pencil study of mushrooms sprouting from a translucent rounded vessel", fit: "contain", ratio: "1280 / 960" },
+        { src: "/ruliad/vault/dashboard-terrarium.jpg", alt: "A glass terrarium resting on a dashboard before a sunlit wooded clearing", fit: "contain", ratio: "1280 / 960" },
         { src: "/ruliad/assumptions-yarn-orbits-01.jpg", alt: "Orange and green yarn spheres entangled in soft pink strands on a striped field", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-orbits-02.jpg", alt: "Close view of green and orange crocheted spheres connected by pale pink loops", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-orbits-03.jpg", alt: "Two crocheted spheres and their loose connecting strands arranged on black and white stripes", fit: "cover" },
@@ -60,8 +63,9 @@ export const ruliadStories: readonly RuliadStory[] = [
     title: "Hands",
     pitch: "An astronaut loses sensation, sight of himself, and the hands that once held his life together.",
     art: [
-      { src: "/ruliad/hands.jpg", alt: "An astronaut held above the enormous black silhouette of a hand", fit: "contain" },
+      { src: "/ruliad/hands.jpg", alt: "An astronaut held above the enormous black silhouette of a hand", fit: "contain", ratio: "943 / 1280" },
       { src: "/ruliad/hands-jar-sketch.jpg", alt: "A purple-lit sketchbook drawing of a vast vessel, drifting marks, and a suspended hand-like form", fit: "contain", ratio: "960 / 1280" },
+      { src: "/ruliad/vault/passenger-seat-synth-dome.jpg", alt: "Synthesizers, a projection dome, and a small plant carefully packed into a car's passenger seat", fit: "contain", ratio: "1280 / 960" },
     ],
   },
   {
@@ -101,7 +105,7 @@ export const ruliadStories: readonly RuliadStory[] = [
     ],
     archive: {
       title: "Inside The Machine",
-      note: "Ten further views from the instrument rooms, the signal tower, the gathered equipment, and the cable-filled belly of The Machine.",
+      note: "Eleven further views from the instrument rooms, the signal tower, the gathered equipment, the XASER laboratory, and the cable-filled belly of The Machine.",
       images: [
         { src: "/ruliad/inside-the-machine-03.jpg", alt: "A hand holding a glowing Brownie Reflex camera in deep red light", fit: "cover" },
         { src: "/ruliad/inside-the-machine-04.jpg", alt: "A red-lit instrument room with modular synthesizers, an oscilloscope, and a small keyboard", fit: "cover" },
@@ -113,6 +117,7 @@ export const ruliadStories: readonly RuliadStory[] = [
         { src: "/ruliad/inside-the-machine-10.jpg", alt: "A low green-lit view across The Machine's CRT cabinets, static-filled screens, guitar, and hanging wires", fit: "cover" },
         { src: "/ruliad/inside-the-machine-11.jpg", alt: "A blue room adjacent to The Machine with a green-lit doorway, CRT, books, and bean illustration", fit: "cover" },
         { src: "/ruliad/inside-the-machine-12.jpg", alt: "A figure with braided hair working at The Machine's mixing desk and modular instruments under violet light", fit: "cover" },
+        { src: "/ruliad/xaser-laboratory-instrument.jpg", alt: "A vintage micro-laser particle counter and optical instrument arranged inside a laboratory", fit: "cover" },
       ],
     },
   },

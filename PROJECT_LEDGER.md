@@ -415,6 +415,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-021 — Mushroom fields, piano rats, and terminal signals.** Expanded *Assumptions* with natural mushrooms, a crocheted field mushroom, and a terrarium drawing; assigned the already-preserved piano-rat photograph to *Lobotomy* without duplicating its source; and paired *The End of Time* drawing with a dense computational CRT pattern.
 
+- **RULIAD-022 — XASER laboratory, mushroom studies, and Hands framing.** Added the vintage laboratory instrument to *The Machine and the XASER*; expanded *The Fabric of Spacetime* with two mushroom drawings and the previously preserved dashboard terrarium; assigned the previously preserved passenger-seat apparatus to *Hands*; and locked every Hands image to its measured native aspect ratio with contain presentation.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.

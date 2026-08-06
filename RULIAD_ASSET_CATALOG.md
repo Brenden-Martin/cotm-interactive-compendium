@@ -22,6 +22,9 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/assumptions-field-mushrooms.jpg` | Assumptions | Mushroom field archive plate |
 | `public/ruliad/assumptions-crocheted-mushroom-field.jpg` | Assumptions | Mushroom and yarn archive plate |
 | `public/ruliad/assumptions-mushroom-terrarium-sketch.jpg` | Assumptions | Mushroom terrarium drawing archive plate |
+| `public/ruliad/assumptions-chanterelle-study.jpg` | Assumptions | Mushroom drawing archive plate |
+| `public/ruliad/assumptions-mushroom-vessel-study.jpg` | Assumptions | Mushroom drawing archive plate |
+| `public/ruliad/vault/dashboard-terrarium.jpg` | Assumptions | Terrarium field archive plate |
 | `public/ruliad/assumptions-yarn-orbits-01.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-orbits-02.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-orbits-03.jpg` | Assumptions | Knot and yarn field archive |
@@ -34,6 +37,7 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER / Assumptions | Shared field plate: yarn-crowned operator inside The Machine |
 | `public/ruliad/hands.jpg` | Hands | Hero illustration |
 | `public/ruliad/hands-jar-sketch.jpg` | Hands | Paired hero sketch |
+| `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Hands | Supporting hero photograph |
 | `public/ruliad/lobotomy.jpg` | Lobotomy | Main preview and hero mark |
 | `public/ruliad/lobotomy-rats-resting.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/lobotomy-rats-moss-platform.jpg` | Lobotomy | Rat Studies archive |
@@ -54,6 +58,7 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/inside-the-machine-10.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-11.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/xaser-laboratory-instrument.jpg` | The Machine and the XASER | XASER laboratory field archive |
 
 ## Intake vault — 2026-08-06
 
@@ -64,14 +69,14 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/yin-yang-beans.jpg` | Hand-drawn yin–yang formed from nested bean shapes | Unassigned |
 | `public/ruliad/vault/magenta-machine-room-yin-yang.jpg` | Wide magenta instrument room with yin–yang images on two CRTs | Unassigned |
 | `public/ruliad/vault/magenta-machine-room-crt.jpg` | Low-angle magenta instrument room with CRT color bars | Unassigned |
-| `public/ruliad/vault/dashboard-terrarium.jpg` | Glass terrarium on a dashboard facing a wooded clearing | Unassigned |
+| `public/ruliad/vault/dashboard-terrarium.jpg` | Glass terrarium on a dashboard facing a wooded clearing | Assumptions archive |
 | `public/ruliad/vault/red-table-field-kit.jpg` | Small tools and objects arranged on a round table under red light | Unassigned |
 
 ## Intake vault — 2026-08-06, batch two
 
 | Asset | Descriptive intake note | Story placement |
 | --- | --- | --- |
-| `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Synthesizers, a projection dome, and a small plant packed into a car's front passenger seat | Unassigned |
+| `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Synthesizers, a projection dome, and a small plant packed into a car's front passenger seat | Hands supporting art |
 | `public/ruliad/vault/car-seat-cable-looms.jpg` | Long blue, black, and white cable looms draped across a car's back seat | Unassigned |
 | `public/ruliad/vault/mushroom-still-life.jpg` | Handmade mushroom tableaux, notebook, and drawing arranged on green cloth | Assumptions archive |
 | `public/ruliad/vault/workbench-cube-field-note.jpg` | Color cube, tools, and a folded handwritten field note on a crowded workbench | Unassigned |
