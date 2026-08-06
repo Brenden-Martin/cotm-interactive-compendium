@@ -1,6 +1,6 @@
 import Link from "next/link";
 export const metadata={title:"Polarization Space & Waveplates"};
-export default function PolarizationArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium">Compendium</Link><span className="folio">Entry 002 / Optics</span></header><article>
+export default function PolarizationArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium/logs">Logs</Link><span className="folio">Entry 002 / Optics</span></header><article>
   <p className="eyebrow">Field Note 002</p><h1>Polarization<br/>Space</h1>
   <p className="comp-lede">Polarization is not merely an arrow. Two perpendicular field components, each with amplitude and phase, trace a family of lines, ellipses, and circles—and optical elements act on them like matrices.</p>
   <Link className="comp-exhibit-link" href="/gallery/polarization-space">Open the optical bench →</Link>

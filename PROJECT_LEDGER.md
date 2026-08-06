@@ -223,6 +223,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **FORTUNE-002 — Testing / Waiting — Fortune corpus.** Begin with an original COTM-flavored starter bank and the initial owner-submitted batch, then curate selected later suggestions into the public bank. Never publish a later suggestion automatically.
 - **FORTUNE-003 — Testing — Repeat delight.** Repeated openings quickly fold the cookie shut, select a different fortune, and crack it again. Preserve room for rarer visual or textual surprises in a later pass.
 - **FORTUNE-004 — Testing — Durable suggestion queue.** Accept a proposed fortune of 3–240 characters into a D1-backed pending-review table. Store the text, duplicate-prevention hash, review status, and timestamp only. A one-time promotion marker approves the owner batch that existed on 2026-08-02; the public endpoint lists approved text only, while later friend submissions remain pending and unlisted.
+- **FORTUNE-005 — Testing — Workbench bank bridge.** The owner-only private workbench keeps its own review queue, but its generator also reads and deduplicates the public site's approved fortune bank through the public read-only endpoint. This repairs the data split without pointing private submissions at production.
 
 ### Private Research and hypothetical devices
 
@@ -234,6 +235,8 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **RESEARCH-006 — Candidate — Lava-pixel desk toy.** A physical lava-lamp pixel simulation with an accelerometer so it responds when shaken.
 - **RESEARCH-007 — Candidate — Glitch Goo video synthesizer.** Present the visual system as a potential video-synthesis module.
 - **RESEARCH-008 — Waiting — Product source pass.** Mine the connected knowledge base for additional device concepts, then ask Brenden which are suitable for public display.
+- **RESEARCH-009 — Testing — Collection selector.** Private Research now uses the Gallery-style destination selector in its established blue identity. Experiments and reference collections grow as independent nested pages rather than replacing one another.
+- **RESEARCH-010 — Testing — Pendulum Laboratory.** Preserve the original draggable-pendulum impulse as a full experiment with small-angle, exact nonlinear, double, and triple modes; adjustable segment length and lowest mass; nonlinear coupled-link equations; fading phosphor paths at every mass; and a twelve-second horizontal-position history for every link.
 
 ### Spectrum to RGB exhibit and color Compendium sequence
 
@@ -267,8 +270,15 @@ The estimates below are relative work sessions, not calendar promises. A session
 ### Recommended Reading
 
 - **READ-001 — Waiting — Source list.** Brenden will supply the Recommended Reading list spanning inspiration for Tales from the Ruliad plus movies, shows, songs, video games, and other works.
-- **READ-002 — Exploration — Prominent placement.** Treat it as a pinned or otherwise persistent Compendium entry. Decide whether its best home is a side rail, footer feature, or pinned index card after the Compendium layout has more content.
+- **READ-002 — Testing — Private Research placement.** Recommended Reading is a first-class entry in Private Research, with reserved shelves for books, movies, shows, YouTube, art, and other signals. Keep it deliberately empty until the first curated list arrives.
 - **READ-003 — Planned — Context, not just links.** Give each selection a brief note explaining what it influenced or why it belongs in COTM.
+
+### Compendium backbone
+
+- **COMP-001 — Testing — Collection selector.** The Compendium follows the Gallery-style selector while retaining its red identity. Its four top-level collections are **Logs**, **Memo Dump**, **Class Notes**, and **Tales from the Ruliad**.
+- **COMP-002 — Testing — Logs preserve the original index.** The former Compendium page now lives intact under **Logs** as the destination for interactive-exhibit companion articles. Existing article URLs remain stable, and their back links return to Logs.
+- **COMP-003 — Testing / Waiting — Memo Dump.** Reserve three ordered eras—**Memo Dump I**, **Memo Dump II**, and **Memo Dump III**—for hundreds of photographed pocket notes. Later intake should preserve the original scan and add dates, transcription, and tags without overwriting source images.
+- **COMP-004 — Testing / Waiting — Class Notes.** Reserve a course-indexed handwritten-notes archive. Each class receives an independent scan sequence with room for annotations, while the original artistic diagrams remain visually primary.
 
 ### Music
 
@@ -297,9 +307,9 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 ### Tales from the Ruliad
 
-- **RULIAD-001 — Planned — Pinned Compendium collection.** Give Tales from the Ruliad a prominent, stable place within the Compendium.
-- **RULIAD-002 — Planned — Nested reading structure.** Host stories and chapters as nested subpages with comfortable long-form reading, rather than sending friends undifferentiated text blocks.
-- **RULIAD-003 — Waiting — Publication sequence.** Brenden will choose edited excerpts and their order as they become polished enough to share.
+- **RULIAD-001 — Testing — Pinned Compendium collection.** Tales from the Ruliad has a prominent, stable place within the Compendium.
+- **RULIAD-002 — Testing — Nested reading structure.** Seven ordered story rooms now reserve illustrated headers, manuscript bodies, and previous/next navigation without presenting unfinished prose as published text.
+- **RULIAD-003 — Locked order / Waiting for material — Publication sequence.** The canonical order is **Assumptions**, **Hands**, **Lobotomy**, **Kind-Eyed Stranger**, **The Legend of Doc Pop**, **The Machine and the XASER**, and **The End of Time**. Request the selected header art and edited text one story at a time when each room enters production.
 - **RULIAD-004 — Goal — Audience and momentum.** Use the collection to build an audience for a completed work and eventual hard-copy publication without presenting unfinished drafts as final.
 
 ## Inputs to request at the relevant kickoff
@@ -315,7 +325,7 @@ Do not ask for all of these at once. Request the relevant bundle immediately bef
 - Spotify artist/profile link, selected recordings, artwork, credits, and rights notes.
 - Device-project descriptions, desired price ranges, and any existing mockups.
 - Clarification of “MP” in the hysteresis-model discussion.
-- Edited Tales from the Ruliad excerpts, story order, and chapter structure.
+- Edited Tales from the Ruliad excerpts, selected story art, and chapter structure.
 
 ## Completed-work log
 
@@ -374,6 +384,10 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **MUSIC-006 through MUSIC-011** — Reorganized Music into collection rooms, preserved Four Small Signals on its own route, opened **Sold As Is {No Returns}**, and added **Moog Preset Alternate 4** with its calculator cover, randomized COTM collection mark, native player, and first audio-reactive cover-bound CRT field.
 
+### 2026-08-06
+
+- **COMP-001 through COMP-004, RULIAD-001 through RULIAD-003, RESEARCH-009 through RESEARCH-010, READ-002, and FORTUNE-005** — Built the remaining Compendium and Private Research navigation backbones in the private workbench, reserved the note and reading archives, added all seven Ruliad story rooms in canonical order, replaced the research pendulum placeholder with a nonlinear multi-link laboratory, and bridged the workbench Fortune Cookie to the public approved bank.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
@@ -388,3 +402,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-02:** Preserve gallery momentum through Spectrum to RGB, references, tuning, and homepage delight. Move About/portfolio into the later major-expansion milestone, where it becomes the first architectural priority.
 - **2026-08-03:** When themed gallery navigation is introduced, retain the current gallery index as **See All**. Treat “Wings” versus “Halls” as an open naming decision and make the selection screen a one-point-perspective, physics-reactive museum scene rather than a static category menu.
 - **2026-08-05:** The unreleased-music collection's canonical display title is **Sold As Is {No Returns}**. Curly braces are intentional typography and must not be normalized to parentheses.
+- **2026-08-06:** **Recommended Reading** belongs in Private Research, not the Compendium.
+- **2026-08-06:** The Compendium's former article index is preserved as **Logs**. The top level now organizes Logs, Memo Dump, Class Notes, and Tales from the Ruliad.
+- **2026-08-06:** The canonical Ruliad order places **Kind-Eyed Stranger** before **The Legend of Doc Pop**, as confirmed after comparing the current note with the older Ruliad outline.
+- **2026-08-06:** Private-workbench D1 remains isolated from production. Its Fortune Cookie may read the public approved bank, but private test submissions continue to stay in the private queue.

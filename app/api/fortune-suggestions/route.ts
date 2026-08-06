@@ -6,12 +6,38 @@ const headers = { "Cache-Control": "no-store" };
 
 type SuggestionInput = { fortune?: unknown; website?: unknown };
 
-export async function GET() {
+export async function GET(request: Request) {
+  const fortunes = new Set<string>();
+  let sourceAvailable = false;
   try {
-    return Response.json({ fortunes: await listApprovedFortunes() }, { headers });
+    for (const fortune of await listApprovedFortunes()) fortunes.add(fortune);
+    sourceAvailable = true;
   } catch {
+    // The private workbench has its own D1. Its local bank may be empty or unavailable.
+  }
+
+  const hostname = new URL(request.url).hostname;
+  if (hostname === "cotm-private-workbench.nednerdnitram.chatgpt.site") {
+    try {
+      const response = await fetch("https://cotm-interactive-compendium.nednerdnitram.chatgpt.site/api/fortune-suggestions", { cache: "no-store" });
+      if (response.ok) {
+        const result = await response.json() as { fortunes?: unknown };
+        if (Array.isArray(result.fortunes)) {
+          for (const fortune of result.fortunes) {
+            if (typeof fortune === "string" && fortune.length >= 3 && fortune.length <= 240) fortunes.add(fortune);
+          }
+        }
+        sourceAvailable = true;
+      }
+    } catch {
+      // Starter fortunes still keep the exhibit usable if the public bank is temporarily unreachable.
+    }
+  }
+
+  if (!sourceAvailable) {
     return Response.json({ fortunes: [], error: "The approved fortune bank is warming up." }, { status: 503, headers });
   }
+  return Response.json({ fortunes: Array.from(fortunes) }, { headers });
 }
 
 export async function POST(request: Request) {

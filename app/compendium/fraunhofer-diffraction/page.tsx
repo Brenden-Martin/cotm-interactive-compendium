@@ -1,6 +1,6 @@
 import Link from "next/link";
 export const metadata={title:"Fraunhofer Diffraction"};
-export default function DiffractionArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium">Compendium</Link><span className="folio">Entry 003 / Wave Optics</span></header><article>
+export default function DiffractionArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium/logs">Logs</Link><span className="folio">Entry 003 / Wave Optics</span></header><article>
   <p className="eyebrow">Field Note 003</p><h1>Fraunhofer<br/>Diffraction</h1>
   <p className="comp-lede">A square cut into an opaque screen writes a luminous cross at infinity. Its far field is not a shadow, but the spatial-frequency portrait of the complex light admitted by the opening.</p>
   <Link className="comp-exhibit-link" href="/gallery/square-aperture">Open the diffraction bench →</Link>
