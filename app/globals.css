@@ -736,7 +736,7 @@ button { font: inherit; }
 .fortune-machine.open .cookie-right { transform:translateX(118px) rotate(31deg); }
 .fortune-paper { position:absolute;z-index:2;left:50%;top:50%;display:grid;place-items:center;width:min(390px,82%);min-height:116px;padding:18px 26px;background:#fff;border:3px solid #111820;box-shadow:7px 7px 0 #111820;opacity:0;transform:translate(-50%,-50%) scaleX(.08);transition:transform .42s cubic-bezier(.2,.88,.25,1.12),opacity .14s; }
 .fortune-machine.open .fortune-paper { z-index:4;opacity:1;transform:translate(-50%,-50%) scaleX(1);transition-delay:.18s; }
-.fortune-paper b { font:800 clamp(13px,2vw,18px)/1.35 Georgia,serif; }
+.fortune-paper b { white-space:pre-line;font:800 clamp(13px,2vw,18px)/1.35 Georgia,serif; }
 .fortune-paper i { margin-top:10px;font-size:8px;font-style:normal;font-weight:900;text-transform:uppercase;letter-spacing:.16em; }
 .fortune-crack { position:relative;z-index:3;min-width:210px;min-height:48px;margin-top:-24px;border:2px solid #111820;background:#e94e35;color:#111820;font:900 10px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;box-shadow:5px 5px 0 #111820; }
 .fortune-crack:hover,.fortune-crack:focus-visible { background:#111820;color:#fff;outline:none; }

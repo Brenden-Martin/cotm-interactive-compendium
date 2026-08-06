@@ -25,6 +25,8 @@ const CURRENT_OWNER_BATCH = {
   submittedThrough: "2026-08-06 01:05:38",
 };
 
+const CURRENT_FORMATTING_BATCH = "fortune-formatting-2026-08-05";
+
 async function database() {
   const db = env.DB;
   if (!db) throw new Error("The fortune suggestion box is unavailable.");
@@ -42,6 +44,55 @@ async function database() {
     db.prepare(
       "INSERT OR IGNORE INTO fortune_promotion_batches (batch_key) VALUES (?)"
     ).bind(CURRENT_OWNER_BATCH.key),
+  ]);
+  await db.batch([
+    db.prepare(`
+      UPDATE fortune_suggestions
+      SET status = 'rejected'
+      WHERE fortune_text = ?
+        AND NOT EXISTS (
+          SELECT 1 FROM fortune_promotion_batches WHERE batch_key = ?
+        )
+    `).bind("You're only ever a candlestick away from buckmisterfullerin", CURRENT_FORMATTING_BATCH),
+    db.prepare(`
+      UPDATE fortune_suggestions
+      SET fortune_text = ?
+      WHERE fortune_text = ?
+        AND NOT EXISTS (
+          SELECT 1 FROM fortune_promotion_batches WHERE batch_key = ?
+        )
+    `).bind(
+      "My Mother Told Me\nI Would Be Writing Haiku\nI Guess She Was Right",
+      "My Mother Told Me I Would Be Writing Haiku I Guess She Was Right",
+      CURRENT_FORMATTING_BATCH,
+    ),
+    db.prepare(`
+      UPDATE fortune_suggestions
+      SET fortune_text = ?
+      WHERE fortune_text = ?
+        AND NOT EXISTS (
+          SELECT 1 FROM fortune_promotion_batches WHERE batch_key = ?
+        )
+    `).bind(
+      "Of making books, there is no end\nAnd much study is wearisome to the flesh",
+      "Of making books, there is no end And much study is wearisome to the flesh",
+      CURRENT_FORMATTING_BATCH,
+    ),
+    db.prepare(`
+      UPDATE fortune_suggestions
+      SET fortune_text = ?
+      WHERE fortune_text = ?
+        AND NOT EXISTS (
+          SELECT 1 FROM fortune_promotion_batches WHERE batch_key = ?
+        )
+    `).bind(
+      "I must not fear\nFear is the mindkiller\nFear is the little death that brings total obliteration",
+      "I must not fear Fear is the mindkiller Fear is the little death that brings total obliteration",
+      CURRENT_FORMATTING_BATCH,
+    ),
+    db.prepare(
+      "INSERT OR IGNORE INTO fortune_promotion_batches (batch_key) VALUES (?)"
+    ).bind(CURRENT_FORMATTING_BATCH),
   ]);
   return db;
 }

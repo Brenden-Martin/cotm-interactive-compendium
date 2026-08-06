@@ -220,7 +220,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 ### Fortune Cookie exhibit
 
 - **FORTUNE-001 — Testing — Core interaction.** A flat-color cartoon fortune cookie cracks into two animated halves and reveals a paper fortune.
-- **FORTUNE-002 — Testing — Fortune corpus.** Begin with an original COTM-flavored starter bank and the owner-approved submission batches through 2026-08-05. Later suggestions remain pending until another deliberate review pass; never publish a new suggestion automatically.
+- **FORTUNE-002 — Testing — Fortune corpus.** Begin with an original COTM-flavored starter bank and the owner-approved submission batches through 2026-08-05. The mistaken misspelled duplicate is retained as rejected rather than served publicly. Submitted line breaks are preserved, and the three clearly structured legacy multiline fortunes were restored. Later suggestions remain pending until another deliberate review pass; never publish a new suggestion automatically.
 - **FORTUNE-003 — Testing — Repeat delight.** Repeated openings quickly fold the cookie shut, select a different fortune, and crack it again. Preserve room for rarer visual or textual surprises in a later pass.
 - **FORTUNE-004 — Testing — Durable suggestion queue.** Accept a proposed fortune of 3–240 characters into a D1-backed pending-review table. Store the text, duplicate-prevention hash, review status, and timestamp only. Dated one-time promotion markers approve only submissions at or before each owner-reviewed cutoff; the public endpoint lists approved text only, while newer submissions remain pending and unlisted.
 

@@ -23,11 +23,18 @@ export async function POST(request: Request) {
     if (typeof body.fortune !== "string") {
       return Response.json({ error: "Please write a fortune first." }, { status: 400, headers });
     }
-    const fortune = body.fortune.trim().replace(/\s+/g, " ");
+    const fortune = body.fortune
+      .replace(/\r\n?/g, "\n")
+      .split("\n")
+      .map((line) => line.trim().replace(/[ \t]+/g, " "))
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
     if (fortune.length < 3 || fortune.length > 240) {
       return Response.json({ error: "Fortunes must be between 3 and 240 characters." }, { status: 400, headers });
     }
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fortune.toLocaleLowerCase()));
+    const canonicalFortune = fortune.replace(/\s+/g, " ").toLocaleLowerCase();
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonicalFortune));
     const fortuneHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
     const saved = await saveFortuneSuggestion(fortune, fortuneHash);
     return Response.json(
