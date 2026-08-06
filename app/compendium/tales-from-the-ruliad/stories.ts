@@ -9,6 +9,11 @@ type RuliadStory = {
   title: string;
   pitch: string;
   art?: readonly RuliadIllustration[];
+  archive?: {
+    title: string;
+    note: string;
+    images: readonly RuliadIllustration[];
+  };
 };
 
 export const ruliadStories: readonly RuliadStory[] = [
@@ -48,6 +53,17 @@ export const ruliadStories: readonly RuliadStory[] = [
       { src: "/ruliad/inside-the-machine-01.jpg", alt: "A red-lit room inside The Machine filled with instruments, wires, books, and paintings", fit: "cover" },
       { src: "/ruliad/inside-the-machine-02.jpg", alt: "Another red and green interior view of The Machine with synthesizers, lights, and cables", fit: "cover" },
     ],
+    archive: {
+      title: "Inside The Machine",
+      note: "Five further views from the instrument rooms, the signal tower, and the equipment gathered around them.",
+      images: [
+        { src: "/ruliad/inside-the-machine-03.jpg", alt: "A hand holding a glowing Brownie Reflex camera in deep red light", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-04.jpg", alt: "A red-lit instrument room with modular synthesizers, an oscilloscope, and a small keyboard", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-05.jpg", alt: "A tall console of synthesizers and keyboards under a projected pattern", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-06.jpg", alt: "A telecommunications tower rising over a field beneath a blue sky", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-07.jpg", alt: "The open trunk of a car filled with vintage electronic instruments and test equipment", fit: "cover" },
+      ],
+    },
   },
   {
     slug: "the-end-of-time",

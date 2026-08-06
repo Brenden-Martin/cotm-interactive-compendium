@@ -48,6 +48,28 @@ export default async function RuliadStoryPage({ params }: { params: Promise<{ sl
           <p>{story.art?.length ? "Archive illustration installed; the geometric field remains in orbit while the manuscript follows." : "This reading room is ready for its illustration and edited text."}</p>
         </div>
       </section>
+      {story.archive ? (
+        <section className="ruliad-image-archive" aria-labelledby="ruliad-image-archive-title">
+          <div className="ruliad-archive-orbits" aria-hidden="true"><i /><i /><i /><i /></div>
+          <header>
+            <div>
+              <span className="eyebrow">Field archive · {String(story.archive.images.length).padStart(2, "0")} plates</span>
+              <h2 id="ruliad-image-archive-title">{story.archive.title}</h2>
+            </div>
+            <p>{story.archive.note}</p>
+          </header>
+          <div className="ruliad-image-grid">
+            {story.archive.images.map((illustration, imageIndex) => (
+              <figure key={illustration.src}>
+                <div className={`ruliad-archive-image ruliad-art-${illustration.fit ?? "cover"}`}>
+                  <Image src={illustration.src} alt={illustration.alt} fill sizes="(max-width: 760px) 92vw, (max-width: 1100px) 46vw, 30vw" unoptimized />
+                </div>
+                <figcaption><span>Plate {String(imageIndex + 1).padStart(2, "0")}</span><i aria-hidden="true" /></figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <section className="ruliad-manuscript-slot">
         <span className="eyebrow">Manuscript slot</span>
         <h2>Awaiting publication material</h2>
