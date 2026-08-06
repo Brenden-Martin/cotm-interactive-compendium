@@ -419,6 +419,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-023 — Universal story-plate framing.** Standardized every Tales room on the outlined, story-color plate language established by *The Fabric of Spacetime*. Hero and archive images now retain their measured native aspect ratios, use contain presentation, participate in normal document flow, and never rely on cropped cover frames, decorative overlap, or translated contact-sheet placement.
 
+- **RULIAD-024 — Hands, Kind-Eyed, and XASER field studies.** Added two complementary notebook views to a new supporting *Hands* archive, gave *Kind-Eyed Stranger* an outlined portrait-study plate, and expanded *The Machine and the XASER* with a marker architecture study and the already-preserved mammatus-cloud photograph. The duplicate cloud submission reuses its checksum-identical vault asset, and all new plates inherit the universal native-ratio, no-crop presentation.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.

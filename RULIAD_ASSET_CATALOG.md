@@ -36,13 +36,16 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/inside-the-machine-09.jpg` | The Machine and the XASER / Assumptions | Shared field plate: cable canopy and yarn topology |
 | `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER / Assumptions | Shared field plate: yarn-crowned operator inside The Machine |
 | `public/ruliad/hands.jpg` | Hands | Hero illustration |
-| `public/ruliad/hands-jar-sketch.jpg` | Hands | Paired hero sketch |
-| `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Hands | Supporting hero photograph |
+| `public/ruliad/hands-jar-sketch.jpg` | Hands | Supporting field-study plate |
+| `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Hands | Supporting field-study plate |
+| `public/ruliad/hands-field-notebook-spread.jpg` | Hands | Supporting field-notebook plate |
+| `public/ruliad/hands-mechanical-figure-study.jpg` | Hands | Supporting field-notebook detail plate |
 | `public/ruliad/lobotomy.jpg` | Lobotomy | Main preview and hero mark |
 | `public/ruliad/lobotomy-rats-resting.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/lobotomy-rats-moss-platform.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/vault/piano-rat-studies.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/kind-eyed-stranger.jpg` | Kind-Eyed Stranger | Hero illustration |
+| `public/ruliad/kind-eyed-portrait-study.jpg` | Kind-Eyed Stranger | Supporting portrait plate |
 | `public/ruliad/doc-pop.jpg` | The Legend of Doc Pop | Hero illustration |
 | `public/ruliad/end-of-time.jpg` | The End of Time | Main preview and hero illustration |
 | `public/ruliad/end-of-time-crt-pattern.jpg` | The End of Time | Paired hero photograph |
@@ -59,6 +62,8 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/inside-the-machine-11.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/xaser-laboratory-instrument.jpg` | The Machine and the XASER | XASER laboratory field archive |
+| `public/ruliad/machine-xaser-architecture-study.jpg` | The Machine and the XASER | Architectural field-study plate |
+| `public/ruliad/vault/mammatus-clouds.jpg` | The Machine and the XASER | Atmospheric field-study plate |
 
 ## Intake vault — 2026-08-06
 
@@ -107,7 +112,7 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | Asset | Descriptive intake note | Story placement |
 | --- | --- | --- |
 | `public/ruliad/vault/antique-store-phonograph.jpg` | Portable phonograph surrounded by densely packed figurines and antiques | Unassigned |
-| `public/ruliad/vault/mammatus-clouds.jpg` | Dramatic field of mammatus clouds over a streetlight, wires, and rooftops | Unassigned |
+| `public/ruliad/vault/mammatus-clouds.jpg` | Dramatic field of mammatus clouds over a streetlight, wires, and rooftops | The Machine and the XASER archive |
 | `public/ruliad/vault/grotto-pool.jpg` | Exact repeat of the grotto-pool asset from batch three; catalog reference retained without a second file | Unassigned |
 | `public/ruliad/vault/grotto-waterfall.jpg` | Exact repeat of the grotto-waterfall asset from batch three; catalog reference retained without a second file | Unassigned |
 | `public/ruliad/vault/woodland-yurts.jpg` | Three round, conical-roofed cabins arranged in a wooded clearing | Unassigned |

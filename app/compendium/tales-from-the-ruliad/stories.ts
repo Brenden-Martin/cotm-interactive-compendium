@@ -62,11 +62,17 @@ export const ruliadStories: readonly RuliadStory[] = [
     slug: "hands",
     title: "Hands",
     pitch: "An astronaut loses sensation, sight of himself, and the hands that once held his life together.",
-    art: [
-      { src: "/ruliad/hands.jpg", alt: "An astronaut held above the enormous black silhouette of a hand", fit: "contain", ratio: "943 / 1280" },
-      { src: "/ruliad/hands-jar-sketch.jpg", alt: "A purple-lit sketchbook drawing of a vast vessel, drifting marks, and a suspended hand-like form", fit: "contain", ratio: "960 / 1280" },
-      { src: "/ruliad/vault/passenger-seat-synth-dome.jpg", alt: "Synthesizers, a projection dome, and a small plant carefully packed into a car's passenger seat", fit: "contain", ratio: "1280 / 960" },
-    ],
+    art: [{ src: "/ruliad/hands.jpg", alt: "An astronaut held above the enormous black silhouette of a hand", fit: "contain", ratio: "943 / 1280" }],
+    archive: {
+      title: "Studies of Hands and Their Machines",
+      note: "Field drawings and transported instruments gather around the astronaut: hands as tools, signals, mechanisms, memory, and the fragile means by which a life holds itself together.",
+      images: [
+        { src: "/ruliad/hands-jar-sketch.jpg", alt: "A purple-lit sketchbook drawing of a vast vessel, drifting marks, and a suspended hand-like form", fit: "contain", ratio: "960 / 1280" },
+        { src: "/ruliad/vault/passenger-seat-synth-dome.jpg", alt: "Synthesizers, a projection dome, and a small plant carefully packed into a car's passenger seat", fit: "contain", ratio: "1280 / 960" },
+        { src: "/ruliad/hands-field-notebook-spread.jpg", alt: "An open field notebook held outdoors, pairing a small machine sketch with a richly colored mechanical figure study", fit: "contain", ratio: "960 / 1280" },
+        { src: "/ruliad/hands-mechanical-figure-study.jpg", alt: "Close field-notebook study of an articulated mechanical figure surrounded by gauges, vessels, cables, and detached hands", fit: "contain", ratio: "960 / 1280" },
+      ],
+    },
   },
   {
     slug: "lobotomy",
@@ -88,6 +94,13 @@ export const ruliadStories: readonly RuliadStory[] = [
     title: "Kind-Eyed Stranger",
     pitch: "A friend to everyone and a stranger to himself, guided by a few fortunes and the choice to be kind.",
     art: [{ src: "/ruliad/kind-eyed-stranger.jpg", alt: "A pencil portrait surrounded by floating eyes, loops, and symbols", fit: "contain", ratio: "811 / 1280" }],
+    archive: {
+      title: "Faces Seen and Remembered",
+      note: "A second portrait holds a warmer register of the stranger's gaze, with another presence lingering faintly behind it.",
+      images: [
+        { src: "/ruliad/kind-eyed-portrait-study.jpg", alt: "An ochre and red portrait of a long-haired woman with a faint second face receding behind her", fit: "contain", ratio: "1030 / 1280" },
+      ],
+    },
   },
   {
     slug: "the-legend-of-doc-pop",
@@ -105,7 +118,7 @@ export const ruliadStories: readonly RuliadStory[] = [
     ],
     archive: {
       title: "Inside The Machine",
-      note: "Eleven further views from the instrument rooms, the signal tower, the gathered equipment, the XASER laboratory, and the cable-filled belly of The Machine.",
+      note: "Further views from the instrument rooms, the signal tower, the gathered equipment, the XASER laboratory, its imagined architecture, the weather above it, and the cable-filled belly of The Machine.",
       images: [
         { src: "/ruliad/inside-the-machine-03.jpg", alt: "A hand holding a glowing Brownie Reflex camera in deep red light", fit: "contain", ratio: "960 / 1280" },
         { src: "/ruliad/inside-the-machine-04.jpg", alt: "A red-lit instrument room with modular synthesizers, an oscilloscope, and a small keyboard", fit: "contain", ratio: "1280 / 960" },
@@ -118,6 +131,8 @@ export const ruliadStories: readonly RuliadStory[] = [
         { src: "/ruliad/inside-the-machine-11.jpg", alt: "A blue room adjacent to The Machine with a green-lit doorway, CRT, books, and bean illustration", fit: "contain", ratio: "1280 / 1029" },
         { src: "/ruliad/inside-the-machine-12.jpg", alt: "A figure with braided hair working at The Machine's mixing desk and modular instruments under violet light", fit: "contain", ratio: "988 / 1280" },
         { src: "/ruliad/xaser-laboratory-instrument.jpg", alt: "A vintage micro-laser particle counter and optical instrument arranged inside a laboratory", fit: "contain", ratio: "1280 / 960" },
+        { src: "/ruliad/machine-xaser-architecture-study.jpg", alt: "A bright marker study of a geometric building, elevated paths, and cloud-framed structures in orange, blue, and yellow", fit: "contain", ratio: "1280 / 981" },
+        { src: "/ruliad/vault/mammatus-clouds.jpg", alt: "A dense ceiling of mammatus clouds above a streetlight, wires, trees, and rooftops", fit: "contain", ratio: "1280 / 960" },
       ],
     },
   },
