@@ -59,6 +59,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/vintage-mixing-console.jpg` | Labeled XR-1200 stereo powered mixing console and tuner | Unassigned |
 | `public/ruliad/vault/doorway-keyboard-room.jpg` | Stacked keyboard instruments and orange chair seen through a doorway | Unassigned |
 
+## Intake vault — 2026-08-06, batch five
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/antique-store-phonograph.jpg` | Portable phonograph surrounded by densely packed figurines and antiques | Unassigned |
+| `public/ruliad/vault/mammatus-clouds.jpg` | Dramatic field of mammatus clouds over a streetlight, wires, and rooftops | Unassigned |
+| `public/ruliad/vault/grotto-pool.jpg` | Exact repeat of the grotto-pool asset from batch three; catalog reference retained without a second file | Unassigned |
+| `public/ruliad/vault/grotto-waterfall.jpg` | Exact repeat of the grotto-waterfall asset from batch three; catalog reference retained without a second file | Unassigned |
+| `public/ruliad/vault/woodland-yurts.jpg` | Three round, conical-roofed cabins arranged in a wooded clearing | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
