@@ -20,7 +20,10 @@ const promotionSchemaSql = `
   )
 `;
 
-const CURRENT_OWNER_BATCH = "owner-batch-2026-08-02";
+const CURRENT_OWNER_BATCH = {
+  key: "owner-batch-2026-08-05",
+  submittedThrough: "2026-08-06 01:05:38",
+};
 
 async function database() {
   const db = env.DB;
@@ -31,13 +34,14 @@ async function database() {
       UPDATE fortune_suggestions
       SET status = 'approved'
       WHERE status = 'pending'
+        AND created_at <= ?
         AND NOT EXISTS (
           SELECT 1 FROM fortune_promotion_batches WHERE batch_key = ?
         )
-    `).bind(CURRENT_OWNER_BATCH),
+    `).bind(CURRENT_OWNER_BATCH.submittedThrough, CURRENT_OWNER_BATCH.key),
     db.prepare(
       "INSERT OR IGNORE INTO fortune_promotion_batches (batch_key) VALUES (?)"
-    ).bind(CURRENT_OWNER_BATCH),
+    ).bind(CURRENT_OWNER_BATCH.key),
   ]);
   return db;
 }
