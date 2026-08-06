@@ -401,6 +401,8 @@ This is a human-readable summary of the repository history, not a substitute for
 - **RULIAD-010 — Image intake vault, batch five.** Preserved the antique-store phonograph, mammatus-cloud field, and woodland yurts. The other two submissions were checksum-identical repeats of the existing grotto-pool and grotto-waterfall assets, so the catalog records their recurrence without storing duplicate files.
 - **RULIAD-011 — Image intake vault, batch six.** Preserved all five received images as two coherent technical clusters: three optical-breadboard component arrangements and two vintage circuit-board closeups. All remain unassigned and ready for later canonical placement.
 - **RULIAD-012 — Image intake vault, batch seven.** Preserved a five-image texture study for the Ruliad canon: moss-covered bones, a wall of weathered skulls, worn canvas shoes, a second illuminated bone arrangement, and lichen-covered stone. The cluster remains unassigned and ready for later canonical placement.
+- **RULIAD-013 — Image intake vault, batch eight.** Preserved the five supplied photographs of Brenden's physical fortune-slip archive under stable descriptive names. The source photographs remain unassigned Ruliad texture material while their readable text is independently available to the Fortune Cookie exhibit.
+- **FORTUNE-006 — Physical fortune archive import.** Transcribed and approved all 27 readable fortunes from the five supplied photographs, found no exact duplicates in the 97-entry public approved bank, and added the new lines to the private workbench's versioned local bank. The generator and its read-only bank endpoint both include the collection without altering either site's pending-review queue.
 
 ## Decision log
 

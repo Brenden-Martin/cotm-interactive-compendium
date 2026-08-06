@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { ARCHIVED_FORTUNES } from "./fortune-bank";
 
 const STARTER_FORTUNES = [
   "The shortest path will develop an unexpected scenic route.",
@@ -29,6 +30,8 @@ const STARTER_FORTUNES = [
   "Congratulations: the bug has become an exhibit.",
 ];
 
+const LOCAL_FORTUNES = [...STARTER_FORTUNES, ...ARCHIVED_FORTUNES];
+
 function nextFortune(previous: number, bankSize: number) {
   if (bankSize < 2) return 0;
   let next = Math.floor(Math.random() * bankSize);
@@ -38,7 +41,7 @@ function nextFortune(previous: number, bankSize: number) {
 
 export function FortuneCookie() {
   const [fortuneIndex, setFortuneIndex] = useState(0);
-  const [fortunes, setFortunes] = useState<string[]>(STARTER_FORTUNES);
+  const [fortunes, setFortunes] = useState<string[]>(LOCAL_FORTUNES);
   const [open, setOpen] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [trap, setTrap] = useState("");
@@ -56,7 +59,7 @@ export function FortuneCookie() {
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((result: { fortunes?: unknown }) => {
         if (!active || !Array.isArray(result.fortunes)) return;
-        const unique = new Set(STARTER_FORTUNES);
+        const unique = new Set(LOCAL_FORTUNES);
         const approved = result.fortunes.filter((fortune): fortune is string =>
           typeof fortune === "string" && fortune.length >= 3 && fortune.length <= 240
         );
@@ -120,7 +123,7 @@ export function FortuneCookie() {
           onClick={crackCookie}
           aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"}
         >
-          <span className="fortune-paper"><b>{fortunes[fortuneIndex] ?? STARTER_FORTUNES[0]}</b><i>Child of the Machine</i></span>
+          <span className="fortune-paper"><b>{fortunes[fortuneIndex] ?? LOCAL_FORTUNES[0]}</b><i>Child of the Machine</i></span>
           <span className="cookie-half cookie-left"><i /></span>
           <span className="cookie-half cookie-right"><i /></span>
         </button>

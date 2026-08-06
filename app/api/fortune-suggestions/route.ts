@@ -1,4 +1,5 @@
 import { listApprovedFortunes, saveFortuneSuggestion } from "../../../db/fortune-suggestions";
+import { ARCHIVED_FORTUNES } from "../../gallery/fortune-cookie/fortune-bank";
 
 export const dynamic = "force-dynamic";
 
@@ -7,8 +8,8 @@ const headers = { "Cache-Control": "no-store" };
 type SuggestionInput = { fortune?: unknown; website?: unknown };
 
 export async function GET(request: Request) {
-  const fortunes = new Set<string>();
-  let sourceAvailable = false;
+  const fortunes = new Set<string>(ARCHIVED_FORTUNES);
+  let sourceAvailable = fortunes.size > 0;
   try {
     for (const fortune of await listApprovedFortunes()) fortunes.add(fortune);
     sourceAvailable = true;

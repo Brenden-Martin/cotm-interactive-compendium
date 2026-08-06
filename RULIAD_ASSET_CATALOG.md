@@ -89,6 +89,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/moss-covered-bones-02.jpg` | Skull and rib-like bones crossed by green growth and a shaft of light | Unassigned |
 | `public/ruliad/vault/lichen-moss-rock.jpg` | Close texture study of pale lichen and saturated moss across fractured stone | Unassigned |
 
+## Intake vault — 2026-08-06, batch eight
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/fortune-slip-archive-01.jpg` | Five worn fortune-cookie slips arranged on a white textured surface | Unassigned |
+| `public/ruliad/vault/fortune-slip-archive-02.jpg` | Six collected fortune-cookie slips centered on a white textured surface | Unassigned |
+| `public/ruliad/vault/fortune-slip-archive-03.jpg` | Seven overlapping fortune-cookie slips with blue printer marks | Unassigned |
+| `public/ruliad/vault/fortune-slip-archive-04.jpg` | Five fortune-cookie slips about action, happiness, respect, and home | Unassigned |
+| `public/ruliad/vault/fortune-slip-archive-05.jpg` | Four fortune-cookie slips preserved together inside a clear sleeve | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
