@@ -397,6 +397,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - **RULIAD-006 — Image intake vault.** Added a human-readable asset catalog and preserved five further Ruliad-associated images under stable descriptive names: the bean-shaped yin–yang, two magenta instrument-room views, the dashboard terrarium, and the red-lit field kit. Mnemosyne did not establish an exact tale assignment for this batch, so the assets remain intentionally unassigned rather than turning visual resemblance into canon.
 - **RULIAD-007 — Image intake vault, batch two.** Preserved five more Ruliad-associated photographs: the passenger-seat synthesizers and projection dome, car-seat cable looms, mushroom still life, workbench field note, and vintage vacuum-tube layout. All remain unassigned and ready for later canonical placement.
 - **RULIAD-008 — Image intake vault, batch three.** Preserved another five Ruliad-associated photographs: the shirt-pocket drafting kit, red keyboard room, pond pump structure, grotto pool, and grotto waterfall. All remain unassigned and ready for later canonical placement.
+- **RULIAD-009 — Image intake vault, batch four.** Preserved the laboratory hallway, vintage physics-of-sound chart, retro media room, XR-1200 mixing console, and doorway view of the keyboard room. All remain unassigned and ready for later canonical placement.
 
 ## Decision log
 

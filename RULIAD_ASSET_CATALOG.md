@@ -49,6 +49,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/grotto-pool.jpg` | Sunlit rocky grotto and still pool surrounded by dense trees | Unassigned |
 | `public/ruliad/vault/grotto-waterfall.jpg` | Waterfall descending into a secluded green grotto | Unassigned |
 
+## Intake vault — 2026-08-06, batch four
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/laboratory-hallway.jpg` | Long institutional laboratory corridor terminating in a ladder and darkness | Unassigned |
+| `public/ruliad/vault/physics-of-sound-pitch-chart.jpg` | Vintage encyclopedia page mapping instrument and voice ranges across a piano keyboard | Unassigned |
+| `public/ruliad/vault/retro-media-room.jpg` | CRT, game consoles, cartridges, accordions, and political ephemera gathered in a small room | Unassigned |
+| `public/ruliad/vault/vintage-mixing-console.jpg` | Labeled XR-1200 stereo powered mixing console and tuner | Unassigned |
+| `public/ruliad/vault/doorway-keyboard-room.jpg` | Stacked keyboard instruments and orange chair seen through a doorway | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
