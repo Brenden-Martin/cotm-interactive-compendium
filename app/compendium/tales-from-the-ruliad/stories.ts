@@ -43,6 +43,7 @@ export const ruliadStories: readonly RuliadStory[] = [
         { src: "/ruliad/assumptions-yarn-orbits-02.jpg", alt: "Close view of green and orange crocheted spheres connected by pale pink loops", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-orbits-03.jpg", alt: "Two crocheted spheres and their loose connecting strands arranged on black and white stripes", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-terrariums.jpg", alt: "Crocheted vessels and mushrooms growing from glass terrariums and moss", fit: "cover" },
+        { src: "/ruliad/vault/mushroom-still-life.jpg", alt: "Handmade mushroom tableaux, a notebook, and small drawings arranged across green cloth", fit: "cover" },
         { src: "/ruliad/assumptions-soft-sculpture-console-01.jpg", alt: "A family of fluorescent crocheted vessels and forms arranged across a mixing console", fit: "cover" },
         { src: "/ruliad/assumptions-soft-sculpture-table.jpg", alt: "A crowded tabletop habitat of crocheted mushrooms, pods, and glass enclosures", fit: "cover" },
         { src: "/ruliad/assumptions-soft-sculpture-console-02.jpg", alt: "A green crocheted vessel spreading long soft tendrils across a mixing console", fit: "cover" },
@@ -55,13 +56,24 @@ export const ruliadStories: readonly RuliadStory[] = [
     slug: "hands",
     title: "Hands",
     pitch: "An astronaut loses sensation, sight of himself, and the hands that once held his life together.",
-    art: [{ src: "/ruliad/hands.jpg", alt: "An astronaut held above the enormous black silhouette of a hand", fit: "contain" }],
+    art: [
+      { src: "/ruliad/hands.jpg", alt: "An astronaut held above the enormous black silhouette of a hand", fit: "contain" },
+      { src: "/ruliad/hands-jar-sketch.jpg", alt: "A purple-lit sketchbook drawing of a vast vessel, drifting marks, and a suspended hand-like form", fit: "contain", ratio: "960 / 1280" },
+    ],
   },
   {
     slug: "lobotomy",
     title: "Lobotomy",
     pitch: "A man deletes himself piece by piece, preserving only the scraps he hopes deserve to survive him.",
     art: [{ src: "/ruliad/lobotomy.jpg", alt: "A plain white hand-drawn rat mark on a black field", fit: "contain" }],
+    archive: {
+      title: "Rat Studies",
+      note: "Two small lives curl into shelter and explore a hanging garden: domestic field studies for the story's gentler, stranger anatomy.",
+      images: [
+        { src: "/ruliad/lobotomy-rats-resting.jpg", alt: "Two rats curled together inside folds of dark plaid fabric", fit: "cover" },
+        { src: "/ruliad/lobotomy-rats-moss-platform.jpg", alt: "Two rats exploring a moss-covered hanging platform beside a clear exercise wheel", fit: "contain", ratio: "960 / 1280" },
+      ],
+    },
   },
   {
     slug: "kind-eyed-stranger",
@@ -103,6 +115,7 @@ export const ruliadStories: readonly RuliadStory[] = [
   {
     slug: "the-end-of-time",
     title: "The End of Time",
+    art: [{ src: "/ruliad/end-of-time.jpg", alt: "A dense pencil drawing of an overgrown technological landscape suspended beneath an immense circular structure", fit: "contain", ratio: "1280 / 991" }],
     pitch: "At heat death, the last human and the last Machine solve every remaining riddle—and finally learn how to mourn.",
   },
 ];

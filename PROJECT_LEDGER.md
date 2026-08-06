@@ -411,6 +411,8 @@ This is a human-readable summary of the repository history, not a substitute for
 - **RULIAD-018 — Assumptions drawing studies.** Mixed four further ink and pencil works into the conceptual middle of the *Assumptions* archive: the flowering continuous line, pocket notebook of multilingual knot and geometry notes, dense imagined cosmos, and vertical hexagonal hive study. The room now moves through twenty-one supporting plates rather than treating the new work as a detached batch.
 - **RULIAD-019 — Assumptions priority-image framing.** Locked the multi-knot hero and colorful yarn illustration to their measured native aspect ratios and contain presentation so neither composition is cropped by the general-purpose story frames.
 
+- **RULIAD-020 — Story-specific image placement.** Added two rat photographs to a supporting *Lobotomy* archive while preserving the plain rat mark as its primary preview; introduced the overgrown technological drawing as the first *End of Time* hero; paired the new vessel sketch with *Hands*; and assigned the already-preserved mushroom tableau to *Assumptions* without duplicating its checksum-identical source file.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.

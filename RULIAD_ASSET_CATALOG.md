@@ -23,15 +23,20 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/assumptions-yarn-orbits-02.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-orbits-03.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-terrariums.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/vault/mushroom-still-life.jpg` | Assumptions | Handmade mushroom tableau archive plate |
 | `public/ruliad/assumptions-soft-sculpture-console-01.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-soft-sculpture-table.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-soft-sculpture-console-02.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/inside-the-machine-09.jpg` | The Machine and the XASER / Assumptions | Shared field plate: cable canopy and yarn topology |
 | `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER / Assumptions | Shared field plate: yarn-crowned operator inside The Machine |
 | `public/ruliad/hands.jpg` | Hands | Hero illustration |
+| `public/ruliad/hands-jar-sketch.jpg` | Hands | Paired hero sketch |
 | `public/ruliad/lobotomy.jpg` | Lobotomy | Main preview and hero mark |
+| `public/ruliad/lobotomy-rats-resting.jpg` | Lobotomy | Rat Studies archive |
+| `public/ruliad/lobotomy-rats-moss-platform.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/kind-eyed-stranger.jpg` | Kind-Eyed Stranger | Hero illustration |
 | `public/ruliad/doc-pop.jpg` | The Legend of Doc Pop | Hero illustration |
+| `public/ruliad/end-of-time.jpg` | The End of Time | Main preview and hero illustration |
 | `public/ruliad/inside-the-machine-01.jpg` | The Machine and the XASER | Hero archive pair |
 | `public/ruliad/inside-the-machine-02.jpg` | The Machine and the XASER | Hero archive pair |
 | `public/ruliad/inside-the-machine-03.jpg` | The Machine and the XASER | Field archive |
@@ -63,7 +68,7 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | --- | --- | --- |
 | `public/ruliad/vault/passenger-seat-synth-dome.jpg` | Synthesizers, a projection dome, and a small plant packed into a car's front passenger seat | Unassigned |
 | `public/ruliad/vault/car-seat-cable-looms.jpg` | Long blue, black, and white cable looms draped across a car's back seat | Unassigned |
-| `public/ruliad/vault/mushroom-still-life.jpg` | Handmade mushroom tableaux, notebook, and drawing arranged on green cloth | Unassigned |
+| `public/ruliad/vault/mushroom-still-life.jpg` | Handmade mushroom tableaux, notebook, and drawing arranged on green cloth | Assumptions archive |
 | `public/ruliad/vault/workbench-cube-field-note.jpg` | Color cube, tools, and a folded handwritten field note on a crowded workbench | Unassigned |
 | `public/ruliad/vault/vintage-tube-layout.jpg` | Printed vacuum-tube chassis layout and connection diagram | Unassigned |
 
