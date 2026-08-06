@@ -23,7 +23,7 @@ export const ruliadStories: readonly RuliadStory[] = [
     title: "Assumptions",
     art: [{ src: "/ruliad/assumptions.jpg", alt: "Four knitted knot forms arranged on a white page filled with hand-drawn knot studies", fit: "contain", ratio: "1280 / 989" }],
     archive: {
-      title: "Knots, Loops, and Soft Assumptions",
+      title: "The Fabric of Spacetime",
       note: "A tactile field notebook of drawn, baked, knitted, crocheted, and inhabited loops: ideas tested by hand until their crossings become objects, organisms, and parts of The Machine.",
       images: [
         { src: "/ruliad/assumptions-yarn-illustration.jpg", alt: "A vivid marker illustration of bundled yarn casting an abstract orange shadow", fit: "contain", ratio: "1280 / 742" },
@@ -39,6 +39,9 @@ export const ruliadStories: readonly RuliadStory[] = [
         { src: "/ruliad/assumptions-handheld-rainbow-knot.jpg", alt: "A hand holding a rainbow knitted infinity-shaped knot and wooden spool", fit: "cover" },
         { src: "/ruliad/inside-the-machine-09.jpg", alt: "Braided yarn, coiled leads, and suspended cables crossing the blue-green ceiling of The Machine", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-mushroom-workbench.jpg", alt: "Crocheted mushrooms, yarn spheres, terrariums, and drawing tools gathered on a colorful workbench", fit: "cover" },
+        { src: "/ruliad/assumptions-field-mushrooms.jpg", alt: "A loose constellation of white mushrooms rising from green grass", fit: "cover" },
+        { src: "/ruliad/assumptions-crocheted-mushroom-field.jpg", alt: "A striped crocheted mushroom planted upright in a field of grass", fit: "cover" },
+        { src: "/ruliad/assumptions-mushroom-terrarium-sketch.jpg", alt: "A colored-pencil study of mushrooms and moss enclosed inside a round glass terrarium", fit: "contain", ratio: "960 / 1280" },
         { src: "/ruliad/assumptions-yarn-orbits-01.jpg", alt: "Orange and green yarn spheres entangled in soft pink strands on a striped field", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-orbits-02.jpg", alt: "Close view of green and orange crocheted spheres connected by pale pink loops", fit: "cover" },
         { src: "/ruliad/assumptions-yarn-orbits-03.jpg", alt: "Two crocheted spheres and their loose connecting strands arranged on black and white stripes", fit: "cover" },
@@ -72,6 +75,7 @@ export const ruliadStories: readonly RuliadStory[] = [
       images: [
         { src: "/ruliad/lobotomy-rats-resting.jpg", alt: "Two rats curled together inside folds of dark plaid fabric", fit: "cover" },
         { src: "/ruliad/lobotomy-rats-moss-platform.jpg", alt: "Two rats exploring a moss-covered hanging platform beside a clear exercise wheel", fit: "contain", ratio: "960 / 1280" },
+        { src: "/ruliad/vault/piano-rat-studies.jpg", alt: "Three toy rats gathered across the illustrated keys of an upright piano", fit: "cover" },
       ],
     },
   },
@@ -115,7 +119,10 @@ export const ruliadStories: readonly RuliadStory[] = [
   {
     slug: "the-end-of-time",
     title: "The End of Time",
-    art: [{ src: "/ruliad/end-of-time.jpg", alt: "A dense pencil drawing of an overgrown technological landscape suspended beneath an immense circular structure", fit: "contain", ratio: "1280 / 991" }],
+    art: [
+      { src: "/ruliad/end-of-time.jpg", alt: "A dense pencil drawing of an overgrown technological landscape suspended beneath an immense circular structure", fit: "contain", ratio: "1280 / 991" },
+      { src: "/ruliad/end-of-time-crt-pattern.jpg", alt: "A curved CRT filled edge to edge with a dense blue, green, white, and amber computational pattern", fit: "contain", ratio: "1280 / 960" },
+    ],
     pitch: "At heat death, the last human and the last Machine solve every remaining riddle—and finally learn how to mourn.",
   },
 ];

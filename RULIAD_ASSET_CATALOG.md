@@ -19,6 +19,9 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/assumptions-rainbow-knot-in-progress.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-handheld-rainbow-knot.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-mushroom-workbench.jpg` | Assumptions | Knot and yarn field archive |
+| `public/ruliad/assumptions-field-mushrooms.jpg` | Assumptions | Mushroom field archive plate |
+| `public/ruliad/assumptions-crocheted-mushroom-field.jpg` | Assumptions | Mushroom and yarn archive plate |
+| `public/ruliad/assumptions-mushroom-terrarium-sketch.jpg` | Assumptions | Mushroom terrarium drawing archive plate |
 | `public/ruliad/assumptions-yarn-orbits-01.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-orbits-02.jpg` | Assumptions | Knot and yarn field archive |
 | `public/ruliad/assumptions-yarn-orbits-03.jpg` | Assumptions | Knot and yarn field archive |
@@ -34,9 +37,11 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/lobotomy.jpg` | Lobotomy | Main preview and hero mark |
 | `public/ruliad/lobotomy-rats-resting.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/lobotomy-rats-moss-platform.jpg` | Lobotomy | Rat Studies archive |
+| `public/ruliad/vault/piano-rat-studies.jpg` | Lobotomy | Rat Studies archive |
 | `public/ruliad/kind-eyed-stranger.jpg` | Kind-Eyed Stranger | Hero illustration |
 | `public/ruliad/doc-pop.jpg` | The Legend of Doc Pop | Hero illustration |
 | `public/ruliad/end-of-time.jpg` | The End of Time | Main preview and hero illustration |
+| `public/ruliad/end-of-time-crt-pattern.jpg` | The End of Time | Paired hero photograph |
 | `public/ruliad/inside-the-machine-01.jpg` | The Machine and the XASER | Hero archive pair |
 | `public/ruliad/inside-the-machine-02.jpg` | The Machine and the XASER | Hero archive pair |
 | `public/ruliad/inside-the-machine-03.jpg` | The Machine and the XASER | Field archive |
@@ -139,7 +144,7 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/fortune-slip-archive-06.jpg` | Four collected fortune-cookie slips, including a line about fate resting in one's own hands | Unassigned |
 | `public/ruliad/vault/fortune-slip-archive-07.jpg` | Five fortune-cookie slips about email, Friday, fruit punch, and gluten | Unassigned |
 | `public/ruliad/vault/fortune-slip-archive-08.jpg` | Seven worn fortune-cookie slips about compassion, courage, criticism, love, and self-acceptance | Unassigned |
-| `public/ruliad/vault/piano-rat-studies.jpg` | Toy rats gathered across hand-drawn piano keys | Unassigned |
+| `public/ruliad/vault/piano-rat-studies.jpg` | Toy rats gathered across hand-drawn piano keys | Lobotomy archive |
 | `public/ruliad/vault/machine-shop-interior.jpg` | Two people standing inside a narrow, tool-lined machine shop | Unassigned |
 
 ## Intake vault — 2026-08-06, Lobotomy alternate

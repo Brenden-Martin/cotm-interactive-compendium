@@ -413,6 +413,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-020 — Story-specific image placement.** Added two rat photographs to a supporting *Lobotomy* archive while preserving the plain rat mark as its primary preview; introduced the overgrown technological drawing as the first *End of Time* hero; paired the new vessel sketch with *Hands*; and assigned the already-preserved mushroom tableau to *Assumptions* without duplicating its checksum-identical source file.
 
+- **RULIAD-021 — Mushroom fields, piano rats, and terminal signals.** Expanded *Assumptions* with natural mushrooms, a crocheted field mushroom, and a terrarium drawing; assigned the already-preserved piano-rat photograph to *Lobotomy* without duplicating its source; and paired *The End of Time* drawing with a dense computational CRT pattern.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
