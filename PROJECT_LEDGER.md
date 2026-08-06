@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The next Site version contains nineteen gallery exhibits:
+The next Site version contains twenty gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -58,6 +58,7 @@ The next Site version contains nineteen gallery exhibits:
 17. Spectrum to RGB
 18. DEQ Atlas
 19. Manifold Golf
+20. Pendulum Laboratory
 
 The Compendium currently contains five linked theory entries:
 
@@ -236,7 +237,10 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **RESEARCH-007 — Candidate — Glitch Goo video synthesizer.** Present the visual system as a potential video-synthesis module.
 - **RESEARCH-008 — Waiting — Product source pass.** Mine the connected knowledge base for additional device concepts, then ask Brenden which are suitable for public display.
 - **RESEARCH-009 — Testing — Collection selector.** Private Research now uses the Gallery-style destination selector in its established blue identity. Experiments and reference collections grow as independent nested pages rather than replacing one another.
-- **RESEARCH-010 — Testing — Pendulum Laboratory.** Preserve the original draggable-pendulum impulse as a full experiment with small-angle, exact nonlinear, double, and triple modes; adjustable segment length and lowest mass; nonlinear coupled-link equations; fading phosphor paths at every mass; and a twelve-second horizontal-position history for every link.
+- **RESEARCH-010 — Testing — Pendulum Laboratory.** Preserve the original draggable-pendulum impulse as a full Gallery exhibit with small-angle, exact nonlinear, double, and triple modes; adjustable segment length and lowest mass; nonlinear coupled-link equations; fading phosphor paths at every mass; and a twelve-second horizontal-position history for every link. Keep the former Private Research URL as a redirect so saved links survive the move.
+- **RESEARCH-011 — Waiting — Mesopyramids archive.** Reserve a project room for later reports, presentations, figures, research-notebook photographs, simulations, and key plots sourced from the project directories.
+- **RESEARCH-012 — Waiting — Noncontact Respiration Monitoring archive.** Reserve a project room for later reports, presentations, figures, research-notebook photographs, simulations, and key plots sourced from the project directories.
+- **RESEARCH-013 — Waiting — Electro-Optic Fabry–Pérot archive.** Reserve a project room for later reports, presentations, figures, research-notebook photographs, simulations, and key plots sourced from the project directories.
 
 ### Spectrum to RGB exhibit and color Compendium sequence
 
@@ -387,6 +391,7 @@ This is a human-readable summary of the repository history, not a substitute for
 ### 2026-08-06
 
 - **COMP-001 through COMP-004, RULIAD-001 through RULIAD-003, RESEARCH-009 through RESEARCH-010, READ-002, and FORTUNE-005** — Built the remaining Compendium and Private Research navigation backbones in the private workbench, reserved the note and reading archives, added all seven Ruliad story rooms in canonical order, replaced the research pendulum placeholder with a nonlinear multi-link laboratory, and bridged the workbench Fortune Cookie to the public approved bank.
+- **RESEARCH-010 through RESEARCH-013** — Moved Pendulum Laboratory into Gallery as exhibit 20 while preserving its former URL, and replaced its Private Research card with project-archive rooms for Mesopyramids, Noncontact Respiration Monitoring, and Electro-Optic Fabry–Pérot.
 
 ## Decision log
 
@@ -406,3 +411,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-06:** The Compendium's former article index is preserved as **Logs**. The top level now organizes Logs, Memo Dump, Class Notes, and Tales from the Ruliad.
 - **2026-08-06:** The canonical Ruliad order places **Kind-Eyed Stranger** before **The Legend of Doc Pop**, as confirmed after comparing the current note with the older Ruliad outline.
 - **2026-08-06:** Private-workbench D1 remains isolated from production. Its Fortune Cookie may read the public approved bank, but private test submissions continue to stay in the private queue.
+- **2026-08-06:** Pendulum Laboratory belongs in Gallery. Private Research is the home for Brenden's real research archives, beginning with Mesopyramids, Noncontact Respiration Monitoring, and Electro-Optic Fabry–Pérot; their current rooms remain intentionally skeletal until the named source directories are supplied.

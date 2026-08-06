@@ -123,6 +123,12 @@ export default function Gallery() {
           <strong>Manifold Golf</strong>
           <small>Putt through curved space →</small>
         </Link>
+        <Link className="study pendulum-entry" href="/gallery/pendulum-lab">
+          <span className="eyebrow">Exhibit 20 / Nonlinear Dynamics</span>
+          <div className="pendulum-entry-figure" aria-hidden="true"><i /><b /><span /></div>
+          <strong>Pendulum Laboratory</strong>
+          <small>Set the system in motion →</small>
+        </Link>
       </section>
     </main>
   );
