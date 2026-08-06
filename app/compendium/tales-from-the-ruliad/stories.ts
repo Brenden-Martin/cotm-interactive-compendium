@@ -2,6 +2,7 @@ type RuliadIllustration = {
   src: string;
   alt: string;
   fit?: "contain" | "cover";
+  ratio?: string;
 };
 
 type RuliadStory = {
@@ -20,12 +21,12 @@ export const ruliadStories: readonly RuliadStory[] = [
   {
     slug: "assumptions",
     title: "Assumptions",
-    art: [{ src: "/ruliad/assumptions.jpg", alt: "Four knitted knot forms arranged on a white page filled with hand-drawn knot studies", fit: "cover" }],
+    art: [{ src: "/ruliad/assumptions.jpg", alt: "Four knitted knot forms arranged on a white page filled with hand-drawn knot studies", fit: "contain", ratio: "1280 / 989" }],
     archive: {
       title: "Knots, Loops, and Soft Assumptions",
       note: "A tactile field notebook of drawn, baked, knitted, crocheted, and inhabited loops: ideas tested by hand until their crossings become objects, organisms, and parts of The Machine.",
       images: [
-        { src: "/ruliad/assumptions-yarn-illustration.jpg", alt: "A vivid marker illustration of bundled yarn casting an abstract orange shadow", fit: "contain" },
+        { src: "/ruliad/assumptions-yarn-illustration.jpg", alt: "A vivid marker illustration of bundled yarn casting an abstract orange shadow", fit: "contain", ratio: "1280 / 742" },
         { src: "/ruliad/assumptions-white-knot-object.jpg", alt: "A white interwoven knot object resting against ornate woven fabric", fit: "cover" },
         { src: "/ruliad/assumptions-bread-knot.jpg", alt: "A baked bread knot served in a round earthenware bowl", fit: "cover" },
         { src: "/ruliad/assumptions-painted-knot-study.jpg", alt: "A hand holding a painted study of a golden trefoil knot and its black shadow form", fit: "cover" },

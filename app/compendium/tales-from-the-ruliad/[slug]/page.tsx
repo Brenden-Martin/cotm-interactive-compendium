@@ -34,7 +34,7 @@ export default async function RuliadStoryPage({ params }: { params: Promise<{ sl
           {story.art?.length ? (
             <div className={`ruliad-art-stack ruliad-art-stack-${story.art.length}`}>
               {story.art.map((illustration) => (
-                <figure className={`ruliad-art-frame ruliad-art-${illustration.fit ?? "contain"}`} key={illustration.src}>
+                <figure className={`ruliad-art-frame ruliad-art-${illustration.fit ?? "contain"}`} key={illustration.src} style={illustration.ratio ? { aspectRatio: illustration.ratio, alignSelf: "center", width: "100%" } : undefined}>
                   <Image src={illustration.src} alt={illustration.alt} fill sizes="(max-width: 760px) 88vw, 38vw" unoptimized />
                 </figure>
               ))}
@@ -61,7 +61,7 @@ export default async function RuliadStoryPage({ params }: { params: Promise<{ sl
           <div className="ruliad-image-grid">
             {story.archive.images.map((illustration, imageIndex) => (
               <figure key={illustration.src}>
-                <div className={`ruliad-archive-image ruliad-art-${illustration.fit ?? "cover"}`}>
+                <div className={`ruliad-archive-image ruliad-art-${illustration.fit ?? "cover"}`} style={illustration.ratio ? { aspectRatio: illustration.ratio } : undefined}>
                   <Image src={illustration.src} alt={illustration.alt} fill sizes="(max-width: 760px) 92vw, (max-width: 1100px) 46vw, 30vw" unoptimized />
                 </div>
                 <figcaption><span>Plate {String(imageIndex + 1).padStart(2, "0")}</span><i aria-hidden="true" /></figcaption>
