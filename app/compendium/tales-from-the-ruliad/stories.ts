@@ -32,6 +32,7 @@ export const ruliadStories: readonly RuliadStory[] = [
     slug: "lobotomy",
     title: "Lobotomy",
     pitch: "A man deletes himself piece by piece, preserving only the scraps he hopes deserve to survive him.",
+    art: [{ src: "/ruliad/lobotomy.jpg", alt: "A plain white hand-drawn rat mark on a black field", fit: "contain" }],
   },
   {
     slug: "kind-eyed-stranger",
@@ -55,13 +56,18 @@ export const ruliadStories: readonly RuliadStory[] = [
     ],
     archive: {
       title: "Inside The Machine",
-      note: "Five further views from the instrument rooms, the signal tower, and the equipment gathered around them.",
+      note: "Ten further views from the instrument rooms, the signal tower, the gathered equipment, and the cable-filled belly of The Machine.",
       images: [
         { src: "/ruliad/inside-the-machine-03.jpg", alt: "A hand holding a glowing Brownie Reflex camera in deep red light", fit: "cover" },
         { src: "/ruliad/inside-the-machine-04.jpg", alt: "A red-lit instrument room with modular synthesizers, an oscilloscope, and a small keyboard", fit: "cover" },
         { src: "/ruliad/inside-the-machine-05.jpg", alt: "A tall console of synthesizers and keyboards under a projected pattern", fit: "cover" },
         { src: "/ruliad/inside-the-machine-06.jpg", alt: "A telecommunications tower rising over a field beneath a blue sky", fit: "cover" },
         { src: "/ruliad/inside-the-machine-07.jpg", alt: "The open trunk of a car filled with vintage electronic instruments and test equipment", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-08.jpg", alt: "The Machine assembled from glowing CRT cabinets, synthesizers, controllers, and suspended notes under green and violet light", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-09.jpg", alt: "A blue-green ceiling view of The Machine's hanging cables, braided cords, and suspended fragments", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-10.jpg", alt: "A low green-lit view across The Machine's CRT cabinets, static-filled screens, guitar, and hanging wires", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-11.jpg", alt: "A blue room adjacent to The Machine with a green-lit doorway, CRT, books, and bean illustration", fit: "cover" },
+        { src: "/ruliad/inside-the-machine-12.jpg", alt: "A figure with braided hair working at The Machine's mixing desk and modular instruments under violet light", fit: "cover" },
       ],
     },
   },

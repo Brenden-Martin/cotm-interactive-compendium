@@ -7,6 +7,7 @@ This register preserves the story-image collection independently from its eventu
 | Asset | Current room | Use |
 | --- | --- | --- |
 | `public/ruliad/hands.jpg` | Hands | Hero illustration |
+| `public/ruliad/lobotomy.jpg` | Lobotomy | Main preview and hero mark |
 | `public/ruliad/kind-eyed-stranger.jpg` | Kind-Eyed Stranger | Hero illustration |
 | `public/ruliad/doc-pop.jpg` | The Legend of Doc Pop | Hero illustration |
 | `public/ruliad/inside-the-machine-01.jpg` | The Machine and the XASER | Hero archive pair |
@@ -16,6 +17,11 @@ This register preserves the story-image collection independently from its eventu
 | `public/ruliad/inside-the-machine-05.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-06.jpg` | The Machine and the XASER | Field archive |
 | `public/ruliad/inside-the-machine-07.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-08.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-09.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-10.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-11.jpg` | The Machine and the XASER | Field archive |
+| `public/ruliad/inside-the-machine-12.jpg` | The Machine and the XASER | Field archive |
 
 ## Intake vault — 2026-08-06
 
@@ -98,6 +104,22 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/fortune-slip-archive-03.jpg` | Seven overlapping fortune-cookie slips with blue printer marks | Unassigned |
 | `public/ruliad/vault/fortune-slip-archive-04.jpg` | Five fortune-cookie slips about action, happiness, respect, and home | Unassigned |
 | `public/ruliad/vault/fortune-slip-archive-05.jpg` | Four fortune-cookie slips preserved together inside a clear sleeve | Unassigned |
+
+## Intake vault — 2026-08-06, batch nine
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/fortune-slip-archive-06.jpg` | Four collected fortune-cookie slips, including a line about fate resting in one's own hands | Unassigned |
+| `public/ruliad/vault/fortune-slip-archive-07.jpg` | Five fortune-cookie slips about email, Friday, fruit punch, and gluten | Unassigned |
+| `public/ruliad/vault/fortune-slip-archive-08.jpg` | Seven worn fortune-cookie slips about compassion, courage, criticism, love, and self-acceptance | Unassigned |
+| `public/ruliad/vault/piano-rat-studies.jpg` | Toy rats gathered across hand-drawn piano keys | Unassigned |
+| `public/ruliad/vault/machine-shop-interior.jpg` | Two people standing inside a narrow, tool-lined machine shop | Unassigned |
+
+## Intake vault — 2026-08-06, Lobotomy alternate
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/lobotomy-rat-mark-bones.jpg` | Elaborated rat mark with colored cranial stem and crossed bones | Lobotomy alternate; not the main preview |
 
 ## Filing rule
 
