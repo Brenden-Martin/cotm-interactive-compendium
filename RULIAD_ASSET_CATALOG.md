@@ -39,6 +39,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/workbench-cube-field-note.jpg` | Color cube, tools, and a folded handwritten field note on a crowded workbench | Unassigned |
 | `public/ruliad/vault/vintage-tube-layout.jpg` | Printed vacuum-tube chassis layout and connection diagram | Unassigned |
 
+## Intake vault — 2026-08-06, batch three
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/shirt-pocket-drafting-tools.jpg` | Compass, pencils, and small drawing tools carried in a handmade shirt-pocket holder | Unassigned |
+| `public/ruliad/vault/red-keyboard-room.jpg` | Red-lit wood-paneled music room with stacked keyboards and an illuminated instrument | Unassigned |
+| `public/ruliad/vault/quarry-pump-pond.jpg` | Weathered pump structure standing over a green woodland pond | Unassigned |
+| `public/ruliad/vault/grotto-pool.jpg` | Sunlit rocky grotto and still pool surrounded by dense trees | Unassigned |
+| `public/ruliad/vault/grotto-waterfall.jpg` | Waterfall descending into a secluded green grotto | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
