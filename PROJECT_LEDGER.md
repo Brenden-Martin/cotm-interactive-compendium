@@ -400,6 +400,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - **RULIAD-009 — Image intake vault, batch four.** Preserved the laboratory hallway, vintage physics-of-sound chart, retro media room, XR-1200 mixing console, and doorway view of the keyboard room. All remain unassigned and ready for later canonical placement.
 - **RULIAD-010 — Image intake vault, batch five.** Preserved the antique-store phonograph, mammatus-cloud field, and woodland yurts. The other two submissions were checksum-identical repeats of the existing grotto-pool and grotto-waterfall assets, so the catalog records their recurrence without storing duplicate files.
 - **RULIAD-011 — Image intake vault, batch six.** Preserved all five received images as two coherent technical clusters: three optical-breadboard component arrangements and two vintage circuit-board closeups. All remain unassigned and ready for later canonical placement.
+- **RULIAD-012 — Image intake vault, batch seven.** Preserved a five-image texture study for the Ruliad canon: moss-covered bones, a wall of weathered skulls, worn canvas shoes, a second illuminated bone arrangement, and lichen-covered stone. The cluster remains unassigned and ready for later canonical placement.
 
 ## Decision log
 

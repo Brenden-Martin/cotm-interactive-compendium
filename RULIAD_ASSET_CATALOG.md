@@ -79,6 +79,16 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/vault/vintage-circuit-board-closeup-01.jpg` | Tight view of a vintage circuit board with orange capacitors and radial transistor packages | Unassigned |
 | `public/ruliad/vault/vintage-circuit-board-closeup-02.jpg` | Wider closeup of a densely populated vintage board with coils, resistors, capacitors, and integrated circuits | Unassigned |
 
+## Intake vault — 2026-08-06, batch seven
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/vault/moss-covered-bones-01.jpg` | Moss and lichen growing across stacked bones in diffuse enclosure light | Unassigned |
+| `public/ruliad/vault/moss-covered-skulls.jpg` | Dense wall of weathered skulls and bone fragments with green growth | Unassigned |
+| `public/ruliad/vault/worn-canvas-shoes.jpg` | Loosely laced, worn canvas high-tops resting on vivid red carpet | Unassigned |
+| `public/ruliad/vault/moss-covered-bones-02.jpg` | Skull and rib-like bones crossed by green growth and a shaft of light | Unassigned |
+| `public/ruliad/vault/lichen-moss-rock.jpg` | Close texture study of pale lichen and saturated moss across fractured stone | Unassigned |
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.
