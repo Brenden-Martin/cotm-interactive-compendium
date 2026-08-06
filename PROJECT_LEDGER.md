@@ -417,6 +417,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-022 — XASER laboratory, mushroom studies, and Hands framing.** Added the vintage laboratory instrument to *The Machine and the XASER*; expanded *The Fabric of Spacetime* with two mushroom drawings and the previously preserved dashboard terrarium; assigned the previously preserved passenger-seat apparatus to *Hands*; and locked every Hands image to its measured native aspect ratio with contain presentation.
 
+- **RULIAD-023 — Universal story-plate framing.** Standardized every Tales room on the outlined, story-color plate language established by *The Fabric of Spacetime*. Hero and archive images now retain their measured native aspect ratios, use contain presentation, participate in normal document flow, and never rely on cropped cover frames, decorative overlap, or translated contact-sheet placement.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
