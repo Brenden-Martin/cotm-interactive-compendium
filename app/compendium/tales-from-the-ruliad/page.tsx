@@ -16,7 +16,7 @@ export default function TalesFromTheRuliadPage() {
       <section className="ruliad-intro">
         <span className="eyebrow">A computational universe</span>
         <h1>Tales from<br />the Ruliad</h1>
-        <p>Seven stories arranged from first assumptions to the end of time. Text and illustrated headers will enter this structure as their publication forms are prepared.</p>
+        <p>Seven stories arranged from first assumptions to the end of time. Their illustrations are beginning to enter the orbit while the manuscripts approach their publication forms.</p>
       </section>
       <ol className="ruliad-story-list">
         {ruliadStories.map((story, index) => (
@@ -24,7 +24,7 @@ export default function TalesFromTheRuliadPage() {
             <Link href={`/compendium/tales-from-the-ruliad/${story.slug}`}>
               <span>{String(index + 1).padStart(2, "0")}</span>
               <strong>{story.title}</strong>
-              <small>Story and art reserved →</small>
+              <small>{story.art?.length ? "Illustrated room" : "Story room reserved"} →</small>
             </Link>
           </li>
         ))}

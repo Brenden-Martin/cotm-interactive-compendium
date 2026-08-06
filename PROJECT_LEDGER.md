@@ -392,6 +392,7 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **COMP-001 through COMP-004, RULIAD-001 through RULIAD-003, RESEARCH-009 through RESEARCH-010, READ-002, and FORTUNE-005** — Built the remaining Compendium and Private Research navigation backbones in the private workbench, reserved the note and reading archives, added all seven Ruliad story rooms in canonical order, replaced the research pendulum placeholder with a nonlinear multi-link laboratory, and bridged the workbench Fortune Cookie to the public approved bank.
 - **RESEARCH-010 through RESEARCH-013** — Moved Pendulum Laboratory into Gallery as exhibit 20 while preserving its former URL, and replaced its Private Research card with project-archive rooms for Mesopyramids, Noncontact Respiration Monitoring, and Electro-Optic Fabry–Pérot.
+- **RULIAD-004 — First illustration pass.** Installed the supplied art for *Hands*, *Kind-Eyed Stranger*, *The Legend of Doc Pop*, and two interior views for *The Machine and the XASER*. Keep the animated orbital geometry and each story's color field visible around every illustration as a permanent part of the room design. Added a one-line story signal to every room, distilled from the indexed Ruliad conversations rather than substituting new manuscript prose.
 
 ## Decision log
 
@@ -412,3 +413,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-06:** The canonical Ruliad order places **Kind-Eyed Stranger** before **The Legend of Doc Pop**, as confirmed after comparing the current note with the older Ruliad outline.
 - **2026-08-06:** Private-workbench D1 remains isolated from production. Its Fortune Cookie may read the public approved bank, but private test submissions continue to stay in the private queue.
 - **2026-08-06:** Pendulum Laboratory belongs in Gallery. Private Research is the home for Brenden's real research archives, beginning with Mesopyramids, Noncontact Respiration Monitoring, and Electro-Optic Fabry–Pérot; their current rooms remain intentionally skeletal until the named source directories are supplied.
+- **2026-08-06:** Ruliad illustrations layer into the existing rainbow story rooms; they do not replace the geometric fields or animated orbital language.

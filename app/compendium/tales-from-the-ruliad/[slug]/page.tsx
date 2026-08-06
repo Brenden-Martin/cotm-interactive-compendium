@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRuliadStory, ruliadStories } from "../stories";
@@ -11,7 +12,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const story = getRuliadStory((await params).slug);
-  return { title: story ? `${story.title} · Tales from the Ruliad` : "Tales from the Ruliad" };
+  return { title: story ? `${story.title} · Tales from the Ruliad` : "Tales from the Ruliad", description: story?.pitch };
 }
 
 export default async function RuliadStoryPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -28,11 +29,23 @@ export default async function RuliadStoryPage({ params }: { params: Promise<{ sl
         <span className="folio">Story {String(index + 1).padStart(2, "0")} / 07</span>
       </header>
       <section className="ruliad-story-hero">
-        <div className="ruliad-story-art" aria-label="Reserved space for Brenden's story illustration"><i /><i /><i /><i /><i /></div>
+        <div className={`ruliad-story-art ${story.art?.length ? "has-illustration" : "is-reserved"}`}>
+          <div className="ruliad-story-orbits" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+          {story.art?.length ? (
+            <div className={`ruliad-art-stack ruliad-art-stack-${story.art.length}`}>
+              {story.art.map((illustration) => (
+                <figure className={`ruliad-art-frame ruliad-art-${illustration.fit ?? "contain"}`} key={illustration.src}>
+                  <Image src={illustration.src} alt={illustration.alt} fill sizes="(max-width: 760px) 88vw, 38vw" unoptimized />
+                </figure>
+              ))}
+            </div>
+          ) : <span className="ruliad-art-awaiting">Illustration to follow</span>}
+          <div className="ruliad-art-caption"><span>Story signal</span><p>{story.pitch}</p></div>
+        </div>
         <div>
           <span className="eyebrow">Tales from the Ruliad</span>
           <h1>{story.title}</h1>
-          <p>This reading room is ready for its illustrated header and edited text.</p>
+          <p>{story.art?.length ? "Archive illustration installed; the geometric field remains in orbit while the manuscript follows." : "This reading room is ready for its illustration and edited text."}</p>
         </div>
       </section>
       <section className="ruliad-manuscript-slot">
