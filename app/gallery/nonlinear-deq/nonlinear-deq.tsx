@@ -18,8 +18,9 @@ type FoundryMode = "standard" | "photo" | "cursor";
 type AnchorBank = "all" | "curated" | "color-cycle";
 type RecursiveMode = "luckfield" | "periodic" | "manual";
 type ChannelPermutation = readonly [number, number, number];
-type FieldMetrics = { brightness: number; contrast: number; colorVariance: number; entropy: number; detail: number };
+type FieldMetrics = { brightness: number; contrast: number; colorVariance: number; entropy: number; multiscale: number; scaleBalance: number; detail: number };
 type BoundaryTransition = { from: FieldState; target: FieldState; current: FieldState; startedAt: number; duration: number };
+type AudioVoice = { source: AudioBufferSourceNode; gain: GainNode };
 type RecursiveSettings = {
   interval: number;
   brightnessGate: number;
@@ -28,6 +29,8 @@ type RecursiveSettings = {
   transitionTime: number;
   transitionWildness: number;
   glitchCarry: number;
+  glitchColor: number;
+  glitchZoom: number;
 };
 type AutoCursor = {
   frequencyX: number;
@@ -56,14 +59,16 @@ const channelPermutations: ChannelPermutation[] = [
 ];
 const initialRecursiveSettings: RecursiveSettings = {
   interval: 5,
-  brightnessGate: .22,
-  detailGate: .48,
+  brightnessGate: .18,
+  detailGate: .76,
   luckChance: .38,
   transitionTime: 2.8,
   transitionWildness: .32,
   glitchCarry: .16,
+  glitchColor: .28,
+  glitchZoom: .24,
 };
-const emptyMetrics: FieldMetrics = { brightness: 0, contrast: 0, colorVariance: 0, entropy: 0, detail: 0 };
+const emptyMetrics: FieldMetrics = { brightness: 0, contrast: 0, colorVariance: 0, entropy: 0, multiscale: 0, scaleBalance: 0, detail: 0 };
 
 const indexK = (dest: number, source: number, template: number) => (dest * 3 + source) * 5 + template;
 const sparseK = (entries: Array<[number, number, number, number]>) => {
@@ -100,39 +105,72 @@ const permuteConfigChannels = (config: Config, permutation: ChannelPermutation):
 };
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+const metricPresence = (value: number, low: number, high: number) => {
+  const position = clamp01((value-low)/(high-low));
+  return position*position*(3-2*position);
+};
 const cloneField = (field: FieldState): FieldState => [new Float32Array(field[0]), new Float32Array(field[1]), new Float32Array(field[2])];
 const uniformBoundary = (): FieldState => [new Float32Array(SIZE).fill(1), new Float32Array(SIZE).fill(1), new Float32Array(SIZE).fill(1)];
+const transformGlitchColor = (r: number, g: number, b: number, hue: number, saturation: number, contrast: number): [number, number, number] => {
+  const cosine = Math.cos(hue), sine = Math.sin(hue);
+  let nr = (.213+cosine*.787-sine*.213)*r + (.715-cosine*.715-sine*.715)*g + (.072-cosine*.072+sine*.928)*b;
+  let ng = (.213-cosine*.213+sine*.143)*r + (.715+cosine*.285+sine*.140)*g + (.072-cosine*.072-sine*.283)*b;
+  let nb = (.213-cosine*.213-sine*.787)*r + (.715-cosine*.715+sine*.715)*g + (.072+cosine*.928+sine*.072)*b;
+  const luminance = (nr + ng + nb) / 3;
+  nr = luminance + (nr-luminance)*saturation;
+  ng = luminance + (ng-luminance)*saturation;
+  nb = luminance + (nb-luminance)*saturation;
+  return [clamp01(.5+(nr-.5)*contrast), clamp01(.5+(ng-.5)*contrast), clamp01(.5+(nb-.5)*contrast)];
+};
 const analyzeField = (field: FieldState): FieldMetrics => {
   const histogram = new Uint32Array(16);
   let brightness = 0;
-  let contrast = 0;
   let colorVariance = 0;
-  for (let y = 0; y < H; y++) {
-    const row = y * W;
-    const down = ((y + 1) % H) * W;
-    for (let x = 0; x < W; x++) {
-      const index = row + x;
-      const right = row + ((x + 1) % W);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const index = y*W+x;
       const r = field[0][index], g = field[1][index], b = field[2][index];
       const luminance = (r + g + b) / 3;
       brightness += luminance;
       histogram[Math.min(15, Math.floor(luminance * 16))]++;
       colorVariance += ((r - luminance) ** 2 + (g - luminance) ** 2 + (b - luminance) ** 2) / 3;
-      contrast += (Math.abs(r-field[0][right])+Math.abs(g-field[1][right])+Math.abs(b-field[2][right])
-        + Math.abs(r-field[0][down+x])+Math.abs(g-field[1][down+x])+Math.abs(b-field[2][down+x])) / 6;
-    }
   }
   let entropy = 0;
   for (const count of histogram) if (count) { const p = count / SIZE; entropy -= p * Math.log2(p); }
   const normalizedEntropy = entropy / 4;
-  const normalizedContrast = clamp01(contrast / SIZE * 4.5);
   const normalizedColorVariance = clamp01(Math.sqrt(colorVariance / SIZE) * 2.8);
+  const scaleContrasts = [1,2,4,8,16].map((distance) => {
+    let energy = 0;
+    for (let y = 0; y < H; y++) {
+      const row = y*W;
+      const down = ((y+distance)%H)*W;
+      for (let x = 0; x < W; x++) {
+        const index = row+x;
+        const right = row+((x+distance)%W);
+        energy += (Math.abs(field[0][index]-field[0][right])+Math.abs(field[1][index]-field[1][right])+Math.abs(field[2][index]-field[2][right])
+          +Math.abs(field[0][index]-field[0][down+x])+Math.abs(field[1][index]-field[1][down+x])+Math.abs(field[2][index]-field[2][down+x]))/6;
+      }
+    }
+    return clamp01(energy/SIZE*3.6);
+  });
+  const sortedScales = [...scaleContrasts].sort((a,b)=>a-b);
+  const scaleMean = scaleContrasts.reduce((sum,value)=>sum+value,0)/scaleContrasts.length;
+  const scaleFloor = sortedScales[1];
+  const scaleBalance = scaleMean > 0 ? clamp01(scaleFloor/scaleMean) : 0;
+  const multiscale = clamp01(scaleMean*.68 + scaleFloor*.32);
+  const detail = clamp01(
+    metricPresence(normalizedEntropy,.28,.78)*.25
+    + metricPresence(normalizedColorVariance,.12,.70)*.17
+    + metricPresence(multiscale,.16,.60)*.43
+    + metricPresence(scaleBalance,.45,.90)*.15
+  );
   return {
     brightness: brightness / SIZE,
-    contrast: normalizedContrast,
+    contrast: scaleContrasts[0],
     colorVariance: normalizedColorVariance,
     entropy: normalizedEntropy,
-    detail: clamp01(normalizedEntropy*.38 + normalizedContrast*.37 + normalizedColorVariance*.25),
+    multiscale,
+    scaleBalance,
+    detail,
   };
 };
 const colorChannels = (hex: string): [number, number, number] => [
@@ -167,6 +205,14 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const recursiveSettingsRef = useRef<RecursiveSettings>(initialRecursiveSettings);
   const boundaryTransitionRef = useRef<BoundaryTransition | null>(null);
   const lastBoundaryScanRef = useRef(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioMasterRef = useRef<GainNode | null>(null);
+  const audioVoicesRef = useRef<AudioVoice[]>([]);
+  const audioEnabledRef = useRef(false);
+  const audioFrameRef = useRef(0);
+  const audioVolumeRef = useRef(.12);
+  const audioPitchRef = useRef(1);
+  const audioRefreshFramesRef = useRef(12);
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
@@ -193,6 +239,10 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const [fieldMetrics, setFieldMetrics] = useState<FieldMetrics>(emptyMetrics);
   const [boundaryStatus, setBoundaryStatus] = useState("Watching for a lucky field");
   const [boundaryMutations, setBoundaryMutations] = useState(0);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(.12);
+  const [audioPitch, setAudioPitch] = useState(1);
+  const [audioRefreshFrames, setAudioRefreshFrames] = useState(12);
 
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => {
@@ -206,6 +256,13 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   useEffect(() => { recursiveModeRef.current = recursiveMode; }, [recursiveMode]);
   useEffect(() => { boundaryHeldRef.current = boundaryHeld; }, [boundaryHeld]);
   useEffect(() => { recursiveSettingsRef.current = recursiveSettings; }, [recursiveSettings]);
+  useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
+  useEffect(() => {
+    audioVolumeRef.current = audioVolume;
+    audioMasterRef.current?.gain.setTargetAtTime(audioVolume, audioContextRef.current?.currentTime ?? 0, .02);
+  }, [audioVolume]);
+  useEffect(() => { audioPitchRef.current = audioPitch; }, [audioPitch]);
+  useEffect(() => { audioRefreshFramesRef.current = audioRefreshFrames; }, [audioRefreshFrames]);
 
   const switchFoundryMode = (mode: FoundryMode) => {
     foundryModeRef.current = mode;
@@ -393,11 +450,21 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
       const blockHeight = 2 + Math.floor(Math.random() * (3 + settings.glitchCarry * H * .22));
       const startX = Math.floor(Math.random() * W);
       const startY = Math.floor(Math.random() * H);
+      const sourceX = Math.floor(Math.random() * W);
+      const sourceY = Math.floor(Math.random() * H);
+      const scale = Math.pow(2, (Math.random()*2-1) * settings.glitchZoom * 3);
+      const hue = (Math.random()*2-1) * Math.PI * settings.glitchColor;
+      const saturation = 1 + (Math.random()*2-1) * settings.glitchColor * 1.5;
+      const contrast = 1 + (Math.random()*2-1) * settings.glitchColor * 1.4;
       for (let dy = 0; dy < blockHeight; dy++) for (let dx = 0; dx < blockWidth; dx++) {
-        const index = ((startY + dy) % H) * W + ((startX + dx) % W);
-        target[0][index] = previous[0][index];
-        target[1][index] = previous[1][index];
-        target[2][index] = previous[2][index];
+        const targetIndex = ((startY + dy) % H) * W + ((startX + dx) % W);
+        const sampleX = (sourceX + Math.floor((dx-blockWidth/2)*scale) + W) % W;
+        const sampleY = (sourceY + Math.floor((dy-blockHeight/2)*scale) + H) % H;
+        const sourceIndex = sampleY * W + sampleX;
+        const transformed = transformGlitchColor(previous[0][sourceIndex],previous[1][sourceIndex],previous[2][sourceIndex],hue,saturation,contrast);
+        target[0][targetIndex] = transformed[0];
+        target[1][targetIndex] = transformed[1];
+        target[2][targetIndex] = transformed[2];
       }
     }
     const current = cloneField(previous);
@@ -423,6 +490,75 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const setRecursiveValue = (key: keyof RecursiveSettings, value: number) => {
     setRecursiveSettings((current) => ({ ...current, [key]: value }));
   };
+
+  const stopFieldAudio = useCallback(() => {
+    audioEnabledRef.current = false;
+    setAudioEnabled(false);
+    for (const voice of audioVoicesRef.current) { try { voice.source.stop(); } catch {} }
+    audioVoicesRef.current = [];
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    audioMasterRef.current = null;
+    if (context) void context.close();
+  }, []);
+
+  const toggleFieldAudio = async () => {
+    if (audioEnabledRef.current) { stopFieldAudio(); return; }
+    const AudioContextClass = window.AudioContext || (window as typeof window & {webkitAudioContext?: typeof AudioContext}).webkitAudioContext;
+    if (!AudioContextClass) { setBoundaryStatus("Field audio is unavailable in this browser"); return; }
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.value = audioVolumeRef.current;
+    master.connect(context.destination);
+    audioContextRef.current = context;
+    audioMasterRef.current = master;
+    audioFrameRef.current = audioRefreshFramesRef.current;
+    audioEnabledRef.current = true;
+    setAudioEnabled(true);
+    await context.resume();
+  };
+
+  const refreshAudioGranules = useCallback(() => {
+    const context = audioContextRef.current;
+    const master = audioMasterRef.current;
+    if (!context || !master || !audioEnabledRef.current) return;
+    const field = fieldRef.current;
+    const horizontal = Array.from({length:W},(_,x)=>(field[0][Math.floor(H/2)*W+x]+field[1][Math.floor(H/2)*W+x]+field[2][Math.floor(H/2)*W+x])/3);
+    const vertical = Array.from({length:H},(_,y)=>(field[0][y*W+Math.floor(W/2)]+field[1][y*W+Math.floor(W/2)]+field[2][y*W+Math.floor(W/2)])/3);
+    const now = context.currentTime;
+    const voices = [horizontal,vertical].map((slice,index) => {
+      const mean = slice.reduce((sum,value)=>sum+value,0)/slice.length;
+      const centered = slice.map((value)=>value-mean);
+      const peak = Math.max(.04,...centered.map(Math.abs));
+      const buffer = context.createBuffer(1,slice.length,context.sampleRate);
+      const samples = buffer.getChannelData(0);
+      for (let sample=0;sample<samples.length;sample++) samples[sample]=centered[sample]/peak*.72;
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      const panner = context.createStereoPanner();
+      source.buffer=buffer;
+      source.loop=true;
+      source.playbackRate.value=audioPitchRef.current;
+      panner.pan.value=index===0?-.72:.72;
+      gain.gain.setValueAtTime(0,now);
+      gain.gain.linearRampToValueAtTime(.72,now+.035);
+      source.connect(gain).connect(panner).connect(master);
+      source.start(now);
+      return {source,gain};
+    });
+    for (const voice of audioVoicesRef.current) {
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(voice.gain.gain.value,now);
+      voice.gain.gain.linearRampToValueAtTime(0,now+.04);
+      voice.source.stop(now+.045);
+    }
+    audioVoicesRef.current=voices;
+  }, []);
+
+  useEffect(() => () => {
+    const context = audioContextRef.current;
+    if (context) void context.close();
+  }, []);
 
   const applyPreset = (name: string) => {
     const preset = presets.find((item) => item.name === name) ?? presets[0];
@@ -694,6 +830,10 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
       if (!pausedRef.current && now - last > 24) {
         paint();
         step();
+        if (audioEnabledRef.current && ++audioFrameRef.current >= audioRefreshFramesRef.current) {
+          audioFrameRef.current = 0;
+          refreshAudioGranules();
+        }
         last = now;
       } else paint();
       if (autoMutateRef.current && now - mutationTimeRef.current > 5000) {
@@ -718,7 +858,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
       canvas.removeEventListener("pointercancel", up);
       canvas.removeEventListener("contextmenu", preventMenu);
     };
-  }, [mutate, recursiveBoundary, replaceBoundary, seedNoise]);
+  }, [mutate, recursiveBoundary, refreshAudioGranules, replaceBoundary, seedNoise]);
 
   const setScalar = (key: "dt" | "decay" | "noise", value: number) => setConfig((current) => ({ ...current, [key]: value }));
   const setExponent = (channel: number, value: number) => setConfig((current) => ({ ...current, exponent: current.exponent.map((item, index) => index === channel ? value : item) }));
@@ -737,6 +877,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     <section className={`deq-lab ${recursiveBoundary ? "luckfield-lab" : ""}`}>
       <div className={`deq-stage ${recursiveBoundary ? "luckfield-stage" : ""}`}>
         <canvas ref={canvasRef} width={W} height={H} className="deq-canvas" aria-label="Interactive three-channel nonlinear differential-equation field. Drag to paint into the system." />
+        {recursiveBoundary && <div className={`luckfield-crosshair ${audioEnabled ? "active" : ""}`} aria-hidden="true" />}
         <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{recursiveBoundary ? `${boundaryMutations} boundary captures` : `${mutationCount} parameter mutations`}</span></div>
       </div>
       <aside className="deq-controls">
@@ -759,7 +900,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
             <div className="luckfield-meter" aria-label="Current field interestingness">
               <span><i style={{width:`${fieldMetrics.brightness*100}%`}}/>Amplitude <b>{Math.round(fieldMetrics.brightness*100)}</b></span>
               <span><i style={{width:`${fieldMetrics.detail*100}%`}}/>Detail <b>{Math.round(fieldMetrics.detail*100)}</b></span>
-              <small>Entropy {Math.round(fieldMetrics.entropy*100)} · contrast {Math.round(fieldMetrics.contrast*100)} · color variance {Math.round(fieldMetrics.colorVariance*100)}</small>
+              <small>Entropy {Math.round(fieldMetrics.entropy*100)} · multiscale {Math.round(fieldMetrics.multiscale*100)} · scale balance {Math.round(fieldMetrics.scaleBalance*100)} · color variance {Math.round(fieldMetrics.colorVariance*100)}</small>
             </div>
             <div className="deq-morph-sliders luckfield-sliders">
               <label><span>{recursiveMode === "periodic" ? "Capture interval" : "Interestingness scan"}</span><output>{recursiveSettings.interval.toFixed(1)} s</output><input type="range" min="1" max="20" step=".5" value={recursiveSettings.interval} onChange={(event)=>setRecursiveValue("interval",Number(event.target.value))}/></label>
@@ -771,7 +912,19 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
               <label><span>Boundary morph time</span><output>{recursiveSettings.transitionTime.toFixed(1)} s</output><input type="range" min=".15" max="10" step=".05" value={recursiveSettings.transitionTime} onChange={(event)=>setRecursiveValue("transitionTime",Number(event.target.value))}/></label>
               <label><span>Replacement wildness</span><output>{Math.round(recursiveSettings.transitionWildness*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.transitionWildness} onChange={(event)=>setRecursiveValue("transitionWildness",Number(event.target.value))}/></label>
               <label><span>Old-chunk glitch carry</span><output>{Math.round(recursiveSettings.glitchCarry*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchCarry} onChange={(event)=>setRecursiveValue("glitchCarry",Number(event.target.value))}/></label>
+              <label><span>Glitch hue / saturation / contrast</span><output>{Math.round(recursiveSettings.glitchColor*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchColor} onChange={(event)=>setRecursiveValue("glitchColor",Number(event.target.value))}/></label>
+              <label><span>Glitch block zoom</span><output>{Math.round(recursiveSettings.glitchZoom*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchZoom} onChange={(event)=>setRecursiveValue("glitchZoom",Number(event.target.value))}/></label>
             </div>
+          </div>
+          <div className="control-block luckfield-audio">
+            <div className="luckfield-title"><span className="control-label">Experimental crosshair audio</span><b>{audioEnabled ? "LIVE" : "MUTED"}</b></div>
+            <button className={`toggle-wide ${audioEnabled ? "active" : ""}`} onClick={()=>void toggleFieldAudio()}>{audioEnabled ? "Mute field audio" : "Interpret field as sound"}</button>
+            <div className="deq-morph-sliders">
+              <label><span>Output volume</span><output>{Math.round(audioVolume*100)}%</output><input type="range" min="0" max=".4" step=".01" value={audioVolume} onChange={(event)=>setAudioVolume(Number(event.target.value))}/></label>
+              <label><span>Granule loop rate</span><output>{audioPitch.toFixed(2)}×</output><input type="range" min=".2" max="4" step=".05" value={audioPitch} onChange={(event)=>setAudioPitch(Number(event.target.value))}/></label>
+              <label><span>Refresh cadence</span><output>{audioRefreshFrames} frames</output><input type="range" min="2" max="60" step="1" value={audioRefreshFrames} onChange={(event)=>setAudioRefreshFrames(Number(event.target.value))}/></label>
+            </div>
+            <p className="lab-note">The center row loops in the left channel; the center column loops in the right. Each new pair crossfades into the moving field signal.</p>
           </div>
           <div className="control-block luckfield-morph-bank">
             <label className="preset-select deq-bank-select"><span className="control-label">Equation morph bank · {bankSizeLabel}</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="color-cycle">Full bank · all six RGB permutations</option><option value="all">All anchors · original colors</option><option value="curated">Curated · locked clean set</option></select></label>

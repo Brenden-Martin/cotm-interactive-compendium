@@ -1024,6 +1024,11 @@ button { font: inherit; }
 .luckfield-stage { background:#030507;display:grid;place-items:center; }
 .luckfield-stage::before { content:"SQUARE-CELL LATTICE · 160 × 90";position:absolute;z-index:0;right:14px;top:12px;color:rgba(244,240,223,.38);font:800 8px monospace;letter-spacing:.1em; }
 .luckfield-stage .deq-canvas { inset:auto;position:relative;width:100%;height:auto;aspect-ratio:16/9;max-width:100%;image-rendering:pixelated; }
+.luckfield-crosshair { position:absolute;z-index:2;left:0;top:50%;width:100%;aspect-ratio:16/9;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .2s ease; }
+.luckfield-crosshair.active { opacity:1; }
+.luckfield-crosshair::before,.luckfield-crosshair::after { content:"";position:absolute;background:rgba(244,240,223,.72);box-shadow:0 0 4px rgba(3,5,7,.8); }
+.luckfield-crosshair::before { left:50%;top:0;bottom:0;width:1px; }
+.luckfield-crosshair::after { left:0;right:0;top:50%;height:1px; }
 .luckfield-console { margin:20px 0;padding:14px;border:2px solid #111820;background:#b9c4be; }
 .luckfield-title { display:flex;justify-content:space-between;gap:12px;margin-bottom:10px; }
 .luckfield-title b { font:900 10px monospace;letter-spacing:.1em; }
@@ -1038,6 +1043,9 @@ button { font: inherit; }
 .luckfield-meter small { font:800 8px monospace;text-transform:uppercase;line-height:1.45;opacity:.7; }
 .luckfield-sliders { padding-top:10px;border-top:1px solid #111820; }
 .luckfield-morph-bank { margin:0 0 20px;padding:14px;border:2px solid #111820;background:#f2dc43; }
+.luckfield-audio { margin:0 0 20px;padding:14px;border:2px solid #111820;background:#d7d3c4; }
+.luckfield-audio .deq-morph-sliders { margin-top:12px; }
+.luckfield-audio .lab-note { margin-bottom:0; }
 .deq-foundry { margin-bottom:24px;padding:14px;border:2px solid #111820;background:#f2dc43; }
 .deq-foundry-title { display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:10px; }
 .deq-foundry-title b { display:none; }
