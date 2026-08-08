@@ -147,7 +147,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 - **OPS-001 — Done — Standalone v2 crisp output.** Brenden confirmed the compatible MP4 plays correctly and preserves the deliberately blocky pixels. The renderer and its version history are now on `main`.
 - **OPS-002 — Done — Durable project ledger.** Keep this file current and versioned in GitHub.
-- **OPS-003 — Next — Completed-work discipline.** Every future implementation should update this ledger and cite its task IDs in the commit or pull-request description.
+- **OPS-003 — Review — Completed-work discipline.** Every future implementation should update this ledger and cite its task IDs in the commit or pull-request description. A repository pull-request template now makes the task-ID citation, ledger-update decision, verification evidence, and public-deployment boundary explicit at review time.
 - **OPS-004 — Planned — Source-material register.** When screenshots, links, stories, presets, audio, or mockups arrive, record their repository location and usage status here.
 
 ### References and inspiration links
