@@ -425,6 +425,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-026 — Machine and XASER field-study expansion.** Added five uncropped supporting plates to *The Machine and the XASER*: two speculative drawings, two refinery landscapes, and a mist-filled mountain valley. The existing magenta CRT-room hero remains unchanged, and every new plate preserves its measured native aspect ratio.
 
+- **RULIAD-027 — Final labeled image flood.** Recovered the 29 attachments that arrived after private-workbench version 24: 27 explicitly labeled for *The Machine and the XASER*, one for *Kind-Eyed Stranger*, and one for *Lobotomy*. After checksum reconciliation, the site gains 28 distinct story plates backed by 23 new files and five canonical vault reuses; a twice-submitted resonator-curtain photograph appears only once. Every addition inherits the universal story-color outline, measured native ratio, contain framing, and no-overlap layout.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
