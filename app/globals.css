@@ -1024,6 +1024,11 @@ button { font: inherit; }
 .luckfield-stage { background:#030507;display:grid;place-items:center; }
 .luckfield-stage::before { content:"SQUARE-CELL LATTICE · 160 × 90";position:absolute;z-index:0;right:14px;top:12px;color:rgba(244,240,223,.38);font:800 8px monospace;letter-spacing:.1em; }
 .luckfield-stage .deq-canvas { inset:auto;position:relative;width:100%;height:auto;aspect-ratio:16/9;max-width:100%;image-rendering:pixelated; }
+.luckfield-fullscreen { position:absolute;z-index:6;left:12px;top:12px;min-height:34px;padding:0 11px;border:1px solid rgba(244,240,223,.72);background:rgba(3,5,7,.72);color:#f4f0df;font:800 8px monospace;text-transform:uppercase;letter-spacing:.09em;cursor:pointer;backdrop-filter:blur(5px); }
+.luckfield-fullscreen:hover,.luckfield-fullscreen:focus-visible { background:#f2dc43;color:#111820;outline:none; }
+.luckfield-stage:fullscreen,.luckfield-stage:-webkit-full-screen { width:100vw;height:100vh;min-height:100vh;background:#030507; }
+.luckfield-stage:fullscreen .deq-canvas,.luckfield-stage:-webkit-full-screen .deq-canvas { width:min(100vw,177.7778vh);height:min(100vh,56.25vw);max-width:none;max-height:none; }
+.luckfield-stage:fullscreen .luckfield-crosshair,.luckfield-stage:fullscreen .luckfield-raster-scan,.luckfield-stage:fullscreen .luckfield-spectrum-scan,.luckfield-stage:-webkit-full-screen .luckfield-crosshair,.luckfield-stage:-webkit-full-screen .luckfield-raster-scan,.luckfield-stage:-webkit-full-screen .luckfield-spectrum-scan { left:50%;width:min(100vw,177.7778vh);transform:translate(-50%,-50%); }
 .luckfield-crosshair { position:absolute;z-index:2;left:0;top:50%;width:100%;aspect-ratio:16/9;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .2s ease; }
 .luckfield-crosshair.active { opacity:1; }
 .luckfield-crosshair::before,.luckfield-crosshair::after { content:"";position:absolute;background:rgba(244,240,223,.72);box-shadow:0 0 4px rgba(3,5,7,.8); }

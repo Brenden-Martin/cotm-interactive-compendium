@@ -246,6 +246,7 @@ const colorChannels = (hex: string): [number, number, number] => [
 
 export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false }: { presetFoundry?: boolean; recursiveBoundary?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const fieldRef = useRef<FieldState>([new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)]);
   const configRef = useRef<Config>(cloneConfig(presets[0]));
   const frameRef = useRef(0);
@@ -312,6 +313,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const [audioRefreshFrames, setAudioRefreshFrames] = useState(12);
   const [audioMode, setAudioMode] = useState<AudioMode>("crosshair");
   const [audioColorDepth, setAudioColorDepth] = useState(.78);
+  const [fieldFullscreen, setFieldFullscreen] = useState(false);
 
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => {
@@ -334,6 +336,13 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   useEffect(() => { audioRefreshFramesRef.current = audioRefreshFrames; }, [audioRefreshFrames]);
   useEffect(() => { audioModeRef.current = audioMode; }, [audioMode]);
   useEffect(() => { audioColorDepthRef.current = audioColorDepth; }, [audioColorDepth]);
+  useEffect(() => {
+    const fullscreenDocument=document as Document&{webkitFullscreenElement?:Element|null};
+    const sync=()=>setFieldFullscreen(Boolean(document.fullscreenElement||fullscreenDocument.webkitFullscreenElement));
+    document.addEventListener("fullscreenchange",sync);
+    document.addEventListener("webkitfullscreenchange",sync);
+    return()=>{document.removeEventListener("fullscreenchange",sync);document.removeEventListener("webkitfullscreenchange",sync);};
+  }, []);
 
   const switchFoundryMode = (mode: FoundryMode) => {
     foundryModeRef.current = mode;
@@ -596,6 +605,20 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     audioRefreshFramesRef.current = cadence;
     setAudioRefreshFrames(cadence);
     audioFrameRef.current = cadence;
+  };
+
+  const toggleFieldFullscreen = async () => {
+    const stage=stageRef.current as (HTMLDivElement&{webkitRequestFullscreen?:()=>Promise<void>|void})|null;
+    const fullscreenDocument=document as Document&{webkitFullscreenElement?:Element|null;webkitExitFullscreen?:()=>Promise<void>|void};
+    try {
+      if (document.fullscreenElement||fullscreenDocument.webkitFullscreenElement) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else await fullscreenDocument.webkitExitFullscreen?.();
+      } else if (stage) {
+        if (stage.requestFullscreen) await stage.requestFullscreen();
+        else await stage.webkitRequestFullscreen?.();
+      }
+    } catch { setBoundaryStatus("Fullscreen is unavailable in this browser"); }
   };
 
   const refreshAudioGranules = useCallback(() => {
@@ -993,13 +1016,14 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
 
   return (
     <section className={`deq-lab ${recursiveBoundary ? "luckfield-lab" : ""}`}>
-      <div className={`deq-stage ${recursiveBoundary ? "luckfield-stage" : ""}`}>
+      <div ref={stageRef} className={`deq-stage ${recursiveBoundary ? "luckfield-stage" : ""}`}>
         <canvas ref={canvasRef} width={W} height={H} className="deq-canvas" aria-label="Interactive three-channel nonlinear differential-equation field. Drag to paint into the system." />
         {recursiveBoundary && <>
           <div className={`luckfield-crosshair ${audioEnabled&&audioMode==="crosshair" ? "active" : ""}`} aria-hidden="true" />
           <div className={`luckfield-raster-scan ${audioEnabled&&audioMode==="raster" ? "active" : ""}`} aria-hidden="true" />
           <div className={`luckfield-spectrum-scan ${audioEnabled&&audioMode==="spectrogram" ? "active" : ""}`} aria-hidden="true" />
         </>}
+        {recursiveBoundary&&<button className="luckfield-fullscreen" onClick={()=>void toggleFieldFullscreen()} aria-label={fieldFullscreen?"Exit fullscreen field":"View field fullscreen"}>{fieldFullscreen?"Exit fullscreen":"Fullscreen field"}</button>}
         <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{recursiveBoundary ? `${boundaryMutations} boundary captures` : `${mutationCount} parameter mutations`}</span></div>
       </div>
       <aside className="deq-controls">
