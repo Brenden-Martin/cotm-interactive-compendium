@@ -21,6 +21,7 @@ type ChannelPermutation = readonly [number, number, number];
 type FieldMetrics = { brightness: number; contrast: number; colorVariance: number; entropy: number; multiscale: number; scaleBalance: number; detail: number };
 type BoundaryTransition = { from: FieldState; target: FieldState; current: FieldState; startedAt: number; duration: number };
 type AudioVoice = { source: AudioBufferSourceNode; gain: GainNode };
+type AudioMode = "crosshair" | "raster";
 type RecursiveSettings = {
   interval: number;
   brightnessGate: number;
@@ -213,6 +214,8 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const audioVolumeRef = useRef(.12);
   const audioPitchRef = useRef(1);
   const audioRefreshFramesRef = useRef(12);
+  const audioModeRef = useRef<AudioMode>("crosshair");
+  const audioColorDepthRef = useRef(.78);
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
@@ -243,6 +246,8 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const [audioVolume, setAudioVolume] = useState(.12);
   const [audioPitch, setAudioPitch] = useState(1);
   const [audioRefreshFrames, setAudioRefreshFrames] = useState(12);
+  const [audioMode, setAudioMode] = useState<AudioMode>("crosshair");
+  const [audioColorDepth, setAudioColorDepth] = useState(.78);
 
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => {
@@ -263,6 +268,8 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   }, [audioVolume]);
   useEffect(() => { audioPitchRef.current = audioPitch; }, [audioPitch]);
   useEffect(() => { audioRefreshFramesRef.current = audioRefreshFrames; }, [audioRefreshFrames]);
+  useEffect(() => { audioModeRef.current = audioMode; }, [audioMode]);
+  useEffect(() => { audioColorDepthRef.current = audioColorDepth; }, [audioColorDepth]);
 
   const switchFoundryMode = (mode: FoundryMode) => {
     foundryModeRef.current = mode;
@@ -518,30 +525,73 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     await context.resume();
   };
 
+  const switchAudioMode = (mode: AudioMode) => {
+    audioModeRef.current = mode;
+    setAudioMode(mode);
+    const cadence = mode === "raster" ? 48 : 12;
+    audioRefreshFramesRef.current = cadence;
+    setAudioRefreshFrames(cadence);
+    audioFrameRef.current = cadence;
+  };
+
   const refreshAudioGranules = useCallback(() => {
     const context = audioContextRef.current;
     const master = audioMasterRef.current;
     if (!context || !master || !audioEnabledRef.current) return;
     const field = fieldRef.current;
+    const mode = audioModeRef.current;
+    const colorDepth = audioColorDepthRef.current;
+    let redMean = 0;
+    for (let index=0;index<SIZE;index++) redMean+=field[0][index];
+    redMean/=SIZE;
+    const colorPitch = clamp(1+(redMean-.33)*1.8*colorDepth,.48,2.2);
     const horizontal = Array.from({length:W},(_,x)=>(field[0][Math.floor(H/2)*W+x]+field[1][Math.floor(H/2)*W+x]+field[2][Math.floor(H/2)*W+x])/3);
     const vertical = Array.from({length:H},(_,y)=>(field[0][y*W+Math.floor(W/2)]+field[1][y*W+Math.floor(W/2)]+field[2][y*W+Math.floor(W/2)])/3);
+    const horizontalRaster = mode === "raster" ? Array.from({length:SIZE},(_,position)=>{
+      const y=Math.floor(position/W), localX=position%W;
+      return y%2===0 ? y*W+localX : y*W+(W-1-localX);
+    }) : [];
+    const verticalRaster = mode === "raster" ? Array.from({length:SIZE},(_,position)=>{
+      const x=Math.floor(position/H), localY=position%H;
+      return (x%2===0?localY:H-1-localY)*W+x;
+    }) : [];
+    const renderRaster = (path: number[]) => {
+      const result = new Array<number>(SIZE);
+      let filtered=0, held=0, holdRemaining=0;
+      for (let sample=0;sample<SIZE;sample++) {
+        const index=path[sample];
+        const red=field[0][index], green=field[1][index], blue=field[2][index];
+        if (holdRemaining<=0) {
+          const greenGrain=Math.sin((sample+1)*12.9898+green*78.233)*green*colorDepth*.16;
+          held=red*.72+green*.38-blue*.62+greenGrain;
+          holdRemaining=Math.floor(green*colorDepth*9);
+        } else holdRemaining--;
+        const lowPass=clamp(.035+(1-blue*colorDepth)*.82,.035,.92);
+        filtered+=lowPass*(held-filtered);
+        result[sample]=filtered;
+      }
+      return result;
+    };
+    const voiceData = mode === "raster"
+      ? [renderRaster(horizontalRaster),renderRaster(verticalRaster)]
+      : [horizontal,vertical];
     const now = context.currentTime;
-    const voices = [horizontal,vertical].map((slice,index) => {
+    const voices = voiceData.map((slice,index) => {
       const mean = slice.reduce((sum,value)=>sum+value,0)/slice.length;
       const centered = slice.map((value)=>value-mean);
-      const peak = Math.max(.04,...centered.map(Math.abs));
+      const peak = Math.max(.04,centered.reduce((largest,value)=>Math.max(largest,Math.abs(value)),0));
       const buffer = context.createBuffer(1,slice.length,context.sampleRate);
       const samples = buffer.getChannelData(0);
-      for (let sample=0;sample<samples.length;sample++) samples[sample]=centered[sample]/peak*.72;
+      for (let sample=0;sample<samples.length;sample++) samples[sample]=centered[sample]/peak*(mode==="raster"?.62:.72);
       const source = context.createBufferSource();
       const gain = context.createGain();
       const panner = context.createStereoPanner();
       source.buffer=buffer;
       source.loop=true;
-      source.playbackRate.value=audioPitchRef.current;
+      source.playbackRate.value=audioPitchRef.current*(mode==="raster"?colorPitch:1);
       panner.pan.value=index===0?-.72:.72;
       gain.gain.setValueAtTime(0,now);
-      gain.gain.linearRampToValueAtTime(.72,now+.035);
+      gain.gain.linearRampToValueAtTime(mode==="raster"?.62:.72,now+.055);
       source.connect(gain).connect(panner).connect(master);
       source.start(now);
       return {source,gain};
@@ -549,8 +599,8 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     for (const voice of audioVoicesRef.current) {
       voice.gain.gain.cancelScheduledValues(now);
       voice.gain.gain.setValueAtTime(voice.gain.gain.value,now);
-      voice.gain.gain.linearRampToValueAtTime(0,now+.04);
-      voice.source.stop(now+.045);
+      voice.gain.gain.linearRampToValueAtTime(0,now+.06);
+      voice.source.stop(now+.065);
     }
     audioVoicesRef.current=voices;
   }, []);
@@ -877,7 +927,10 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     <section className={`deq-lab ${recursiveBoundary ? "luckfield-lab" : ""}`}>
       <div className={`deq-stage ${recursiveBoundary ? "luckfield-stage" : ""}`}>
         <canvas ref={canvasRef} width={W} height={H} className="deq-canvas" aria-label="Interactive three-channel nonlinear differential-equation field. Drag to paint into the system." />
-        {recursiveBoundary && <div className={`luckfield-crosshair ${audioEnabled ? "active" : ""}`} aria-hidden="true" />}
+        {recursiveBoundary && <>
+          <div className={`luckfield-crosshair ${audioEnabled&&audioMode==="crosshair" ? "active" : ""}`} aria-hidden="true" />
+          <div className={`luckfield-raster-scan ${audioEnabled&&audioMode==="raster" ? "active" : ""}`} aria-hidden="true" />
+        </>}
         <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{recursiveBoundary ? `${boundaryMutations} boundary captures` : `${mutationCount} parameter mutations`}</span></div>
       </div>
       <aside className="deq-controls">
@@ -917,14 +970,20 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
             </div>
           </div>
           <div className="control-block luckfield-audio">
-            <div className="luckfield-title"><span className="control-label">Experimental crosshair audio</span><b>{audioEnabled ? "LIVE" : "MUTED"}</b></div>
+            <div className="luckfield-title"><span className="control-label">Experimental field audio</span><b>{audioEnabled ? "LIVE" : "MUTED"}</b></div>
+            <div className="deq-foundry-tabs luckfield-audio-tabs" role="tablist" aria-label="Field audio reading mode">
+              <button role="tab" aria-selected={audioMode==="crosshair"} className={audioMode==="crosshair"?"active":""} onClick={()=>switchAudioMode("crosshair")}>Crosshairs</button>
+              <button role="tab" aria-selected={audioMode==="raster"} className={audioMode==="raster"?"active":""} onClick={()=>switchAudioMode("raster")}>Full raster</button>
+            </div>
             <button className={`toggle-wide ${audioEnabled ? "active" : ""}`} onClick={()=>void toggleFieldAudio()}>{audioEnabled ? "Mute field audio" : "Interpret field as sound"}</button>
             <div className="deq-morph-sliders">
               <label><span>Output volume</span><output>{Math.round(audioVolume*100)}%</output><input type="range" min="0" max=".4" step=".01" value={audioVolume} onChange={(event)=>setAudioVolume(Number(event.target.value))}/></label>
-              <label><span>Granule loop rate</span><output>{audioPitch.toFixed(2)}×</output><input type="range" min=".2" max="4" step=".05" value={audioPitch} onChange={(event)=>setAudioPitch(Number(event.target.value))}/></label>
-              <label><span>Refresh cadence</span><output>{audioRefreshFrames} frames</output><input type="range" min="2" max="60" step="1" value={audioRefreshFrames} onChange={(event)=>setAudioRefreshFrames(Number(event.target.value))}/></label>
+              <label><span>{audioMode==="raster"?"Raster scan rate":"Granule loop rate"}</span><output>{audioPitch.toFixed(2)}×</output><input type="range" min=".2" max="4" step=".05" value={audioPitch} onChange={(event)=>setAudioPitch(Number(event.target.value))}/></label>
+              <label><span>Field refresh cadence</span><output>{audioRefreshFrames} frames</output><input type="range" min="2" max="180" step="1" value={audioRefreshFrames} onChange={(event)=>setAudioRefreshFrames(Number(event.target.value))}/></label>
+              {audioMode==="raster"&&<label><span>Color identity depth</span><output>{Math.round(audioColorDepth*100)}%</output><input type="range" min="0" max="1" step=".01" value={audioColorDepth} onChange={(event)=>setAudioColorDepth(Number(event.target.value))}/></label>}
             </div>
-            <p className="lab-note">The center row loops in the left channel; the center column loops in the right. Each new pair crossfades into the moving field signal.</p>
+            {audioMode==="raster"&&<div className="luckfield-color-key"><span className="red">R<b>pitch / upper motion</b></span><span className="green">G<b>micro-granularity</b></span><span className="blue">B<b>high-frequency damping</b></span></div>}
+            <p className="lab-note">{audioMode==="raster"?"Every pixel enters a long serpentine scan: horizontal motion in the left channel, vertical motion in the right. Color continuously reshapes the sound before each new field crossfades in.":"The center row loops in the left channel; the center column loops in the right. Each new pair crossfades into the moving field signal."}</p>
           </div>
           <div className="control-block luckfield-morph-bank">
             <label className="preset-select deq-bank-select"><span className="control-label">Equation morph bank · {bankSizeLabel}</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="color-cycle">Full bank · all six RGB permutations</option><option value="all">All anchors · original colors</option><option value="curated">Curated · locked clean set</option></select></label>
