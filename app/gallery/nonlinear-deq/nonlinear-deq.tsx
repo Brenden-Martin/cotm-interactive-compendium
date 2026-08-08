@@ -16,7 +16,19 @@ type SharedPreset = { id: number; config: Config; createdAt: string };
 type SharedPresetPage = { presets?: SharedPreset[]; total?: number; nextCursor?: number | null; error?: string };
 type FoundryMode = "standard" | "photo" | "cursor";
 type AnchorBank = "all" | "curated" | "color-cycle";
+type RecursiveMode = "luckfield" | "periodic" | "manual";
 type ChannelPermutation = readonly [number, number, number];
+type FieldMetrics = { brightness: number; contrast: number; colorVariance: number; entropy: number; detail: number };
+type BoundaryTransition = { from: FieldState; target: FieldState; current: FieldState; startedAt: number; duration: number };
+type RecursiveSettings = {
+  interval: number;
+  brightnessGate: number;
+  detailGate: number;
+  luckChance: number;
+  transitionTime: number;
+  transitionWildness: number;
+  glitchCarry: number;
+};
 type AutoCursor = {
   frequencyX: number;
   frequencyY: number;
@@ -39,6 +51,19 @@ const initialAutoCursor: AutoCursor = {
   harmonicsX: [1, .24, .08],
   harmonicsY: [1, .18, -.06],
 };
+const channelPermutations: ChannelPermutation[] = [
+  [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+];
+const initialRecursiveSettings: RecursiveSettings = {
+  interval: 5,
+  brightnessGate: .22,
+  detailGate: .48,
+  luckChance: .38,
+  transitionTime: 2.8,
+  transitionWildness: .32,
+  glitchCarry: .16,
+};
+const emptyMetrics: FieldMetrics = { brightness: 0, contrast: 0, colorVariance: 0, entropy: 0, detail: 0 };
 
 const indexK = (dest: number, source: number, template: number) => (dest * 3 + source) * 5 + template;
 const sparseK = (entries: Array<[number, number, number, number]>) => {
@@ -73,25 +98,50 @@ const permuteConfigChannels = (config: Config, permutation: ChannelPermutation):
     exponent: permutation.map((channel) => config.exponent[channel]),
   };
 };
-const randomColorIdentity = (config: Config) => {
-  const swapped: ChannelPermutation = Math.random() < .5 ? [1, 0, 2] : [0, 1, 2];
-  const turns = Math.floor(Math.random() * 3);
-  const permutation: ChannelPermutation = [
-    swapped[turns % 3],
-    swapped[(turns + 1) % 3],
-    swapped[(turns + 2) % 3],
-  ];
-  return permuteConfigChannels(config, permutation);
-};
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+const cloneField = (field: FieldState): FieldState => [new Float32Array(field[0]), new Float32Array(field[1]), new Float32Array(field[2])];
+const uniformBoundary = (): FieldState => [new Float32Array(SIZE).fill(1), new Float32Array(SIZE).fill(1), new Float32Array(SIZE).fill(1)];
+const analyzeField = (field: FieldState): FieldMetrics => {
+  const histogram = new Uint32Array(16);
+  let brightness = 0;
+  let contrast = 0;
+  let colorVariance = 0;
+  for (let y = 0; y < H; y++) {
+    const row = y * W;
+    const down = ((y + 1) % H) * W;
+    for (let x = 0; x < W; x++) {
+      const index = row + x;
+      const right = row + ((x + 1) % W);
+      const r = field[0][index], g = field[1][index], b = field[2][index];
+      const luminance = (r + g + b) / 3;
+      brightness += luminance;
+      histogram[Math.min(15, Math.floor(luminance * 16))]++;
+      colorVariance += ((r - luminance) ** 2 + (g - luminance) ** 2 + (b - luminance) ** 2) / 3;
+      contrast += (Math.abs(r-field[0][right])+Math.abs(g-field[1][right])+Math.abs(b-field[2][right])
+        + Math.abs(r-field[0][down+x])+Math.abs(g-field[1][down+x])+Math.abs(b-field[2][down+x])) / 6;
+    }
+  }
+  let entropy = 0;
+  for (const count of histogram) if (count) { const p = count / SIZE; entropy -= p * Math.log2(p); }
+  const normalizedEntropy = entropy / 4;
+  const normalizedContrast = clamp01(contrast / SIZE * 4.5);
+  const normalizedColorVariance = clamp01(Math.sqrt(colorVariance / SIZE) * 2.8);
+  return {
+    brightness: brightness / SIZE,
+    contrast: normalizedContrast,
+    colorVariance: normalizedColorVariance,
+    entropy: normalizedEntropy,
+    detail: clamp01(normalizedEntropy*.38 + normalizedContrast*.37 + normalizedColorVariance*.25),
+  };
+};
 const colorChannels = (hex: string): [number, number, number] => [
   Number.parseInt(hex.slice(1, 3), 16) / 255,
   Number.parseInt(hex.slice(3, 5), 16) / 255,
   Number.parseInt(hex.slice(5, 7), 16) / 255,
 ];
 
-export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolean }) {
+export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false }: { presetFoundry?: boolean; recursiveBoundary?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<FieldState>([new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)]);
   const configRef = useRef<Config>(cloneConfig(presets[0]));
@@ -112,6 +162,11 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const morphIndexRef = useRef(0);
   const morphRateRef = useRef(1);
   const morphRandomnessRef = useRef(.18);
+  const recursiveModeRef = useRef<RecursiveMode>("luckfield");
+  const boundaryHeldRef = useRef(false);
+  const recursiveSettingsRef = useRef<RecursiveSettings>(initialRecursiveSettings);
+  const boundaryTransitionRef = useRef<BoundaryTransition | null>(null);
+  const lastBoundaryScanRef = useRef(0);
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
@@ -119,19 +174,25 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const [paintColor, setPaintColor] = useState(DEFAULT_PAINT_COLOR);
   const [brush, setBrush] = useState(DEFAULT_BRUSH_RADIUS);
   const [paused, setPaused] = useState(false);
-  const [autoMutate, setAutoMutate] = useState(!presetFoundry);
+  const [autoMutate, setAutoMutate] = useState(!presetFoundry && !recursiveBoundary);
   const [mutationCount, setMutationCount] = useState(0);
   const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>([]);
   const [sharedPresetTotal, setSharedPresetTotal] = useState(0);
   const [bankLoadStatus, setBankLoadStatus] = useState("Loading complete bank…");
-  const [morphing, setMorphing] = useState(false);
+  const [morphing, setMorphing] = useState(recursiveBoundary);
   const [morphRate, setMorphRate] = useState(1);
   const [morphRandomness, setMorphRandomness] = useState(.18);
   const [foundryMode, setFoundryMode] = useState<FoundryMode>("standard");
-  const [anchorBank, setAnchorBank] = useState<AnchorBank>("all");
+  const [anchorBank, setAnchorBank] = useState<AnchorBank>(recursiveBoundary ? "color-cycle" : "all");
   const [boundaryName, setBoundaryName] = useState("No photo loaded");
   const [autoCursor, setAutoCursor] = useState<AutoCursor>(initialAutoCursor);
   const [saveStatus, setSaveStatus] = useState("Ready to collect this state");
+  const [recursiveMode, setRecursiveMode] = useState<RecursiveMode>("luckfield");
+  const [boundaryHeld, setBoundaryHeld] = useState(false);
+  const [recursiveSettings, setRecursiveSettings] = useState<RecursiveSettings>(initialRecursiveSettings);
+  const [fieldMetrics, setFieldMetrics] = useState<FieldMetrics>(emptyMetrics);
+  const [boundaryStatus, setBoundaryStatus] = useState("Watching for a lucky field");
+  const [boundaryMutations, setBoundaryMutations] = useState(0);
 
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => {
@@ -142,6 +203,9 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   useEffect(() => { brushRef.current = brush; }, [brush]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { autoMutateRef.current = autoMutate; }, [autoMutate]);
+  useEffect(() => { recursiveModeRef.current = recursiveMode; }, [recursiveMode]);
+  useEffect(() => { boundaryHeldRef.current = boundaryHeld; }, [boundaryHeld]);
+  useEffect(() => { recursiveSettingsRef.current = recursiveSettings; }, [recursiveSettings]);
 
   const switchFoundryMode = (mode: FoundryMode) => {
     foundryModeRef.current = mode;
@@ -211,7 +275,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   };
 
   useEffect(() => {
-    if (!presetFoundry) return;
+    if (!presetFoundry && !recursiveBoundary) return;
     const controller = new AbortController();
     const loadCompleteBank = async () => {
       try {
@@ -244,10 +308,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     };
     loadCompleteBank();
     return () => controller.abort();
-  }, [presetFoundry]);
+  }, [presetFoundry, recursiveBoundary]);
 
   useEffect(() => {
-    if (!presetFoundry || !morphing) return;
+    if ((!presetFoundry && !recursiveBoundary) || !morphing) return;
     const seenAnchors = new Set<string>();
     const anchors: Config[] = [
       ...presets.map(cloneConfig),
@@ -259,17 +323,19 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       seenAnchors.add(fingerprint);
       return true;
     });
-    if (anchors.length < 2) return;
+    const traversalAnchors = anchorBank === "color-cycle"
+      ? anchors.flatMap((anchor) => channelPermutations.map((permutation) => permuteConfigChannels(anchor, permutation)))
+      : anchors;
+    if (traversalAnchors.length < 2) return;
     let raf = 0;
     let lastPaint = 0;
     let lastTime = performance.now();
     let progress = 0;
-    const startIndex = morphIndexRef.current % anchors.length;
+    const startIndex = morphIndexRef.current % traversalAnchors.length;
     const from = configRef.current;
     let targetIndex = startIndex;
-    while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * anchors.length);
-    const selectedAnchor = anchors[targetIndex];
-    const to = anchorBank === "color-cycle" ? randomColorIdentity(selectedAnchor) : selectedAnchor;
+    while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * traversalAnchors.length);
+    const to = traversalAnchors[targetIndex];
     const randomSigned = () => Math.random() * 2 - 1;
     const jitter: Config = {
       k: to.k.map((value) => randomSigned() * (.2 + Math.min(2, Math.abs(value) * .15))),
@@ -305,7 +371,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     };
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [anchorBank, morphing, presetFoundry, sharedPresets]);
+  }, [anchorBank, morphing, presetFoundry, recursiveBoundary, sharedPresets]);
 
   const seedNoise = useCallback(() => {
     const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
@@ -316,6 +382,47 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     }
     fieldRef.current = next;
   }, []);
+
+  const replaceBoundary = useCallback((label: string) => {
+    const settings = recursiveSettingsRef.current;
+    const previous = boundaryRef.current ? cloneField(boundaryRef.current) : uniformBoundary();
+    const target = cloneField(fieldRef.current);
+    const blocks = Math.round(settings.glitchCarry * 28);
+    for (let block = 0; block < blocks; block++) {
+      const blockWidth = 3 + Math.floor(Math.random() * (4 + settings.glitchCarry * W * .22));
+      const blockHeight = 2 + Math.floor(Math.random() * (3 + settings.glitchCarry * H * .22));
+      const startX = Math.floor(Math.random() * W);
+      const startY = Math.floor(Math.random() * H);
+      for (let dy = 0; dy < blockHeight; dy++) for (let dx = 0; dx < blockWidth; dx++) {
+        const index = ((startY + dy) % H) * W + ((startX + dx) % W);
+        target[0][index] = previous[0][index];
+        target[1][index] = previous[1][index];
+        target[2][index] = previous[2][index];
+      }
+    }
+    const current = cloneField(previous);
+    boundaryRef.current = current;
+    boundaryTransitionRef.current = {
+      from: previous,
+      target,
+      current,
+      startedAt: performance.now(),
+      duration: settings.transitionTime * 1000,
+    };
+    setBoundaryMutations((count) => count + 1);
+    setBoundaryStatus(label);
+  }, []);
+
+  const resetBoundary = useCallback(() => {
+    const reset = uniformBoundary();
+    boundaryTransitionRef.current = null;
+    boundaryRef.current = reset;
+    setBoundaryStatus("Boundary conditions reset to uniform");
+  }, []);
+
+  const setRecursiveValue = (key: keyof RecursiveSettings, value: number) => {
+    setRecursiveSettings((current) => ({ ...current, [key]: value }));
+  };
 
   const applyPreset = (name: string) => {
     const preset = presets.find((item) => item.name === name) ?? presets[0];
@@ -386,6 +493,11 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     const image = ctx.createImageData(W, H);
     seedNoise();
     mutationTimeRef.current = performance.now();
+    if (recursiveBoundary) {
+      boundaryRef.current = cloneField(fieldRef.current);
+      boundaryTransitionRef.current = null;
+      lastBoundaryScanRef.current = performance.now();
+    }
 
     const paint = () => {
       if (!pointerRef.current.active) return;
@@ -502,6 +614,44 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       pointerRef.current.active = true;
     };
 
+    const updateRecursiveBoundary = (now: number) => {
+      if (!recursiveBoundary || boundaryHeldRef.current) return;
+      const transition = boundaryTransitionRef.current;
+      if (transition) {
+        const raw = clamp01((now - transition.startedAt) / Math.max(1, transition.duration));
+        const blend = raw * raw * (3 - 2 * raw);
+        const wildness = Math.sin(Math.PI * raw) * recursiveSettingsRef.current.transitionWildness * .16;
+        for (let channel = 0; channel < 3; channel++) for (let index = 0; index < SIZE; index++) {
+          const from = transition.from[channel][index];
+          const to = transition.target[channel][index];
+          const turbulence = Math.sin(index*12.9898 + channel*78.233 + transition.startedAt*.001);
+          transition.current[channel][index] = clamp01(from + (to-from)*blend + turbulence*wildness);
+        }
+        boundaryRef.current = transition.current;
+        if (raw >= 1) {
+          boundaryRef.current = transition.target;
+          boundaryTransitionRef.current = null;
+          setBoundaryStatus("Boundary morph complete");
+        }
+      }
+      const settings = recursiveSettingsRef.current;
+      if (recursiveModeRef.current === "manual" || now - lastBoundaryScanRef.current < settings.interval*1000) return;
+      lastBoundaryScanRef.current = now;
+      const metrics = analyzeField(fieldRef.current);
+      setFieldMetrics(metrics);
+      if (recursiveModeRef.current === "periodic") {
+        replaceBoundary("Periodic field capture");
+        return;
+      }
+      const brightEnough = metrics.brightness >= settings.brightnessGate;
+      const detailedEnough = metrics.detail >= settings.detailGate;
+      if (brightEnough && detailedEnough && Math.random() < settings.luckChance) {
+        replaceBoundary("Luckfield accepted this state");
+      } else if (!brightEnough) setBoundaryStatus("Waiting for amplitude");
+      else if (!detailedEnough) setBoundaryStatus("Waiting for richer detail");
+      else setBoundaryStatus("Interesting field passed; luck declined");
+    };
+
     const draw = () => {
       const field = fieldRef.current;
       for (let index = 0; index < SIZE; index++) {
@@ -540,6 +690,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     let last = performance.now();
     const loop = (now: number) => {
       updateAutomatedPointer(now);
+      updateRecursiveBoundary(now);
       if (!pausedRef.current && now - last > 24) {
         paint();
         step();
@@ -567,7 +718,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       canvas.removeEventListener("pointercancel", up);
       canvas.removeEventListener("contextmenu", preventMenu);
     };
-  }, [mutate, seedNoise]);
+  }, [mutate, recursiveBoundary, replaceBoundary, seedNoise]);
 
   const setScalar = (key: "dt" | "decay" | "noise", value: number) => setConfig((current) => ({ ...current, [key]: value }));
   const setExponent = (channel: number, value: number) => setConfig((current) => ({ ...current, exponent: current.exponent.map((item, index) => index === channel ? value : item) }));
@@ -583,12 +734,55 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     : `${bankSize} states`;
 
   return (
-    <section className="deq-lab">
-      <div className="deq-stage">
+    <section className={`deq-lab ${recursiveBoundary ? "luckfield-lab" : ""}`}>
+      <div className={`deq-stage ${recursiveBoundary ? "luckfield-stage" : ""}`}>
         <canvas ref={canvasRef} width={W} height={H} className="deq-canvas" aria-label="Interactive three-channel nonlinear differential-equation field. Drag to paint into the system." />
-        <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{mutationCount} parameter mutations</span></div>
+        <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{recursiveBoundary ? `${boundaryMutations} boundary captures` : `${mutationCount} parameter mutations`}</span></div>
       </div>
       <aside className="deq-controls">
+        {recursiveBoundary && <>
+          <div className="deq-top-controls">
+            <label className="preset-select"><span className="control-label">Equation preset</span><select value={presetName} onChange={(event) => applyPreset(event.target.value)}>{presets.map((preset) => <option key={preset.name}>{preset.name}</option>)}</select></label>
+            <div className="transport deq-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume field" : "Pause field"}</button><button onClick={seedNoise}>Re-seed</button><button onClick={mutate}>Mutate equation</button></div>
+          </div>
+          <div className="control-block luckfield-console">
+            <div className="luckfield-title"><span className="control-label">Recursive boundary engine</span><b>{boundaryHeld ? "HELD" : recursiveMode.toUpperCase()}</b></div>
+            <div className="deq-foundry-tabs" role="tablist" aria-label="Boundary replacement mode">
+              {(["luckfield","periodic","manual"] as RecursiveMode[]).map((mode) => <button key={mode} role="tab" aria-selected={recursiveMode===mode} className={recursiveMode===mode?"active":""} onClick={()=>setRecursiveMode(mode)}>{mode === "luckfield" ? "The Luckfield" : mode}</button>)}
+            </div>
+            <div className="luckfield-actions transport">
+              <button className={boundaryHeld ? "active" : ""} onClick={()=>setBoundaryHeld((value)=>!value)}>{boundaryHeld ? "Resume boundaries" : "Hold boundaries"}</button>
+              <button onClick={resetBoundary}>Reset boundary conditions</button>
+              <button className="luckfield-mutate" onClick={()=>replaceBoundary("Manual field capture")}>Mutate from current field</button>
+            </div>
+            <p className="luckfield-status" aria-live="polite">{boundaryStatus}</p>
+            <div className="luckfield-meter" aria-label="Current field interestingness">
+              <span><i style={{width:`${fieldMetrics.brightness*100}%`}}/>Amplitude <b>{Math.round(fieldMetrics.brightness*100)}</b></span>
+              <span><i style={{width:`${fieldMetrics.detail*100}%`}}/>Detail <b>{Math.round(fieldMetrics.detail*100)}</b></span>
+              <small>Entropy {Math.round(fieldMetrics.entropy*100)} · contrast {Math.round(fieldMetrics.contrast*100)} · color variance {Math.round(fieldMetrics.colorVariance*100)}</small>
+            </div>
+            <div className="deq-morph-sliders luckfield-sliders">
+              <label><span>{recursiveMode === "periodic" ? "Capture interval" : "Interestingness scan"}</span><output>{recursiveSettings.interval.toFixed(1)} s</output><input type="range" min="1" max="20" step=".5" value={recursiveSettings.interval} onChange={(event)=>setRecursiveValue("interval",Number(event.target.value))}/></label>
+              {recursiveMode === "luckfield" && <>
+                <label><span>Brightness gate</span><output>{Math.round(recursiveSettings.brightnessGate*100)}%</output><input type="range" min="0" max=".8" step=".01" value={recursiveSettings.brightnessGate} onChange={(event)=>setRecursiveValue("brightnessGate",Number(event.target.value))}/></label>
+                <label><span>True detail gate</span><output>{Math.round(recursiveSettings.detailGate*100)}%</output><input type="range" min=".05" max=".9" step=".01" value={recursiveSettings.detailGate} onChange={(event)=>setRecursiveValue("detailGate",Number(event.target.value))}/></label>
+                <label><span>Luck at the gate</span><output>{Math.round(recursiveSettings.luckChance*100)}%</output><input type="range" min=".02" max="1" step=".01" value={recursiveSettings.luckChance} onChange={(event)=>setRecursiveValue("luckChance",Number(event.target.value))}/></label>
+              </>}
+              <label><span>Boundary morph time</span><output>{recursiveSettings.transitionTime.toFixed(1)} s</output><input type="range" min=".15" max="10" step=".05" value={recursiveSettings.transitionTime} onChange={(event)=>setRecursiveValue("transitionTime",Number(event.target.value))}/></label>
+              <label><span>Replacement wildness</span><output>{Math.round(recursiveSettings.transitionWildness*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.transitionWildness} onChange={(event)=>setRecursiveValue("transitionWildness",Number(event.target.value))}/></label>
+              <label><span>Old-chunk glitch carry</span><output>{Math.round(recursiveSettings.glitchCarry*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchCarry} onChange={(event)=>setRecursiveValue("glitchCarry",Number(event.target.value))}/></label>
+            </div>
+          </div>
+          <div className="control-block luckfield-morph-bank">
+            <label className="preset-select deq-bank-select"><span className="control-label">Equation morph bank · {bankSizeLabel}</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="color-cycle">Full bank · all six RGB permutations</option><option value="all">All anchors · original colors</option><option value="curated">Curated · locked clean set</option></select></label>
+            <div className="transport deq-foundry-actions"><button className={morphing ? "active" : ""} onClick={()=>setMorphing((value)=>!value)}>{morphing ? "Hold equation morph" : "Resume equation morph"}</button><button onClick={mutate}>Wild-card mutation</button></div>
+            <div className="deq-morph-sliders">
+              <label><span>Equation traversal rate</span><output>{morphRate.toFixed(2)}×</output><input type="range" min=".15" max="3" step=".05" value={morphRate} onChange={(event)=>{const value=Number(event.target.value);morphRateRef.current=value;setMorphRate(value);}}/></label>
+              <label><span>Equation transition wildness</span><output>{Math.round(morphRandomness*100)}%</output><input type="range" min="0" max="1" step=".01" value={morphRandomness} onChange={(event)=>{const value=Number(event.target.value);morphRandomnessRef.current=value;setMorphRandomness(value);}}/></label>
+            </div>
+            <b className="deq-bank-summary">{bankLoadStatus}</b>
+          </div>
+        </>}
         {presetFoundry && <div className="control-block deq-foundry">
           <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{archivedPresets.length} archived · {sharedPresets.length}/{sharedPresetTotal || "?"} live</b></div>
           <b className="deq-bank-summary">{archivedPresets.length} curated · {subsequentPresets.length} subsequent · {bankLoadStatus}</b>
@@ -633,10 +827,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
           <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Curated">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Curated {String(preset.id).padStart(3, "0")}</option>)}</optgroup>{anchorBank!=="curated"&&<optgroup label="Subsequent saves">{subsequentPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>All {String(preset.id).padStart(3, "0")}</option>)}</optgroup>}</select></label>
           <p className="deq-save-status" aria-live="polite">{saveStatus}</p>
         </div>}
-        <div className="deq-top-controls">
+        {!recursiveBoundary && <div className="deq-top-controls">
           <label className="preset-select"><span className="control-label">Preset</span><select value={presetName} onChange={(event) => applyPreset(event.target.value)}>{presets.map((preset) => <option key={preset.name}>{preset.name}</option>)}</select></label>
           <div className="transport deq-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={seedNoise}>Re-seed</button><button onClick={mutate}>Mutate now</button></div>
-        </div>
+        </div>}
         <div className="control-block">
           <span className="control-label">Screensaver evolution</span>
           <button className={`toggle-wide ${autoMutate ? "active" : ""}`} onClick={() => setAutoMutate((value) => !value)}>Auto-mutate every 5 seconds · {autoMutate ? "on" : "off"}</button>

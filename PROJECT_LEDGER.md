@@ -427,6 +427,8 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **RULIAD-027 — Final labeled image flood.** Recovered the 29 attachments that arrived after private-workbench version 24: 27 explicitly labeled for *The Machine and the XASER*, one for *Kind-Eyed Stranger*, and one for *Lobotomy*. After checksum reconciliation, the site gains 28 distinct story plates backed by 23 new files and five canonical vault reuses; a twice-submitted resonator-curtain photograph appears only once. Every addition inherits the universal story-color outline, measured native ratio, contain framing, and no-overlap layout.
 
+- **DEQ-010 — The Luckfield.** Added a separate recursive-field gallery instrument that periodically replaces its DEQ boundary conditions with the evolving field itself. Its default Luckfield controller accepts captures only after brightness and a combined entropy, edge-contrast, and chromatic-variance detail score pass adjustable gates, then applies a probability check. Periodic and prominent Manual modes, independent boundary hold/reset/capture controls, controllable transition wildness, and old-boundary glitch blocks remain available. The equation traverses the complete anchor bank across all six RGB permutations by default, while the 160×90 display keeps every visible cell square.
+
 ## Decision log
 
 - **2026-07-30:** “Rotating Rings” means nested concentric rings connected axially by torsion springs, rotating out of their starting plane.
@@ -447,3 +449,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-06:** Private-workbench D1 remains isolated from production. Its Fortune Cookie may read the public approved bank, but private test submissions continue to stay in the private queue.
 - **2026-08-06:** Pendulum Laboratory belongs in Gallery. Private Research is the home for Brenden's real research archives, beginning with Mesopyramids, Noncontact Respiration Monitoring, and Electro-Optic Fabry–Pérot; their current rooms remain intentionally skeletal until the named source directories are supplied.
 - **2026-08-06:** Ruliad illustrations layer into the existing rainbow story rooms; they do not replace the geometric fields or animated orbital language.
+- **2026-08-08:** The Luckfield keeps a square-pixel 16:9 simulation surface even inside stretched viewports so recursive feedback does not acquire display-induced directional asymmetry.
