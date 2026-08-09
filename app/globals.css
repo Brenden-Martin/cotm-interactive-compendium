@@ -1028,7 +1028,7 @@ button { font: inherit; }
 .luckfield-fullscreen:hover,.luckfield-fullscreen:focus-visible { background:#f2dc43;color:#111820;outline:none; }
 .luckfield-stage:fullscreen,.luckfield-stage:-webkit-full-screen { width:100vw;height:100vh;min-height:100vh;background:#030507; }
 .luckfield-stage:fullscreen .deq-canvas,.luckfield-stage:-webkit-full-screen .deq-canvas { width:min(100vw,177.7778vh);height:min(100vh,56.25vw);max-width:none;max-height:none; }
-.luckfield-stage:fullscreen .luckfield-crosshair,.luckfield-stage:fullscreen .luckfield-raster-scan,.luckfield-stage:fullscreen .luckfield-spectrum-scan,.luckfield-stage:-webkit-full-screen .luckfield-crosshair,.luckfield-stage:-webkit-full-screen .luckfield-raster-scan,.luckfield-stage:-webkit-full-screen .luckfield-spectrum-scan { left:50%;width:min(100vw,177.7778vh);transform:translate(-50%,-50%); }
+.luckfield-stage:fullscreen .luckfield-crosshair,.luckfield-stage:fullscreen .luckfield-raster-scan,.luckfield-stage:fullscreen .luckfield-spectrum-scan,.luckfield-stage:fullscreen .luckfield-live-scan,.luckfield-stage:-webkit-full-screen .luckfield-crosshair,.luckfield-stage:-webkit-full-screen .luckfield-raster-scan,.luckfield-stage:-webkit-full-screen .luckfield-spectrum-scan,.luckfield-stage:-webkit-full-screen .luckfield-live-scan { left:50%;width:min(100vw,177.7778vh);transform:translate(-50%,-50%); }
 .luckfield-crosshair { position:absolute;z-index:2;left:0;top:50%;width:100%;aspect-ratio:16/9;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .2s ease; }
 .luckfield-crosshair.active { opacity:1; }
 .luckfield-crosshair::before,.luckfield-crosshair::after { content:"";position:absolute;background:rgba(244,240,223,.72);box-shadow:0 0 4px rgba(3,5,7,.8); }
@@ -1042,6 +1042,9 @@ button { font: inherit; }
 .luckfield-spectrum-scan.active { opacity:1; }
 .luckfield-spectrum-scan::after { content:"";position:absolute;top:0;bottom:0;width:2px;left:0;background:#f4f0df;box-shadow:0 0 5px #20d7d7,0 0 13px #e74731;animation:luckfield-spectrum-read 3.6s linear infinite; }
 @keyframes luckfield-spectrum-read { from { left:0; } to { left:100%; } }
+.luckfield-live-scan { --sweep-x:0%;position:absolute;z-index:3;left:0;top:50%;width:100%;aspect-ratio:16/9;transform:translateY(-50%);pointer-events:none;opacity:0;overflow:hidden;transition:opacity .2s ease;background:repeating-linear-gradient(90deg,rgba(244,240,223,.035) 0 1px,transparent 1px calc(100% / 160)); }
+.luckfield-live-scan.active { opacity:1; }
+.luckfield-live-scan::after { content:"";position:absolute;top:0;bottom:0;width:2px;left:var(--sweep-x);background:#f2dc43;box-shadow:0 0 5px #20d7d7,0 0 13px #e74731;transform:translateX(-1px); }
 .luckfield-console { margin:20px 0;padding:14px;border:2px solid #111820;background:#b9c4be; }
 .luckfield-title { display:flex;justify-content:space-between;gap:12px;margin-bottom:10px; }
 .luckfield-title b { font:900 10px monospace;letter-spacing:.1em; }
@@ -1057,7 +1060,7 @@ button { font: inherit; }
 .luckfield-sliders { padding-top:10px;border-top:1px solid #111820; }
 .luckfield-morph-bank { margin:0 0 20px;padding:14px;border:2px solid #111820;background:#f2dc43; }
 .luckfield-audio { margin:0 0 20px;padding:14px;border:2px solid #111820;background:#d7d3c4; }
-.luckfield-audio-tabs { grid-template-columns:repeat(3,1fr);margin-bottom:10px; }
+.luckfield-audio-tabs { grid-template-columns:repeat(4,1fr);margin-bottom:10px; }
 .luckfield-audio .deq-morph-sliders { margin-top:12px; }
 .luckfield-audio .lab-note { margin-bottom:0; }
 .luckfield-color-key { display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:0 0 12px; }
