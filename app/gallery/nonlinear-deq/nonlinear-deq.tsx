@@ -22,6 +22,7 @@ type FieldMetrics = { brightness: number; contrast: number; colorVariance: numbe
 type BoundaryTransition = { from: FieldState; target: FieldState; current: FieldState; startedAt: number; duration: number };
 type AudioVoice = { source: AudioBufferSourceNode; gain: GainNode };
 type AudioMode = "crosshair" | "raster" | "spectrogram" | "live-spectrum";
+type LiveQuantization = "unquantized" | "pentatonic" | "blues" | "melodic-minor";
 type RecursiveSettings = {
   interval: number;
   brightnessGate: number;
@@ -243,20 +244,38 @@ const liveSpectrumWorklet = `
 class LuckfieldLiveSpectrum extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.width=160;this.height=90;this.position=0;this.samplesPerColumn=sampleRate*.02;this.blocks=0;
+    this.width=160;this.height=90;this.position=0;this.samplesPerColumn=sampleRate*.02;this.blocks=0;this.quantization='unquantized';
     this.real=new Float32Array(this.width*this.height);this.imaginary=new Float32Array(this.width*this.height);
     this.sine=new Float32Array(this.height);this.cosine=new Float32Array(this.height).fill(1);
     this.stepSine=new Float32Array(this.height);this.stepCosine=new Float32Array(this.height);
-    for(let row=0;row<this.height;row++){
-      const frequency=20*Math.pow(500,(this.height-1-row)/(this.height-1));
-      const step=2*Math.PI*frequency/sampleRate;
-      this.stepSine[row]=Math.sin(step);this.stepCosine[row]=Math.cos(step);
-    }
+    this.rebuildFrequencies(this.quantization);
     this.port.onmessage=(event)=>{
       const data=event.data;
       if(data.type==='field'){this.real=data.real;this.imaginary=data.imaginary;}
       else if(data.type==='timing')this.samplesPerColumn=Math.max(1,sampleRate*data.milliseconds/1000);
+      else if(data.type==='quantization')this.rebuildFrequencies(data.mode);
     };
+  }
+  rebuildFrequencies(mode){
+    this.quantization=mode;
+    const scales={pentatonic:[0,2,4,7,9],blues:[0,3,5,6,7,10],'melodic-minor':[0,2,3,5,7,9,11]};
+    const scale=scales[mode];
+    for(let row=0;row<this.height;row++){
+      const rawFrequency=20*Math.pow(500,(this.height-1-row)/(this.height-1));
+      let frequency=rawFrequency;
+      if(scale){
+        const rawMidi=69+12*Math.log2(rawFrequency/440),baseOctave=Math.floor(rawMidi/12);
+        let bestDistance=Infinity;
+        for(let octave=baseOctave-1;octave<=baseOctave+1;octave++)for(const pitchClass of scale){
+          const candidate=440*Math.pow(2,(octave*12+pitchClass-69)/12);
+          if(candidate<20||candidate>10000)continue;
+          const distance=Math.abs(Math.log(candidate/rawFrequency));
+          if(distance<bestDistance){bestDistance=distance;frequency=candidate;}
+        }
+      }
+      const step=2*Math.PI*frequency/sampleRate;
+      this.stepSine[row]=Math.sin(step);this.stepCosine[row]=Math.cos(step);
+    }
   }
   process(inputs,outputs){
     const left=outputs[0][0],right=outputs[0][1]||left;
@@ -366,6 +385,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const [audioMode, setAudioMode] = useState<AudioMode>("crosshair");
   const [audioColorDepth, setAudioColorDepth] = useState(.78);
   const [liveStepPower, setLiveStepPower] = useState(Math.log10(20));
+  const [liveQuantization, setLiveQuantization] = useState<LiveQuantization>("unquantized");
   const [fieldFullscreen, setFieldFullscreen] = useState(false);
 
   useEffect(() => { configRef.current = config; }, [config]);
@@ -393,6 +413,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     liveStepPowerRef.current=liveStepPower;
     liveAudioNodeRef.current?.port.postMessage({type:"timing",milliseconds:Math.pow(10,liveStepPower)});
   }, [liveStepPower]);
+  useEffect(() => { liveAudioNodeRef.current?.port.postMessage({type:"quantization",mode:liveQuantization}); }, [liveQuantization]);
   useEffect(() => {
     const fullscreenDocument=document as Document&{webkitFullscreenElement?:Element|null};
     const sync=()=>setFieldFullscreen(Boolean(document.fullscreenElement||fullscreenDocument.webkitFullscreenElement));
@@ -654,6 +675,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     node.connect(master);
     liveAudioNodeRef.current=node;
     node.port.postMessage({type:"timing",milliseconds:Math.pow(10,liveStepPowerRef.current)});
+    node.port.postMessage({type:"quantization",mode:liveQuantization});
     sendLiveSpectrumField();
   };
 
@@ -1174,13 +1196,14 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
             <div className="deq-morph-sliders">
               <label><span>Output volume</span><output>{Math.round(audioVolume*100)}%</output><input type="range" min="0" max=".4" step=".01" value={audioVolume} onChange={(event)=>setAudioVolume(Number(event.target.value))}/></label>
               {audioMode==="live-spectrum"?<label><span>Time step per x pixel</span><output>{Math.pow(10,liveStepPower)>=1000?`${(Math.pow(10,liveStepPower)/1000).toFixed(2)} s`:Math.pow(10,liveStepPower)<1?`${Math.pow(10,liveStepPower).toFixed(2)} ms`:`${Math.pow(10,liveStepPower).toFixed(1)} ms`}</output><input type="range" min="-1" max="3" step=".01" value={liveStepPower} onChange={(event)=>setLiveStepPower(Number(event.target.value))}/></label>:<label><span>{audioMode==="spectrogram"?"Spectral playback rate":audioMode==="raster"?"Raster scan rate":"Granule loop rate"}</span><output>{audioPitch.toFixed(2)}×</output><input type="range" min=".2" max="4" step=".05" value={audioPitch} onChange={(event)=>setAudioPitch(Number(event.target.value))}/></label>}
+              {audioMode==="live-spectrum"&&<label className="luckfield-quantization"><span>Frequency quantization</span><output>{liveQuantization==="unquantized"?"Free":liveQuantization==="melodic-minor"?"C melodic minor":`C ${liveQuantization}`}</output><select value={liveQuantization} onChange={(event)=>setLiveQuantization(event.target.value as LiveQuantization)}><option value="unquantized">Unquantized</option><option value="pentatonic">Pentatonic</option><option value="blues">Blues</option><option value="melodic-minor">Melodic minor</option></select></label>}
               {audioMode!=="live-spectrum"&&<label><span>Field refresh cadence</span><output>{audioRefreshFrames} frames</output><input type="range" min="2" max="180" step="1" value={audioRefreshFrames} onChange={(event)=>setAudioRefreshFrames(Number(event.target.value))}/></label>}
               {audioMode==="raster"&&<label><span>Color identity depth</span><output>{Math.round(audioColorDepth*100)}%</output><input type="range" min="0" max="1" step=".01" value={audioColorDepth} onChange={(event)=>setAudioColorDepth(Number(event.target.value))}/></label>}
             </div>
             {audioMode==="raster"&&<div className="luckfield-color-key"><span className="red">R<b>pitch / upper motion</b></span><span className="green">G<b>micro-granularity</b></span><span className="blue">B<b>high-frequency damping</b></span></div>}
             {audioMode==="spectrogram"&&<div className="luckfield-spectrum-key"><span>↑ High frequency</span><b>Brightness → amplitude</b><b>Hue → phase</b><span>↓ Low frequency</span></div>}
             {audioMode==="live-spectrum"&&<div className="luckfield-spectrum-key"><span>↑ 10 kHz</span><b>Brightness → amplitude</b><b>Hue → phase</b><span>↓ 20 Hz</span></div>}
-            <p className="lab-note">{audioMode==="live-spectrum"?"A live 90-oscillator bank reads the current field column under the audio playhead. X is time; Y is logarithmic frequency from 20 Hz at the bottom to 10 kHz at the top. The evolving field streams continuously into the sound.":audioMode==="spectrogram"?"Each vertical field column becomes a Fourier spectrum and one overlapping audio window. Brightness supplies every bin's amplitude; hue supplies its phase. The right channel mirrors phase orientation for spectral width.":audioMode==="raster"?"Every pixel enters a long serpentine scan: horizontal motion in the left channel, vertical motion in the right. Color continuously reshapes the sound before each new field crossfades in.":"The center row loops in the left channel; the center column loops in the right. Each new pair crossfades into the moving field signal."}</p>
+            <p className="lab-note">{audioMode==="live-spectrum"?`A live 90-oscillator bank reads the current field column under the audio playhead. X is time; Y spans 20 Hz to 10 kHz. ${liveQuantization==="unquantized"?"Unquantized keeps the continuous logarithmic tuning.":`The bins are snapped across octaves to the C ${liveQuantization==="melodic-minor"?"melodic minor":liveQuantization} scale.`} The evolving field streams continuously into the sound.`:audioMode==="spectrogram"?"Each vertical field column becomes a Fourier spectrum and one overlapping audio window. Brightness supplies every bin's amplitude; hue supplies its phase. The right channel mirrors phase orientation for spectral width.":audioMode==="raster"?"Every pixel enters a long serpentine scan: horizontal motion in the left channel, vertical motion in the right. Color continuously reshapes the sound before each new field crossfades in.":"The center row loops in the left channel; the center column loops in the right. Each new pair crossfades into the moving field signal."}</p>
           </div>
           <div className="control-block luckfield-morph-bank">
             <label className="preset-select deq-bank-select"><span className="control-label">Equation morph bank · {bankSizeLabel}</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="color-cycle">Full bank · all six RGB permutations</option><option value="all">All anchors · original colors</option><option value="curated">Curated · locked clean set</option></select></label>

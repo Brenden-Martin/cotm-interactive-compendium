@@ -1090,6 +1090,7 @@ button { font: inherit; }
 .deq-morph-sliders { display:grid;gap:8px;margin:0 0 12px; }
 .deq-morph-sliders label { display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;font:800 9px monospace;text-transform:uppercase;letter-spacing:.08em; }
 .deq-morph-sliders input { grid-column:1/-1;width:100%;accent-color:#e74731; }
+.deq-morph-sliders .luckfield-quantization select { grid-column:1/-1;width:100%;min-height:34px;border:1px solid #111820;background:#f4f0df;padding:5px 8px;font:800 9px monospace;text-transform:uppercase;letter-spacing:.06em; }
 .deq-morph-sliders output { font:inherit; }
 .deq-cursor-numbers { display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0; }
 .deq-cursor-numbers label { display:grid;gap:4px;font:800 8px monospace;text-transform:uppercase;letter-spacing:.06em; }
