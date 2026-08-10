@@ -135,6 +135,12 @@ export default function Gallery() {
           <strong>The Luckfield</strong>
           <small>Let the field choose itself →</small>
         </Link>
+        <Link className="study gibberish-entry" href="/gallery/gibberish-generator">
+          <span className="eyebrow">Exhibit 22 / Character Systems</span>
+          <div className="gibberish-entry-bubble" aria-hidden="true"><i /><span>LUCK STRENGTH INTELLIGENCE</span></div>
+          <strong>Gibberish Generator</strong>
+          <small>Give a color its voice →</small>
+        </Link>
       </section>
     </main>
   );
