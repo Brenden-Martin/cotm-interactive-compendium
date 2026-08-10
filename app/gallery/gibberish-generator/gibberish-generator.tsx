@@ -269,27 +269,36 @@ export function GibberishGenerator() {
           const right = y * W + (x + 1) % W;
           const up = ((y + H - 1) % H) * W + x;
           const down = ((y + 1) % H) * W + x;
-          const boundary = mask[index] / 255;
           for (let destination = 0; destination < 3; destination++) {
             let accumulator = 0;
             for (let source = 0; source < 3; source++) {
               const center = current[source][index];
-              const dx = current[source][right] - center;
-              const dy = current[source][down] - center;
+              const channel = source === 0 ? identity.red : source === 1 ? identity.green : identity.blue;
+              const glyphWeight = .12 + channel * .88;
+              const centerWeight = mix(.12, glyphWeight, mask[index] / 255);
+              const rightWeight = mix(.12, glyphWeight, mask[right] / 255);
+              const leftWeight = mix(.12, glyphWeight, mask[left] / 255);
+              const downWeight = mix(.12, glyphWeight, mask[down] / 255);
+              const upWeight = mix(.12, glyphWeight, mask[up] / 255);
+              const rightValue = current[source][right];
+              const leftValue = current[source][left];
+              const downValue = current[source][down];
+              const upValue = current[source][up];
+              const dx = (rightValue - center) * centerWeight;
+              const dy = (downValue - center) * centerWeight;
               const gradient = Math.sqrt(dx * dx + dy * dy);
-              const laplacian = current[source][left] + current[source][right] + current[source][up] + current[source][down] - 4 * center;
-              const terms = [center, dx, dy, gradient, laplacian];
+              const laplacian =
+                (centerWeight + rightWeight) * .5 * (rightValue - center) +
+                (centerWeight + leftWeight) * .5 * (leftValue - center) +
+                (centerWeight + downWeight) * .5 * (downValue - center) +
+                (centerWeight + upWeight) * .5 * (upValue - center);
+              const terms = [center * centerWeight, dx, dy, gradient, laplacian];
               for (let template = 0; template < 5; template++) accumulator += config.k[indexK(destination, source, template)] * terms[template];
             }
             let value = (1 - config.decay) * current[destination][index] + config.dt * accumulator;
             value = Math.sign(value) * Math.pow(Math.abs(value), config.exponent[destination]);
             if (config.noise > 0) value += (Math.random() - .5) * config.noise;
-            value = clamp01(value);
-            if (boundary > 0) {
-              const channel = destination === 0 ? identity.red : destination === 1 ? identity.green : identity.blue;
-              value = mix(value, .16 + channel * .84, boundary * .82);
-            }
-            next[destination][index] = value;
+            next[destination][index] = clamp01(value);
           }
         }
         [current, next] = [next, current];
@@ -329,7 +338,7 @@ export function GibberishGenerator() {
       <aside className="gibberish-controls">
         <div className="gibberish-copy">
           <span className="control-label">Character utterance</span>
-          <p>Block-built 5×7 glyphs enter the selected DEQ field as live boundary conditions. Their alignment color becomes the voice.</p>
+          <p>Block-built 5×7 glyphs become RGB operator-weight boundaries inside the selected DEQ field. Their alignment color also becomes the voice.</p>
         </div>
         <label className="gibberish-text"><span>Dialogue text</span><textarea value={text} rows={5} maxLength={280} onChange={(event) => changeText(event.target.value)} /></label>
         <div className="gibberish-transport"><button className={playing ? "active" : ""} onClick={() => void start()}>{playing ? "Stop speaking" : revealed ? "Speak again" : "Speak"}</button><button onClick={() => { setPlaying(false); stopSources(); setRevealed(text); setChunkIndex(chunks.length); }}>Set full boundary</button></div>
@@ -356,7 +365,7 @@ export function GibberishGenerator() {
           <span className="strength">R · Strength<b>PWM pulse · percussive attack</b></span>
           <span className="intelligence">B · Intelligence<b>clipped sine · stable formant</b></span>
         </div>
-        <p className="gibberish-note">The complete curated DEQ bank changes the field dynamics without changing the character voice. Two blended tones form each syllabic chunk; consonants strike a separate noise pulse.</p>
+        <p className="gibberish-note">The glyph map weights each channel’s identity, derivatives, gradient, and Laplacian exactly like a boundary image; no static text color is painted over the result. Two blended tones form each syllabic chunk.</p>
       </aside>
     </section>
   );
