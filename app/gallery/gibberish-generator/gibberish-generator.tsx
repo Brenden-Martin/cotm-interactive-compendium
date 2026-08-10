@@ -12,6 +12,7 @@ type Rgb = { red: number; green: number; blue: number };
 type VoiceSettings = { speed: number; pitch: number; variance: number; portamento: number; rgb: Rgb };
 type DeqConfig = { k: number[]; exponent: number[]; dt: number; decay: number; noise: number };
 type ArchivedPreset = { id: number; config: DeqConfig; createdAt: string };
+type PresetPage = { presets?: ArchivedPreset[]; total?: number; nextCursor?: number | null; error?: string };
 
 const deqPresets = archivedPresetData.presets as ArchivedPreset[];
 const indexK = (destination: number, source: number, template: number) => (destination * 3 + source) * 5 + template;
@@ -61,7 +62,7 @@ const chunkHash = (chunk: string) => {
   return (hash >>> 0) / 4294967295;
 };
 
-const renderBoundaryText = (text: string) => {
+const renderBoundaryText = (text: string, scale: 1 | 2) => {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -70,7 +71,10 @@ const renderBoundaryText = (text: string) => {
   if (!context || !text) return mask;
   context.clearRect(0, 0, W, H);
   context.fillStyle = "#fff";
-  const charactersPerLine = 24;
+  const cell = scale;
+  const characterStride = 6 * cell;
+  const lineStride = 8 * cell;
+  const charactersPerLine = Math.floor((W - 16) / characterStride);
   const lines: string[] = [];
   let line = "";
   for (const character of text.toUpperCase()) {
@@ -79,14 +83,14 @@ const renderBoundaryText = (text: string) => {
     line += character;
   }
   lines.push(line);
-  const visibleLines = lines.slice(-8);
+  const visibleLines = lines.slice(-Math.floor((H - 8) / lineStride));
   visibleLines.forEach((visibleLine, lineIndex) => {
     for (let characterIndex = 0; characterIndex < visibleLine.length; characterIndex++) {
       const character = visibleLine[characterIndex];
       if (character === " ") continue;
       const pattern = PIXEL_GLYPHS[character] ?? FALLBACK_GLYPH;
       pattern.forEach((row, rowIndex) => {
-        for (let column = 0; column < 5; column++) if (row[column] === "1") context.fillRect(8 + characterIndex * 6 + column, 4 + lineIndex * 8 + rowIndex, 1, 1);
+        for (let column = 0; column < 5; column++) if (row[column] === "1") context.fillRect(8 + characterIndex * characterStride + column * cell, 4 + lineIndex * lineStride + rowIndex * cell, cell, cell);
       });
     }
   });
@@ -115,15 +119,57 @@ export function GibberishGenerator() {
   const [chunkIndex, setChunkIndex] = useState(0);
   const [presetIndex, setPresetIndex] = useState(0);
   const [seedRevision, setSeedRevision] = useState(0);
+  const [fontScale, setFontScale] = useState<1 | 2>(1);
+  const [sharedPresets, setSharedPresets] = useState<ArchivedPreset[]>([]);
+  const [bankStatus, setBankStatus] = useState(`Loading full bank beyond ${deqPresets.length} curated anchors…`);
   const chunks = useMemo(() => chunkSpeech(text), [text]);
   const rgb = useMemo(() => hexToRgb(color), [color]);
+  const fullPresets = useMemo(() => {
+    const unique = new Map<string, ArchivedPreset>();
+    for (const preset of [...deqPresets, ...sharedPresets]) {
+      const fingerprint = JSON.stringify(preset.config);
+      if (!unique.has(fingerprint)) unique.set(fingerprint, preset);
+    }
+    return [...unique.values()];
+  }, [sharedPresets]);
 
   useEffect(() => {
     identityRef.current = rgb;
     settingsRef.current = { speed, pitch, variance, portamento, rgb };
   }, [pitch, portamento, rgb, speed, variance]);
 
-  useEffect(() => { boundaryMaskRef.current = renderBoundaryText(revealed); }, [revealed]);
+  useEffect(() => { boundaryMaskRef.current = renderBoundaryText(revealed, fontScale); }, [fontScale, revealed]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadFullBank = async () => {
+      try {
+        const collected: ArchivedPreset[] = [];
+        let cursor = 0;
+        let total = 0;
+        do {
+          const response = await fetch(`/api/deq-presets?after=${cursor}&limit=200`, { signal: controller.signal });
+          const data = await response.json() as PresetPage;
+          if (!response.ok) throw new Error(data.error);
+          const page = Array.isArray(data.presets) ? data.presets : [];
+          collected.push(...page);
+          total = typeof data.total === "number" ? data.total : collected.length;
+          if (typeof data.nextCursor !== "number") break;
+          if (data.nextCursor <= cursor) throw new Error("Preset cursor did not advance");
+          cursor = data.nextCursor;
+          setBankStatus(`Loading ${Math.min(collected.length, total)} of ${total} shared anchors…`);
+        } while (!controller.signal.aborted);
+        if (controller.signal.aborted) return;
+        const unique = Array.from(new Map(collected.map((preset) => [JSON.stringify(preset.config), preset])).values()).sort((left, right) => left.id - right.id);
+        setSharedPresets(unique);
+        setBankStatus(`Full bank ready · ${unique.length} shared anchors`);
+      } catch {
+        if (!controller.signal.aborted) setBankStatus(`Shared bank unavailable · ${deqPresets.length} curated anchors remain`);
+      }
+    };
+    void loadFullBank();
+    return () => controller.abort();
+  }, []);
 
   const stopSources = useCallback(() => {
     for (const source of activeSourcesRef.current) { try { source.stop(); } catch {} }
@@ -248,7 +294,7 @@ export function GibberishGenerator() {
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
-    const config = deqPresets[presetIndex]?.config ?? deqPresets[0].config;
+    const config = fullPresets[presetIndex]?.config ?? fullPresets[0].config;
     let current = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
     let next = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
     for (let index = 0; index < SIZE; index++) {
@@ -316,7 +362,7 @@ export function GibberishGenerator() {
     };
     animationFrame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrame);
-  }, [presetIndex, seedRevision]);
+  }, [fullPresets, presetIndex, seedRevision]);
 
   const changeText = (value: string) => {
     setPlaying(false);
@@ -343,9 +389,10 @@ export function GibberishGenerator() {
         <label className="gibberish-text"><span>Dialogue text</span><textarea value={text} rows={5} maxLength={280} onChange={(event) => changeText(event.target.value)} /></label>
         <div className="gibberish-transport"><button className={playing ? "active" : ""} onClick={() => void start()}>{playing ? "Stop speaking" : revealed ? "Speak again" : "Speak"}</button><button onClick={() => { setPlaying(false); stopSources(); setRevealed(text); setChunkIndex(chunks.length); }}>Set full boundary</button></div>
         <div className="gibberish-preset">
-          <label><span>DEQ field preset</span><select value={presetIndex} onChange={(event) => setPresetIndex(Number(event.target.value))}>{deqPresets.map((preset, index) => <option key={preset.id} value={index}>Curated {String(index + 1).padStart(2, "0")} · anchor {preset.id}</option>)}</select></label>
+          <label><span>DEQ field preset · {fullPresets.length} loaded</span><select value={presetIndex} onChange={(event) => setPresetIndex(Number(event.target.value))}>{fullPresets.map((preset, index) => <option key={`${preset.id}-${index}`} value={index}>{index < deqPresets.length ? "Curated" : "Subsequent"} {String(index + 1).padStart(3, "0")} · anchor {preset.id}</option>)}</select><small>{bankStatus}</small></label>
           <button onClick={() => setSeedRevision((revision) => revision + 1)}>Re-seed this look</button>
         </div>
+        <div className="gibberish-font-scale"><span>Pixel boundary font</span><div><button className={fontScale === 1 ? "active" : ""} onClick={() => setFontScale(1)}>1× · 5×7</button><button className={fontScale === 2 ? "active" : ""} onClick={() => setFontScale(2)}>2× · 10×14</button></div></div>
         <div className="identity-control">
           <label><span>Alignment color</span><input type="color" value={color} onChange={(event) => setColor(event.target.value)} /></label>
           <div className="identity-stats">

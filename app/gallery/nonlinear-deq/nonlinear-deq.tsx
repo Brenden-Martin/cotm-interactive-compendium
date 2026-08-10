@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import archivedPresetData from "../deq-morph-bank/saved-presets.json";
 
 const W = 160;
@@ -525,19 +525,27 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     return () => controller.abort();
   }, [presetFoundry, recursiveBoundary]);
 
+  const curatedAnchorConfigs = useMemo(() => {
+    const unique = new Map<string, Config>();
+    for (const anchor of [...presets.map(cloneConfig), ...archivedPresets.map((preset) => preset.config)]) {
+      const fingerprint = JSON.stringify(anchor);
+      if (!unique.has(fingerprint)) unique.set(fingerprint, anchor);
+    }
+    return [...unique.values()];
+  }, []);
+
+  const completeAnchorConfigs = useMemo(() => {
+    const unique = new Map(curatedAnchorConfigs.map((anchor) => [JSON.stringify(anchor), anchor]));
+    for (const preset of sharedPresets) {
+      const fingerprint = JSON.stringify(preset.config);
+      if (!unique.has(fingerprint)) unique.set(fingerprint, preset.config);
+    }
+    return [...unique.values()];
+  }, [curatedAnchorConfigs, sharedPresets]);
+
   useEffect(() => {
     if ((!presetFoundry && !recursiveBoundary) || !morphing) return;
-    const seenAnchors = new Set<string>();
-    const anchors: Config[] = [
-      ...presets.map(cloneConfig),
-      ...archivedPresets.map((preset) => preset.config),
-      ...(anchorBank !== "curated" ? sharedPresets.map((preset) => preset.config) : []),
-    ].filter((anchor) => {
-      const fingerprint = JSON.stringify(anchor);
-      if (seenAnchors.has(fingerprint)) return false;
-      seenAnchors.add(fingerprint);
-      return true;
-    });
+    const anchors = anchorBank === "curated" ? curatedAnchorConfigs : completeAnchorConfigs;
     const traversalAnchors = anchorBank === "color-cycle"
       ? anchors.flatMap((anchor) => channelPermutations.map((permutation) => permuteConfigChannels(anchor, permutation)))
       : anchors;
@@ -586,7 +594,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     };
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [anchorBank, morphing, presetFoundry, recursiveBoundary, sharedPresets]);
+  }, [anchorBank, completeAnchorConfigs, curatedAnchorConfigs, morphing, presetFoundry, recursiveBoundary]);
 
   const seedNoise = useCallback(() => {
     const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
@@ -1130,9 +1138,9 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
     return { ...current, k };
   });
   const subsequentPresets = sharedPresets.filter((preset) => !archivedFingerprints.has(JSON.stringify(preset.config)));
-  const bankSize = presets.length + archivedPresets.length + (anchorBank !== "curated" ? subsequentPresets.length : 0);
+  const bankSize = anchorBank === "curated" ? curatedAnchorConfigs.length : completeAnchorConfigs.length;
   const bankSizeLabel = anchorBank === "color-cycle"
-    ? `${bankSize} states · 6 color identities each`
+    ? `${bankSize} complete-bank states · ${bankSize * channelPermutations.length} RGB variants`
     : `${bankSize} states`;
 
   return (
@@ -1212,7 +1220,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
               <label><span>Equation traversal rate</span><output>{morphRate.toFixed(2)}×</output><input type="range" min=".15" max="3" step=".05" value={morphRate} onChange={(event)=>{const value=Number(event.target.value);morphRateRef.current=value;setMorphRate(value);}}/></label>
               <label><span>Equation transition wildness</span><output>{Math.round(morphRandomness*100)}%</output><input type="range" min="0" max="1" step=".01" value={morphRandomness} onChange={(event)=>{const value=Number(event.target.value);morphRandomnessRef.current=value;setMorphRandomness(value);}}/></label>
             </div>
-            <b className="deq-bank-summary">{bankLoadStatus}</b>
+            <b className="deq-bank-summary">{bankLoadStatus}{anchorBank==="color-cycle"?` · ${completeAnchorConfigs.length * channelPermutations.length} full-bank permutation routes armed`:""}</b>
           </div>
         </>}
         {presetFoundry && <div className="control-block deq-foundry">
