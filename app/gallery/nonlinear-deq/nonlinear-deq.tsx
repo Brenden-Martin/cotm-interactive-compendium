@@ -365,7 +365,7 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const [mutationCount, setMutationCount] = useState(0);
   const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>(preservedSharedPresets);
   const [sharedPresetTotal, setSharedPresetTotal] = useState(preservedSharedPresets.length);
-  const [bankLoadStatus, setBankLoadStatus] = useState(`All ${preservedSharedPresets.length} preserved shared anchors loaded · checking live additions…`);
+  const [bankLoadStatus, setBankLoadStatus] = useState(`All ${preservedSharedPresets.length} preserved shared anchors loaded`);
   const [morphing, setMorphing] = useState(recursiveBoundary);
   const [morphRate, setMorphRate] = useState(1);
   const [morphRandomness, setMorphRandomness] = useState(.18);

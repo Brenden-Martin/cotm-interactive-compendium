@@ -123,7 +123,7 @@ export function GibberishGenerator() {
   const [seedRevision, setSeedRevision] = useState(0);
   const [fontScale, setFontScale] = useState<1 | 2>(1);
   const [sharedPresets, setSharedPresets] = useState<ArchivedPreset[]>(preservedSharedPresets);
-  const [bankStatus, setBankStatus] = useState(`Full bank ready · ${preservedSharedPresets.length} preserved shared anchors · checking live additions…`);
+  const [bankStatus, setBankStatus] = useState(`Full bank ready · ${preservedSharedPresets.length} preserved shared anchors`);
   const chunks = useMemo(() => chunkSpeech(text), [text]);
   const rgb = useMemo(() => hexToRgb(color), [color]);
   const fullPresets = useMemo(() => {
