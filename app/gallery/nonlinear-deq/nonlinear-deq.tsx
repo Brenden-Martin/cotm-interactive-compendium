@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import archivedPresetData from "../deq-morph-bank/saved-presets.json";
+import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
 
 const W = 160;
 const H = 90;
@@ -44,6 +45,7 @@ type AutoCursor = {
   harmonicsY: number[];
 };
 const archivedPresets = archivedPresetData.presets as SharedPreset[];
+const preservedSharedPresets = sharedPresetArchiveData.presets as SharedPreset[];
 const archivedFingerprints = new Set(archivedPresets.map((preset) => JSON.stringify(preset.config)));
 const DEFAULT_BRUSH_RADIUS = 13;
 const DEFAULT_PAINT_COLOR = "#20d7d7";
@@ -361,9 +363,9 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
   const [paused, setPaused] = useState(false);
   const [autoMutate, setAutoMutate] = useState(!presetFoundry && !recursiveBoundary);
   const [mutationCount, setMutationCount] = useState(0);
-  const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>([]);
-  const [sharedPresetTotal, setSharedPresetTotal] = useState(0);
-  const [bankLoadStatus, setBankLoadStatus] = useState("Loading complete bank…");
+  const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>(preservedSharedPresets);
+  const [sharedPresetTotal, setSharedPresetTotal] = useState(preservedSharedPresets.length);
+  const [bankLoadStatus, setBankLoadStatus] = useState(`All ${preservedSharedPresets.length} preserved shared anchors loaded · checking live additions…`);
   const [morphing, setMorphing] = useState(recursiveBoundary);
   const [morphRate, setMorphRate] = useState(1);
   const [morphRandomness, setMorphRandomness] = useState(.18);
@@ -510,14 +512,14 @@ export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false 
           setBankLoadStatus(`Loading ${Math.min(collected.length, total)} of ${total} anchors…`);
         } while (!controller.signal.aborted);
         if (controller.signal.aborted) return;
-        const unique = Array.from(new Map(collected.map((preset) => [preset.id, preset])).values()).sort((left, right) => left.id - right.id);
+        const unique = Array.from(new Map([...preservedSharedPresets, ...collected].map((preset) => [JSON.stringify(preset.config), preset])).values()).sort((left, right) => left.id - right.id);
         setSharedPresets(unique);
-        setSharedPresetTotal(total);
+        setSharedPresetTotal(Math.max(total, unique.length));
         setBankLoadStatus(`All ${unique.length} shared anchors loaded`);
       } catch {
         if (!controller.signal.aborted) {
-          setBankLoadStatus("Complete bank temporarily unavailable");
-          setSaveStatus("Shared bank temporarily unavailable");
+          setBankLoadStatus(`All ${preservedSharedPresets.length} preserved shared anchors loaded · live additions unavailable`);
+          setSaveStatus("Live shared-bank additions temporarily unavailable");
         }
       }
     };

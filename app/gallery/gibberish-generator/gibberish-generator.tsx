@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import archivedPresetData from "../deq-morph-bank/saved-presets.json";
+import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
 
 const W = 160;
 const H = 72;
@@ -15,6 +16,7 @@ type ArchivedPreset = { id: number; config: DeqConfig; createdAt: string };
 type PresetPage = { presets?: ArchivedPreset[]; total?: number; nextCursor?: number | null; error?: string };
 
 const deqPresets = archivedPresetData.presets as ArchivedPreset[];
+const preservedSharedPresets = sharedPresetArchiveData.presets as ArchivedPreset[];
 const indexK = (destination: number, source: number, template: number) => (destination * 3 + source) * 5 + template;
 const glyph = (rows: string) => rows.split("/");
 const PIXEL_GLYPHS: Record<string, string[]> = {
@@ -120,8 +122,8 @@ export function GibberishGenerator() {
   const [presetIndex, setPresetIndex] = useState(0);
   const [seedRevision, setSeedRevision] = useState(0);
   const [fontScale, setFontScale] = useState<1 | 2>(1);
-  const [sharedPresets, setSharedPresets] = useState<ArchivedPreset[]>([]);
-  const [bankStatus, setBankStatus] = useState(`Loading full bank beyond ${deqPresets.length} curated anchors…`);
+  const [sharedPresets, setSharedPresets] = useState<ArchivedPreset[]>(preservedSharedPresets);
+  const [bankStatus, setBankStatus] = useState(`Full bank ready · ${preservedSharedPresets.length} preserved shared anchors · checking live additions…`);
   const chunks = useMemo(() => chunkSpeech(text), [text]);
   const rgb = useMemo(() => hexToRgb(color), [color]);
   const fullPresets = useMemo(() => {
@@ -160,11 +162,11 @@ export function GibberishGenerator() {
           setBankStatus(`Loading ${Math.min(collected.length, total)} of ${total} shared anchors…`);
         } while (!controller.signal.aborted);
         if (controller.signal.aborted) return;
-        const unique = Array.from(new Map(collected.map((preset) => [JSON.stringify(preset.config), preset])).values()).sort((left, right) => left.id - right.id);
+        const unique = Array.from(new Map([...preservedSharedPresets, ...collected].map((preset) => [JSON.stringify(preset.config), preset])).values()).sort((left, right) => left.id - right.id);
         setSharedPresets(unique);
         setBankStatus(`Full bank ready · ${unique.length} shared anchors`);
       } catch {
-        if (!controller.signal.aborted) setBankStatus(`Shared bank unavailable · ${deqPresets.length} curated anchors remain`);
+        if (!controller.signal.aborted) setBankStatus(`Full bank ready · ${preservedSharedPresets.length} preserved shared anchors · live additions unavailable`);
       }
     };
     void loadFullBank();
