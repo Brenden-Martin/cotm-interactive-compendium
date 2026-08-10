@@ -1099,6 +1099,10 @@ button { font: inherit; }
 .gibberish-transport { display:grid;grid-template-columns:1.25fr 1fr;gap:7px;margin-bottom:15px; }
 .gibberish-transport button { min-height:44px;border:2px solid #111820;background:#f4f0df;color:#111820;font:900 9px monospace;text-transform:uppercase;letter-spacing:.08em;cursor:pointer; }
 .gibberish-transport button:first-child,.gibberish-transport button.active { background:#111820;color:#f4f0df; }
+.gibberish-preset { display:grid;grid-template-columns:1fr auto;gap:7px;margin:0 0 15px;padding:11px;border:2px solid #111820;background:#f2dc43; }
+.gibberish-preset label { display:grid;gap:6px;font:900 8px "Lucida Console","Courier New",monospace;text-transform:uppercase;letter-spacing:.08em; }
+.gibberish-preset select { min-width:0;min-height:36px;border:1px solid #111820;background:#f4f0df;padding:5px 7px;font:900 9px "Lucida Console","Courier New",monospace;text-transform:uppercase; }
+.gibberish-preset button { align-self:end;min-height:36px;border:1px solid #111820;background:#111820;color:#f4f0df;padding:0 10px;font:900 8px "Lucida Console","Courier New",monospace;text-transform:uppercase;letter-spacing:.05em;cursor:pointer; }
 .identity-control { border:2px solid #111820;padding:11px;background:#d7d3c4; }
 .identity-control>label { display:grid;grid-template-columns:1fr auto;align-items:center;font:900 9px monospace;text-transform:uppercase;letter-spacing:.09em; }
 .identity-control input[type="color"] { width:68px;height:36px;border:1px solid #111820;background:transparent;padding:2px;cursor:pointer; }
