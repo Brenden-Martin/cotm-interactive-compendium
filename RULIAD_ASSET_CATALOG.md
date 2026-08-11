@@ -174,6 +174,41 @@ These images are associated with *Tales from the Ruliad* but intentionally remai
 | `public/ruliad/machine-xaser-refinery-02.jpg` | Second refinery view with pipe racks, chimneys, cooling structures, and lattice towers | The Machine and the XASER archive |
 | `public/ruliad/machine-xaser-mountain-valley.jpg` | Mist-filled mountain valley with forested slopes, green fields, and distant ridgelines | The Machine and the XASER archive |
 
+## Final story-room flood — 2026-08-06
+
+| Asset | Descriptive intake note | Story placement |
+| --- | --- | --- |
+| `public/ruliad/lobotomy-handheld-rat.jpg` | Black-and-white rat resting calmly in an open hand | Lobotomy archive |
+| `public/ruliad/kind-eyed-line-portrait.jpg` | Bold line portrait assembled from faces, eyes, birds, symbols, and a falling teardrop form | Kind-Eyed Stranger archive |
+| `public/ruliad/machine-xaser-terraced-concrete.jpg` | Terraced concrete retaining structures repeating along a forested roadside | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-waterworks-channels.jpg` | Geometric array of water channels, gates, beams, and concrete partitions | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-woodland-reservoir-hatch-01.jpg` | Round woodland reservoir hatch crossed by timber and fitted with a radial grate | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-woodland-reservoir-hatch-02.jpg` | Wider view of the weathered circular reservoir structure in the woods | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-mossed-concrete-shelter.jpg` | Small moss-covered concrete shelter nearly absorbed into woodland growth | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-water-tower.jpg` | Water tower rising above a willow beneath an overcast sky | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-dam-gate-01.jpg` | Concrete dam gate and actuator poised above still green water | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-dam-gate-02.jpg` | Close view of the dam gate, hydraulic arms, and curved spillway | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-woodland-waterworks.jpg` | Circular waterworks structure radiating pipes beneath a forest canopy | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-forest-lichen.jpg` | Pale branching lichen and moss gathered across the forest floor | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-grain-silo.jpg` | Corrugated grain silo and unloading auger in a winter field | The Machine and the XASER archive |
+| `public/ruliad/vault/antique-store-phonograph.jpg` | Exact repeat of the preserved antique-store phonograph; reused without another file | The Machine and the XASER archive |
+| `public/ruliad/vault/machine-shop-interior.jpg` | Exact repeat of the preserved tool-lined machine shop; reused without another file | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-rainbow-cable-laboratory.jpg` | Laboratory work area crossed by a thick bundle of rainbow-colored cables | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-radiant-cube-field.jpg` | Suspended cubes and bright sources radiating through a field of pinprick lights | The Machine and the XASER archive |
+| `public/ruliad/vault/quarry-pump-pond.jpg` | Exact repeat of the preserved metal pump structure over a clear green pond | The Machine and the XASER archive |
+| `public/ruliad/vault/woodland-yurts.jpg` | Exact repeat of the preserved conical-roofed woodland cabins | The Machine and the XASER archive |
+| `public/ruliad/vault/vintage-tube-layout.jpg` | Exact repeat of the preserved radio and television tube-layout chart | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-red-keyboard-room.jpg` | Red-lit keyboard and microphone station beneath green ceiling light | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-crt-cabinet-red.jpg` | CRT cabinet and stacked instruments glowing red and violet | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-resonator-curtain.jpg` | Hand parting a curtain of suspended metal resonators before a neon doorway | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-red-field-cable.jpg` | Cable crossing red carpet beneath a concentrated patch of red light | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-electrostatic-generator.jpg` | Vintage electrostatic generator carrying its original maker label | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-red-blower.jpg` | Handheld red electric blower presented like a compact ray instrument | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-laser-speckle-apparatus.jpg` | Exposed optical apparatus projecting a green laser-speckle field | The Machine and the XASER archive |
+| `public/ruliad/machine-xaser-handheld-optical-barrel.jpg` | Compact cylindrical optical instrument held above a synthesizer | The Machine and the XASER archive |
+
+The resonator-curtain photograph was submitted twice within the final flood. Its second occurrence is recorded here but deliberately reuses the same canonical asset and appears only once in the story room.
+
 ## Filing rule
 
 An intake image moves into a story room only after an explicit story assignment or a strong canonical match is established. Moving the website copy does not alter the supplied attachment or this catalog's history.

@@ -129,6 +129,18 @@ export default function Gallery() {
           <strong>Pendulum Laboratory</strong>
           <small>Set the system in motion →</small>
         </Link>
+        <Link className="study luckfield-entry" href="/gallery/the-luckfield">
+          <span className="eyebrow">Exhibit 21 / Recursive Fields</span>
+          <div className="luckfield-entry-field" aria-hidden="true"><i /><i /><i /><span /><b /></div>
+          <strong>The Luckfield</strong>
+          <small>Let the field choose itself →</small>
+        </Link>
+        <Link className="study gibberish-entry" href="/gallery/gibberish-generator">
+          <span className="eyebrow">Exhibit 22 / Character Systems</span>
+          <div className="gibberish-entry-bubble" aria-hidden="true"><i /><span>LUCK STRENGTH INTELLIGENCE</span></div>
+          <strong>Gibberish Generator</strong>
+          <small>Give a color its voice →</small>
+        </Link>
       </section>
     </main>
   );

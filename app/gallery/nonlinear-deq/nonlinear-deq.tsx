@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import archivedPresetData from "../deq-morph-bank/saved-presets.json";
+import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
 
 const W = 160;
 const H = 90;
@@ -16,7 +17,24 @@ type SharedPreset = { id: number; config: Config; createdAt: string };
 type SharedPresetPage = { presets?: SharedPreset[]; total?: number; nextCursor?: number | null; error?: string };
 type FoundryMode = "standard" | "photo" | "cursor";
 type AnchorBank = "all" | "curated" | "color-cycle";
+type RecursiveMode = "luckfield" | "periodic" | "manual";
 type ChannelPermutation = readonly [number, number, number];
+type FieldMetrics = { brightness: number; contrast: number; colorVariance: number; entropy: number; multiscale: number; scaleBalance: number; detail: number };
+type BoundaryTransition = { from: FieldState; target: FieldState; current: FieldState; startedAt: number; duration: number };
+type AudioVoice = { source: AudioBufferSourceNode; gain: GainNode };
+type AudioMode = "crosshair" | "raster" | "spectrogram" | "live-spectrum";
+type LiveQuantization = "unquantized" | "pentatonic" | "blues" | "melodic-minor";
+type RecursiveSettings = {
+  interval: number;
+  brightnessGate: number;
+  detailGate: number;
+  luckChance: number;
+  transitionTime: number;
+  transitionWildness: number;
+  glitchCarry: number;
+  glitchColor: number;
+  glitchZoom: number;
+};
 type AutoCursor = {
   frequencyX: number;
   frequencyY: number;
@@ -27,6 +45,7 @@ type AutoCursor = {
   harmonicsY: number[];
 };
 const archivedPresets = archivedPresetData.presets as SharedPreset[];
+const preservedSharedPresets = sharedPresetArchiveData.presets as SharedPreset[];
 const archivedFingerprints = new Set(archivedPresets.map((preset) => JSON.stringify(preset.config)));
 const DEFAULT_BRUSH_RADIUS = 13;
 const DEFAULT_PAINT_COLOR = "#20d7d7";
@@ -39,6 +58,21 @@ const initialAutoCursor: AutoCursor = {
   harmonicsX: [1, .24, .08],
   harmonicsY: [1, .18, -.06],
 };
+const channelPermutations: ChannelPermutation[] = [
+  [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+];
+const initialRecursiveSettings: RecursiveSettings = {
+  interval: 5,
+  brightnessGate: .18,
+  detailGate: .76,
+  luckChance: .38,
+  transitionTime: 2.8,
+  transitionWildness: .32,
+  glitchCarry: .16,
+  glitchColor: .28,
+  glitchZoom: .24,
+};
+const emptyMetrics: FieldMetrics = { brightness: 0, contrast: 0, colorVariance: 0, entropy: 0, multiscale: 0, scaleBalance: 0, detail: 0 };
 
 const indexK = (dest: number, source: number, template: number) => (dest * 3 + source) * 5 + template;
 const sparseK = (entries: Array<[number, number, number, number]>) => {
@@ -73,26 +107,216 @@ const permuteConfigChannels = (config: Config, permutation: ChannelPermutation):
     exponent: permutation.map((channel) => config.exponent[channel]),
   };
 };
-const randomColorIdentity = (config: Config) => {
-  const swapped: ChannelPermutation = Math.random() < .5 ? [1, 0, 2] : [0, 1, 2];
-  const turns = Math.floor(Math.random() * 3);
-  const permutation: ChannelPermutation = [
-    swapped[turns % 3],
-    swapped[(turns + 1) % 3],
-    swapped[(turns + 2) % 3],
-  ];
-  return permuteConfigChannels(config, permutation);
-};
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+const metricPresence = (value: number, low: number, high: number) => {
+  const position = clamp01((value-low)/(high-low));
+  return position*position*(3-2*position);
+};
+const cloneField = (field: FieldState): FieldState => [new Float32Array(field[0]), new Float32Array(field[1]), new Float32Array(field[2])];
+const uniformBoundary = (): FieldState => [new Float32Array(SIZE).fill(1), new Float32Array(SIZE).fill(1), new Float32Array(SIZE).fill(1)];
+const transformGlitchColor = (r: number, g: number, b: number, hue: number, saturation: number, contrast: number): [number, number, number] => {
+  const cosine = Math.cos(hue), sine = Math.sin(hue);
+  let nr = (.213+cosine*.787-sine*.213)*r + (.715-cosine*.715-sine*.715)*g + (.072-cosine*.072+sine*.928)*b;
+  let ng = (.213-cosine*.213+sine*.143)*r + (.715+cosine*.285+sine*.140)*g + (.072-cosine*.072-sine*.283)*b;
+  let nb = (.213-cosine*.213-sine*.787)*r + (.715-cosine*.715+sine*.715)*g + (.072+cosine*.928+sine*.072)*b;
+  const luminance = (nr + ng + nb) / 3;
+  nr = luminance + (nr-luminance)*saturation;
+  ng = luminance + (ng-luminance)*saturation;
+  nb = luminance + (nb-luminance)*saturation;
+  return [clamp01(.5+(nr-.5)*contrast), clamp01(.5+(ng-.5)*contrast), clamp01(.5+(nb-.5)*contrast)];
+};
+const analyzeField = (field: FieldState): FieldMetrics => {
+  const histogram = new Uint32Array(16);
+  let brightness = 0;
+  let colorVariance = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const index = y*W+x;
+      const r = field[0][index], g = field[1][index], b = field[2][index];
+      const luminance = (r + g + b) / 3;
+      brightness += luminance;
+      histogram[Math.min(15, Math.floor(luminance * 16))]++;
+      colorVariance += ((r - luminance) ** 2 + (g - luminance) ** 2 + (b - luminance) ** 2) / 3;
+  }
+  let entropy = 0;
+  for (const count of histogram) if (count) { const p = count / SIZE; entropy -= p * Math.log2(p); }
+  const normalizedEntropy = entropy / 4;
+  const normalizedColorVariance = clamp01(Math.sqrt(colorVariance / SIZE) * 2.8);
+  const scaleContrasts = [1,2,4,8,16].map((distance) => {
+    let energy = 0;
+    for (let y = 0; y < H; y++) {
+      const row = y*W;
+      const down = ((y+distance)%H)*W;
+      for (let x = 0; x < W; x++) {
+        const index = row+x;
+        const right = row+((x+distance)%W);
+        energy += (Math.abs(field[0][index]-field[0][right])+Math.abs(field[1][index]-field[1][right])+Math.abs(field[2][index]-field[2][right])
+          +Math.abs(field[0][index]-field[0][down+x])+Math.abs(field[1][index]-field[1][down+x])+Math.abs(field[2][index]-field[2][down+x]))/6;
+      }
+    }
+    return clamp01(energy/SIZE*3.6);
+  });
+  const sortedScales = [...scaleContrasts].sort((a,b)=>a-b);
+  const scaleMean = scaleContrasts.reduce((sum,value)=>sum+value,0)/scaleContrasts.length;
+  const scaleFloor = sortedScales[1];
+  const scaleBalance = scaleMean > 0 ? clamp01(scaleFloor/scaleMean) : 0;
+  const multiscale = clamp01(scaleMean*.68 + scaleFloor*.32);
+  const detail = clamp01(
+    metricPresence(normalizedEntropy,.28,.78)*.25
+    + metricPresence(normalizedColorVariance,.12,.70)*.17
+    + metricPresence(multiscale,.16,.60)*.43
+    + metricPresence(scaleBalance,.45,.90)*.15
+  );
+  return {
+    brightness: brightness / SIZE,
+    contrast: scaleContrasts[0],
+    colorVariance: normalizedColorVariance,
+    entropy: normalizedEntropy,
+    multiscale,
+    scaleBalance,
+    detail,
+  };
+};
+
+const inverseFourier = (real: Float32Array, imaginary: Float32Array) => {
+  const size=real.length;
+  for (let index=1,reversed=0;index<size;index++) {
+    let bit=size>>1;
+    while (reversed&bit) { reversed^=bit; bit>>=1; }
+    reversed^=bit;
+    if (index<reversed) {
+      [real[index],real[reversed]]=[real[reversed],real[index]];
+      [imaginary[index],imaginary[reversed]]=[imaginary[reversed],imaginary[index]];
+    }
+  }
+  for (let span=2;span<=size;span<<=1) {
+    const angle=2*Math.PI/span;
+    const stepReal=Math.cos(angle), stepImaginary=Math.sin(angle);
+    for (let start=0;start<size;start+=span) {
+      let rotationReal=1, rotationImaginary=0;
+      for (let offset=0;offset<span/2;offset++) {
+        const even=start+offset, odd=even+span/2;
+        const oddReal=real[odd]*rotationReal-imaginary[odd]*rotationImaginary;
+        const oddImaginary=real[odd]*rotationImaginary+imaginary[odd]*rotationReal;
+        const evenReal=real[even], evenImaginary=imaginary[even];
+        real[even]=evenReal+oddReal; imaginary[even]=evenImaginary+oddImaginary;
+        real[odd]=evenReal-oddReal; imaginary[odd]=evenImaginary-oddImaginary;
+        const nextReal=rotationReal*stepReal-rotationImaginary*stepImaginary;
+        rotationImaginary=rotationReal*stepImaginary+rotationImaginary*stepReal;
+        rotationReal=nextReal;
+      }
+    }
+  }
+  for (let index=0;index<size;index++) { real[index]/=size; imaginary[index]/=size; }
+};
+
+const synthesizeSpectrogram = (field: FieldState, phaseDirection: 1|-1) => {
+  const transformSize=256;
+  const hop=64;
+  const output=new Float32Array(hop*(W-1)+transformSize);
+  const weight=new Float32Array(output.length);
+  for (let column=0;column<W;column++) {
+    const real=new Float32Array(transformSize);
+    const imaginary=new Float32Array(transformSize);
+    for (let row=0;row<H;row++) {
+      const fieldIndex=row*W+column;
+      const red=field[0][fieldIndex], green=field[1][fieldIndex], blue=field[2][fieldIndex];
+      const brightness=Math.max(red,green,blue);
+      const hue=Math.atan2(Math.sqrt(3)*(green-blue),2*red-green-blue)*phaseDirection;
+      const bin=1+Math.round((H-1-row)/(H-1)*(H-1));
+      const coefficient=brightness;
+      real[bin]=coefficient*Math.cos(hue);
+      imaginary[bin]=coefficient*Math.sin(hue);
+      real[transformSize-bin]=real[bin];
+      imaginary[transformSize-bin]=-imaginary[bin];
+    }
+    inverseFourier(real,imaginary);
+    const start=column*hop;
+    for (let sample=0;sample<transformSize;sample++) {
+      const window=.5-.5*Math.cos(2*Math.PI*sample/(transformSize-1));
+      output[start+sample]+=real[sample]*window;
+      weight[start+sample]+=window;
+    }
+  }
+  for (let sample=0;sample<output.length;sample++) if (weight[sample]>.001) output[sample]/=weight[sample];
+  return Array.from(output);
+};
+
+const liveSpectrumWorklet = `
+class LuckfieldLiveSpectrum extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.width=160;this.height=90;this.position=0;this.samplesPerColumn=sampleRate*.02;this.blocks=0;this.quantization='unquantized';
+    this.real=new Float32Array(this.width*this.height);this.imaginary=new Float32Array(this.width*this.height);
+    this.sine=new Float32Array(this.height);this.cosine=new Float32Array(this.height).fill(1);
+    this.stepSine=new Float32Array(this.height);this.stepCosine=new Float32Array(this.height);
+    this.rebuildFrequencies(this.quantization);
+    this.port.onmessage=(event)=>{
+      const data=event.data;
+      if(data.type==='field'){this.real=data.real;this.imaginary=data.imaginary;}
+      else if(data.type==='timing')this.samplesPerColumn=Math.max(1,sampleRate*data.milliseconds/1000);
+      else if(data.type==='quantization')this.rebuildFrequencies(data.mode);
+    };
+  }
+  rebuildFrequencies(mode){
+    this.quantization=mode;
+    const scales={pentatonic:[0,2,4,7,9],blues:[0,3,5,6,7,10],'melodic-minor':[0,2,3,5,7,9,11]};
+    const scale=scales[mode];
+    for(let row=0;row<this.height;row++){
+      const rawFrequency=20*Math.pow(500,(this.height-1-row)/(this.height-1));
+      let frequency=rawFrequency;
+      if(scale){
+        const rawMidi=69+12*Math.log2(rawFrequency/440),baseOctave=Math.floor(rawMidi/12);
+        let bestDistance=Infinity;
+        for(let octave=baseOctave-1;octave<=baseOctave+1;octave++)for(const pitchClass of scale){
+          const candidate=440*Math.pow(2,(octave*12+pitchClass-69)/12);
+          if(candidate<20||candidate>10000)continue;
+          const distance=Math.abs(Math.log(candidate/rawFrequency));
+          if(distance<bestDistance){bestDistance=distance;frequency=candidate;}
+        }
+      }
+      const step=2*Math.PI*frequency/sampleRate;
+      this.stepSine[row]=Math.sin(step);this.stepCosine[row]=Math.cos(step);
+    }
+  }
+  process(inputs,outputs){
+    const left=outputs[0][0],right=outputs[0][1]||left;
+    for(let sample=0;sample<left.length;sample++){
+      const column=Math.floor(this.position)%this.width,next=(column+1)%this.width,mix=this.position-Math.floor(this.position);
+      let sumLeft=0,sumRight=0;
+      for(let row=0;row<this.height;row++){
+        const current=row*this.width+column,future=row*this.width+next;
+        const real=this.real[current]+(this.real[future]-this.real[current])*mix;
+        const imaginary=this.imaginary[current]+(this.imaginary[future]-this.imaginary[current])*mix;
+        sumLeft+=this.sine[row]*real+this.cosine[row]*imaginary;
+        sumRight+=this.sine[row]*real-this.cosine[row]*imaginary;
+        const nextSine=this.sine[row]*this.stepCosine[row]+this.cosine[row]*this.stepSine[row];
+        this.cosine[row]=this.cosine[row]*this.stepCosine[row]-this.sine[row]*this.stepSine[row];
+        this.sine[row]=nextSine;
+      }
+      left[sample]=Math.tanh(sumLeft*.13);right[sample]=Math.tanh(sumRight*.13);
+      this.position+=1/this.samplesPerColumn;if(this.position>=this.width)this.position-=this.width;
+    }
+    this.blocks++;
+    if(this.blocks%8===0)this.port.postMessage({type:'position',position:this.position});
+    if(this.blocks%256===0)for(let row=0;row<this.height;row++){
+      const magnitude=Math.hypot(this.sine[row],this.cosine[row])||1;
+      this.sine[row]/=magnitude;this.cosine[row]/=magnitude;
+    }
+    return true;
+  }
+}
+registerProcessor('luckfield-live-spectrum',LuckfieldLiveSpectrum);
+`;
 const colorChannels = (hex: string): [number, number, number] => [
   Number.parseInt(hex.slice(1, 3), 16) / 255,
   Number.parseInt(hex.slice(3, 5), 16) / 255,
   Number.parseInt(hex.slice(5, 7), 16) / 255,
 ];
 
-export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolean }) {
+export function NonlinearDeq({ presetFoundry = false, recursiveBoundary = false }: { presetFoundry?: boolean; recursiveBoundary?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const fieldRef = useRef<FieldState>([new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)]);
   const configRef = useRef<Config>(cloneConfig(presets[0]));
   const frameRef = useRef(0);
@@ -112,6 +336,24 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const morphIndexRef = useRef(0);
   const morphRateRef = useRef(1);
   const morphRandomnessRef = useRef(.18);
+  const recursiveModeRef = useRef<RecursiveMode>("luckfield");
+  const boundaryHeldRef = useRef(false);
+  const recursiveSettingsRef = useRef<RecursiveSettings>(initialRecursiveSettings);
+  const boundaryTransitionRef = useRef<BoundaryTransition | null>(null);
+  const lastBoundaryScanRef = useRef(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioMasterRef = useRef<GainNode | null>(null);
+  const audioVoicesRef = useRef<AudioVoice[]>([]);
+  const audioEnabledRef = useRef(false);
+  const audioFrameRef = useRef(0);
+  const audioVolumeRef = useRef(.12);
+  const audioPitchRef = useRef(1);
+  const audioRefreshFramesRef = useRef(12);
+  const audioModeRef = useRef<AudioMode>("crosshair");
+  const audioColorDepthRef = useRef(.78);
+  const liveAudioNodeRef = useRef<AudioWorkletNode | null>(null);
+  const liveSweepMarkerRef = useRef<HTMLDivElement>(null);
+  const liveStepPowerRef = useRef(Math.log10(20));
   const [config, setConfig] = useState<Config>(cloneConfig(presets[0]));
   const [presetName, setPresetName] = useState("Nova");
   const [destination, setDestination] = useState(0);
@@ -119,19 +361,34 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   const [paintColor, setPaintColor] = useState(DEFAULT_PAINT_COLOR);
   const [brush, setBrush] = useState(DEFAULT_BRUSH_RADIUS);
   const [paused, setPaused] = useState(false);
-  const [autoMutate, setAutoMutate] = useState(!presetFoundry);
+  const [autoMutate, setAutoMutate] = useState(!presetFoundry && !recursiveBoundary);
   const [mutationCount, setMutationCount] = useState(0);
-  const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>([]);
-  const [sharedPresetTotal, setSharedPresetTotal] = useState(0);
-  const [bankLoadStatus, setBankLoadStatus] = useState("Loading complete bank…");
-  const [morphing, setMorphing] = useState(false);
+  const [sharedPresets, setSharedPresets] = useState<SharedPreset[]>(preservedSharedPresets);
+  const [sharedPresetTotal, setSharedPresetTotal] = useState(preservedSharedPresets.length);
+  const [bankLoadStatus, setBankLoadStatus] = useState(`All ${preservedSharedPresets.length} preserved shared anchors loaded`);
+  const [morphing, setMorphing] = useState(recursiveBoundary);
   const [morphRate, setMorphRate] = useState(1);
   const [morphRandomness, setMorphRandomness] = useState(.18);
   const [foundryMode, setFoundryMode] = useState<FoundryMode>("standard");
-  const [anchorBank, setAnchorBank] = useState<AnchorBank>("all");
+  const [anchorBank, setAnchorBank] = useState<AnchorBank>(recursiveBoundary ? "color-cycle" : "all");
   const [boundaryName, setBoundaryName] = useState("No photo loaded");
   const [autoCursor, setAutoCursor] = useState<AutoCursor>(initialAutoCursor);
   const [saveStatus, setSaveStatus] = useState("Ready to collect this state");
+  const [recursiveMode, setRecursiveMode] = useState<RecursiveMode>("luckfield");
+  const [boundaryHeld, setBoundaryHeld] = useState(false);
+  const [recursiveSettings, setRecursiveSettings] = useState<RecursiveSettings>(initialRecursiveSettings);
+  const [fieldMetrics, setFieldMetrics] = useState<FieldMetrics>(emptyMetrics);
+  const [boundaryStatus, setBoundaryStatus] = useState("Watching for a lucky field");
+  const [boundaryMutations, setBoundaryMutations] = useState(0);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(.12);
+  const [audioPitch, setAudioPitch] = useState(1);
+  const [audioRefreshFrames, setAudioRefreshFrames] = useState(12);
+  const [audioMode, setAudioMode] = useState<AudioMode>("crosshair");
+  const [audioColorDepth, setAudioColorDepth] = useState(.78);
+  const [liveStepPower, setLiveStepPower] = useState(Math.log10(20));
+  const [liveQuantization, setLiveQuantization] = useState<LiveQuantization>("unquantized");
+  const [fieldFullscreen, setFieldFullscreen] = useState(false);
 
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => {
@@ -142,6 +399,30 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   useEffect(() => { brushRef.current = brush; }, [brush]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { autoMutateRef.current = autoMutate; }, [autoMutate]);
+  useEffect(() => { recursiveModeRef.current = recursiveMode; }, [recursiveMode]);
+  useEffect(() => { boundaryHeldRef.current = boundaryHeld; }, [boundaryHeld]);
+  useEffect(() => { recursiveSettingsRef.current = recursiveSettings; }, [recursiveSettings]);
+  useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
+  useEffect(() => {
+    audioVolumeRef.current = audioVolume;
+    audioMasterRef.current?.gain.setTargetAtTime(audioVolume, audioContextRef.current?.currentTime ?? 0, .02);
+  }, [audioVolume]);
+  useEffect(() => { audioPitchRef.current = audioPitch; }, [audioPitch]);
+  useEffect(() => { audioRefreshFramesRef.current = audioRefreshFrames; }, [audioRefreshFrames]);
+  useEffect(() => { audioModeRef.current = audioMode; }, [audioMode]);
+  useEffect(() => { audioColorDepthRef.current = audioColorDepth; }, [audioColorDepth]);
+  useEffect(() => {
+    liveStepPowerRef.current=liveStepPower;
+    liveAudioNodeRef.current?.port.postMessage({type:"timing",milliseconds:Math.pow(10,liveStepPower)});
+  }, [liveStepPower]);
+  useEffect(() => { liveAudioNodeRef.current?.port.postMessage({type:"quantization",mode:liveQuantization}); }, [liveQuantization]);
+  useEffect(() => {
+    const fullscreenDocument=document as Document&{webkitFullscreenElement?:Element|null};
+    const sync=()=>setFieldFullscreen(Boolean(document.fullscreenElement||fullscreenDocument.webkitFullscreenElement));
+    document.addEventListener("fullscreenchange",sync);
+    document.addEventListener("webkitfullscreenchange",sync);
+    return()=>{document.removeEventListener("fullscreenchange",sync);document.removeEventListener("webkitfullscreenchange",sync);};
+  }, []);
 
   const switchFoundryMode = (mode: FoundryMode) => {
     foundryModeRef.current = mode;
@@ -211,7 +492,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
   };
 
   useEffect(() => {
-    if (!presetFoundry) return;
+    if (!presetFoundry && !recursiveBoundary) return;
     const controller = new AbortController();
     const loadCompleteBank = async () => {
       try {
@@ -231,45 +512,55 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
           setBankLoadStatus(`Loading ${Math.min(collected.length, total)} of ${total} anchors…`);
         } while (!controller.signal.aborted);
         if (controller.signal.aborted) return;
-        const unique = Array.from(new Map(collected.map((preset) => [preset.id, preset])).values()).sort((left, right) => left.id - right.id);
+        const unique = Array.from(new Map([...preservedSharedPresets, ...collected].map((preset) => [JSON.stringify(preset.config), preset])).values()).sort((left, right) => left.id - right.id);
         setSharedPresets(unique);
-        setSharedPresetTotal(total);
+        setSharedPresetTotal(Math.max(total, unique.length));
         setBankLoadStatus(`All ${unique.length} shared anchors loaded`);
       } catch {
         if (!controller.signal.aborted) {
-          setBankLoadStatus("Complete bank temporarily unavailable");
-          setSaveStatus("Shared bank temporarily unavailable");
+          setBankLoadStatus(`All ${preservedSharedPresets.length} preserved shared anchors loaded · live additions unavailable`);
+          setSaveStatus("Live shared-bank additions temporarily unavailable");
         }
       }
     };
     loadCompleteBank();
     return () => controller.abort();
-  }, [presetFoundry]);
+  }, [presetFoundry, recursiveBoundary]);
+
+  const curatedAnchorConfigs = useMemo(() => {
+    const unique = new Map<string, Config>();
+    for (const anchor of [...presets.map(cloneConfig), ...archivedPresets.map((preset) => preset.config)]) {
+      const fingerprint = JSON.stringify(anchor);
+      if (!unique.has(fingerprint)) unique.set(fingerprint, anchor);
+    }
+    return [...unique.values()];
+  }, []);
+
+  const completeAnchorConfigs = useMemo(() => {
+    const unique = new Map(curatedAnchorConfigs.map((anchor) => [JSON.stringify(anchor), anchor]));
+    for (const preset of sharedPresets) {
+      const fingerprint = JSON.stringify(preset.config);
+      if (!unique.has(fingerprint)) unique.set(fingerprint, preset.config);
+    }
+    return [...unique.values()];
+  }, [curatedAnchorConfigs, sharedPresets]);
 
   useEffect(() => {
-    if (!presetFoundry || !morphing) return;
-    const seenAnchors = new Set<string>();
-    const anchors: Config[] = [
-      ...presets.map(cloneConfig),
-      ...archivedPresets.map((preset) => preset.config),
-      ...(anchorBank !== "curated" ? sharedPresets.map((preset) => preset.config) : []),
-    ].filter((anchor) => {
-      const fingerprint = JSON.stringify(anchor);
-      if (seenAnchors.has(fingerprint)) return false;
-      seenAnchors.add(fingerprint);
-      return true;
-    });
-    if (anchors.length < 2) return;
+    if ((!presetFoundry && !recursiveBoundary) || !morphing) return;
+    const anchors = anchorBank === "curated" ? curatedAnchorConfigs : completeAnchorConfigs;
+    const traversalAnchors = anchorBank === "color-cycle"
+      ? anchors.flatMap((anchor) => channelPermutations.map((permutation) => permuteConfigChannels(anchor, permutation)))
+      : anchors;
+    if (traversalAnchors.length < 2) return;
     let raf = 0;
     let lastPaint = 0;
     let lastTime = performance.now();
     let progress = 0;
-    const startIndex = morphIndexRef.current % anchors.length;
+    const startIndex = morphIndexRef.current % traversalAnchors.length;
     const from = configRef.current;
     let targetIndex = startIndex;
-    while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * anchors.length);
-    const selectedAnchor = anchors[targetIndex];
-    const to = anchorBank === "color-cycle" ? randomColorIdentity(selectedAnchor) : selectedAnchor;
+    while (targetIndex === startIndex) targetIndex = Math.floor(Math.random() * traversalAnchors.length);
+    const to = traversalAnchors[targetIndex];
     const randomSigned = () => Math.random() * 2 - 1;
     const jitter: Config = {
       k: to.k.map((value) => randomSigned() * (.2 + Math.min(2, Math.abs(value) * .15))),
@@ -305,7 +596,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     };
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [anchorBank, morphing, presetFoundry, sharedPresets]);
+  }, [anchorBank, completeAnchorConfigs, curatedAnchorConfigs, morphing, presetFoundry, recursiveBoundary]);
 
   const seedNoise = useCallback(() => {
     const next: FieldState = [new Float32Array(SIZE), new Float32Array(SIZE), new Float32Array(SIZE)];
@@ -315,6 +606,229 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       next[2][index] = clamp01(.5 + (Math.random() - .5) * .5);
     }
     fieldRef.current = next;
+  }, []);
+
+  const replaceBoundary = useCallback((label: string) => {
+    const settings = recursiveSettingsRef.current;
+    const previous = boundaryRef.current ? cloneField(boundaryRef.current) : uniformBoundary();
+    const target = cloneField(fieldRef.current);
+    const blocks = Math.round(settings.glitchCarry * 28);
+    for (let block = 0; block < blocks; block++) {
+      const blockWidth = 3 + Math.floor(Math.random() * (4 + settings.glitchCarry * W * .22));
+      const blockHeight = 2 + Math.floor(Math.random() * (3 + settings.glitchCarry * H * .22));
+      const startX = Math.floor(Math.random() * W);
+      const startY = Math.floor(Math.random() * H);
+      const sourceX = Math.floor(Math.random() * W);
+      const sourceY = Math.floor(Math.random() * H);
+      const scale = Math.pow(2, (Math.random()*2-1) * settings.glitchZoom * 3);
+      const hue = (Math.random()*2-1) * Math.PI * settings.glitchColor;
+      const saturation = 1 + (Math.random()*2-1) * settings.glitchColor * 1.5;
+      const contrast = 1 + (Math.random()*2-1) * settings.glitchColor * 1.4;
+      for (let dy = 0; dy < blockHeight; dy++) for (let dx = 0; dx < blockWidth; dx++) {
+        const targetIndex = ((startY + dy) % H) * W + ((startX + dx) % W);
+        const sampleX = (sourceX + Math.floor((dx-blockWidth/2)*scale) + W) % W;
+        const sampleY = (sourceY + Math.floor((dy-blockHeight/2)*scale) + H) % H;
+        const sourceIndex = sampleY * W + sampleX;
+        const transformed = transformGlitchColor(previous[0][sourceIndex],previous[1][sourceIndex],previous[2][sourceIndex],hue,saturation,contrast);
+        target[0][targetIndex] = transformed[0];
+        target[1][targetIndex] = transformed[1];
+        target[2][targetIndex] = transformed[2];
+      }
+    }
+    const current = cloneField(previous);
+    boundaryRef.current = current;
+    boundaryTransitionRef.current = {
+      from: previous,
+      target,
+      current,
+      startedAt: performance.now(),
+      duration: settings.transitionTime * 1000,
+    };
+    setBoundaryMutations((count) => count + 1);
+    setBoundaryStatus(label);
+  }, []);
+
+  const resetBoundary = useCallback(() => {
+    const reset = uniformBoundary();
+    boundaryTransitionRef.current = null;
+    boundaryRef.current = reset;
+    setBoundaryStatus("Boundary conditions reset to uniform");
+  }, []);
+
+  const setRecursiveValue = (key: keyof RecursiveSettings, value: number) => {
+    setRecursiveSettings((current) => ({ ...current, [key]: value }));
+  };
+
+  const sendLiveSpectrumField = useCallback(() => {
+    const node=liveAudioNodeRef.current;
+    if (!node) return;
+    const field=fieldRef.current;
+    const real=new Float32Array(SIZE),imaginary=new Float32Array(SIZE);
+    for (let index=0;index<SIZE;index++) {
+      const red=field[0][index],green=field[1][index],blue=field[2][index];
+      const brightness=Math.max(red,green,blue);
+      const hue=Math.atan2(Math.sqrt(3)*(green-blue),2*red-green-blue);
+      real[index]=brightness*Math.cos(hue);
+      imaginary[index]=brightness*Math.sin(hue);
+    }
+    node.port.postMessage({type:"field",real,imaginary},[real.buffer,imaginary.buffer]);
+  }, []);
+
+  const startLiveSpectrum = async (context: AudioContext, master: GainNode) => {
+    if (!context.audioWorklet) throw new Error("Audio worklets unavailable");
+    const moduleUrl=URL.createObjectURL(new Blob([liveSpectrumWorklet],{type:"application/javascript"}));
+    try { await context.audioWorklet.addModule(moduleUrl); } finally { URL.revokeObjectURL(moduleUrl); }
+    const node=new AudioWorkletNode(context,"luckfield-live-spectrum",{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
+    node.port.onmessage=(event:MessageEvent<{type:string;position:number}>)=>{
+      if (event.data.type==="position"&&liveSweepMarkerRef.current) liveSweepMarkerRef.current.style.setProperty("--sweep-x",`${event.data.position/W*100}%`);
+    };
+    node.connect(master);
+    liveAudioNodeRef.current=node;
+    node.port.postMessage({type:"timing",milliseconds:Math.pow(10,liveStepPowerRef.current)});
+    node.port.postMessage({type:"quantization",mode:liveQuantization});
+    sendLiveSpectrumField();
+  };
+
+  const stopFieldAudio = useCallback(() => {
+    audioEnabledRef.current = false;
+    setAudioEnabled(false);
+    for (const voice of audioVoicesRef.current) { try { voice.source.stop(); } catch {} }
+    audioVoicesRef.current = [];
+    liveAudioNodeRef.current?.disconnect();
+    liveAudioNodeRef.current?.port.close();
+    liveAudioNodeRef.current=null;
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    audioMasterRef.current = null;
+    if (context) void context.close();
+  }, []);
+
+  const toggleFieldAudio = async () => {
+    if (audioEnabledRef.current) { stopFieldAudio(); return; }
+    const AudioContextClass = window.AudioContext || (window as typeof window & {webkitAudioContext?: typeof AudioContext}).webkitAudioContext;
+    if (!AudioContextClass) { setBoundaryStatus("Field audio is unavailable in this browser"); return; }
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.value = audioVolumeRef.current;
+    master.connect(context.destination);
+    audioContextRef.current = context;
+    audioMasterRef.current = master;
+    audioFrameRef.current = audioRefreshFramesRef.current;
+    try {
+      if (audioModeRef.current==="live-spectrum") await startLiveSpectrum(context,master);
+      await context.resume();
+      audioEnabledRef.current = true;
+      setAudioEnabled(true);
+    } catch {
+      audioContextRef.current=null;audioMasterRef.current=null;
+      void context.close();
+      setBoundaryStatus("Live spectral audio is unavailable in this browser");
+    }
+  };
+
+  const switchAudioMode = (mode: AudioMode) => {
+    if (audioEnabledRef.current) stopFieldAudio();
+    audioModeRef.current = mode;
+    setAudioMode(mode);
+    const cadence = mode === "live-spectrum" ? 1 : mode === "spectrogram" ? 72 : mode === "raster" ? 48 : 12;
+    audioRefreshFramesRef.current = cadence;
+    setAudioRefreshFrames(cadence);
+    audioFrameRef.current = cadence;
+  };
+
+  const toggleFieldFullscreen = async () => {
+    const stage=stageRef.current as (HTMLDivElement&{webkitRequestFullscreen?:()=>Promise<void>|void})|null;
+    const fullscreenDocument=document as Document&{webkitFullscreenElement?:Element|null;webkitExitFullscreen?:()=>Promise<void>|void};
+    try {
+      if (document.fullscreenElement||fullscreenDocument.webkitFullscreenElement) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else await fullscreenDocument.webkitExitFullscreen?.();
+      } else if (stage) {
+        if (stage.requestFullscreen) await stage.requestFullscreen();
+        else await stage.webkitRequestFullscreen?.();
+      }
+    } catch { setBoundaryStatus("Fullscreen is unavailable in this browser"); }
+  };
+
+  const refreshAudioGranules = useCallback(() => {
+    const context = audioContextRef.current;
+    const master = audioMasterRef.current;
+    if (!context || !master || !audioEnabledRef.current) return;
+    const field = fieldRef.current;
+    const mode = audioModeRef.current;
+    if (mode==="live-spectrum") return;
+    const colorDepth = audioColorDepthRef.current;
+    let redMean = 0;
+    for (let index=0;index<SIZE;index++) redMean+=field[0][index];
+    redMean/=SIZE;
+    const colorPitch = clamp(1+(redMean-.33)*1.8*colorDepth,.48,2.2);
+    const horizontal = Array.from({length:W},(_,x)=>(field[0][Math.floor(H/2)*W+x]+field[1][Math.floor(H/2)*W+x]+field[2][Math.floor(H/2)*W+x])/3);
+    const vertical = Array.from({length:H},(_,y)=>(field[0][y*W+Math.floor(W/2)]+field[1][y*W+Math.floor(W/2)]+field[2][y*W+Math.floor(W/2)])/3);
+    const horizontalRaster = mode === "raster" ? Array.from({length:SIZE},(_,position)=>{
+      const y=Math.floor(position/W), localX=position%W;
+      return y%2===0 ? y*W+localX : y*W+(W-1-localX);
+    }) : [];
+    const verticalRaster = mode === "raster" ? Array.from({length:SIZE},(_,position)=>{
+      const x=Math.floor(position/H), localY=position%H;
+      return (x%2===0?localY:H-1-localY)*W+x;
+    }) : [];
+    const renderRaster = (path: number[]) => {
+      const result = new Array<number>(SIZE);
+      let filtered=0, held=0, holdRemaining=0;
+      for (let sample=0;sample<SIZE;sample++) {
+        const index=path[sample];
+        const red=field[0][index], green=field[1][index], blue=field[2][index];
+        if (holdRemaining<=0) {
+          const greenGrain=Math.sin((sample+1)*12.9898+green*78.233)*green*colorDepth*.16;
+          held=red*.72+green*.38-blue*.62+greenGrain;
+          holdRemaining=Math.floor(green*colorDepth*9);
+        } else holdRemaining--;
+        const lowPass=clamp(.035+(1-blue*colorDepth)*.82,.035,.92);
+        filtered+=lowPass*(held-filtered);
+        result[sample]=filtered;
+      }
+      return result;
+    };
+    const voiceData = mode === "spectrogram"
+      ? [synthesizeSpectrogram(field,1),synthesizeSpectrogram(field,-1)]
+      : mode === "raster"
+        ? [renderRaster(horizontalRaster),renderRaster(verticalRaster)]
+        : [horizontal,vertical];
+    const now = context.currentTime;
+    const voices = voiceData.map((slice,index) => {
+      const mean = slice.reduce((sum,value)=>sum+value,0)/slice.length;
+      const centered = slice.map((value)=>value-mean);
+      const peak = Math.max(.04,centered.reduce((largest,value)=>Math.max(largest,Math.abs(value)),0));
+      const buffer = context.createBuffer(1,slice.length,context.sampleRate);
+      const samples = buffer.getChannelData(0);
+      for (let sample=0;sample<samples.length;sample++) samples[sample]=mode==="spectrogram"
+        ? clamp(centered[sample]*4,-1,1)
+        : centered[sample]/peak*(mode==="raster"?.62:.72);
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      const panner = context.createStereoPanner();
+      source.buffer=buffer;
+      source.loop=true;
+      source.playbackRate.value=audioPitchRef.current*(mode==="raster"?colorPitch:1);
+      panner.pan.value=index===0?-.72:.72;
+      gain.gain.setValueAtTime(0,now);
+      gain.gain.linearRampToValueAtTime(mode==="raster"?.62:.72,now+.055);
+      source.connect(gain).connect(panner).connect(master);
+      source.start(now);
+      return {source,gain};
+    });
+    for (const voice of audioVoicesRef.current) {
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(voice.gain.gain.value,now);
+      voice.gain.gain.linearRampToValueAtTime(0,now+.06);
+      voice.source.stop(now+.065);
+    }
+    audioVoicesRef.current=voices;
+  }, []);
+
+  useEffect(() => () => {
+    const context = audioContextRef.current;
+    if (context) void context.close();
   }, []);
 
   const applyPreset = (name: string) => {
@@ -386,6 +900,11 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     const image = ctx.createImageData(W, H);
     seedNoise();
     mutationTimeRef.current = performance.now();
+    if (recursiveBoundary) {
+      boundaryRef.current = cloneField(fieldRef.current);
+      boundaryTransitionRef.current = null;
+      lastBoundaryScanRef.current = performance.now();
+    }
 
     const paint = () => {
       if (!pointerRef.current.active) return;
@@ -502,6 +1021,44 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       pointerRef.current.active = true;
     };
 
+    const updateRecursiveBoundary = (now: number) => {
+      if (!recursiveBoundary || boundaryHeldRef.current) return;
+      const transition = boundaryTransitionRef.current;
+      if (transition) {
+        const raw = clamp01((now - transition.startedAt) / Math.max(1, transition.duration));
+        const blend = raw * raw * (3 - 2 * raw);
+        const wildness = Math.sin(Math.PI * raw) * recursiveSettingsRef.current.transitionWildness * .16;
+        for (let channel = 0; channel < 3; channel++) for (let index = 0; index < SIZE; index++) {
+          const from = transition.from[channel][index];
+          const to = transition.target[channel][index];
+          const turbulence = Math.sin(index*12.9898 + channel*78.233 + transition.startedAt*.001);
+          transition.current[channel][index] = clamp01(from + (to-from)*blend + turbulence*wildness);
+        }
+        boundaryRef.current = transition.current;
+        if (raw >= 1) {
+          boundaryRef.current = transition.target;
+          boundaryTransitionRef.current = null;
+          setBoundaryStatus("Boundary morph complete");
+        }
+      }
+      const settings = recursiveSettingsRef.current;
+      if (recursiveModeRef.current === "manual" || now - lastBoundaryScanRef.current < settings.interval*1000) return;
+      lastBoundaryScanRef.current = now;
+      const metrics = analyzeField(fieldRef.current);
+      setFieldMetrics(metrics);
+      if (recursiveModeRef.current === "periodic") {
+        replaceBoundary("Periodic field capture");
+        return;
+      }
+      const brightEnough = metrics.brightness >= settings.brightnessGate;
+      const detailedEnough = metrics.detail >= settings.detailGate;
+      if (brightEnough && detailedEnough && Math.random() < settings.luckChance) {
+        replaceBoundary("Luckfield accepted this state");
+      } else if (!brightEnough) setBoundaryStatus("Waiting for amplitude");
+      else if (!detailedEnough) setBoundaryStatus("Waiting for richer detail");
+      else setBoundaryStatus("Interesting field passed; luck declined");
+    };
+
     const draw = () => {
       const field = fieldRef.current;
       for (let index = 0; index < SIZE; index++) {
@@ -540,9 +1097,15 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     let last = performance.now();
     const loop = (now: number) => {
       updateAutomatedPointer(now);
+      updateRecursiveBoundary(now);
       if (!pausedRef.current && now - last > 24) {
         paint();
         step();
+        if (audioEnabledRef.current && ++audioFrameRef.current >= audioRefreshFramesRef.current) {
+          audioFrameRef.current = 0;
+          if (audioModeRef.current==="live-spectrum") sendLiveSpectrumField();
+          else refreshAudioGranules();
+        }
         last = now;
       } else paint();
       if (autoMutateRef.current && now - mutationTimeRef.current > 5000) {
@@ -567,7 +1130,7 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
       canvas.removeEventListener("pointercancel", up);
       canvas.removeEventListener("contextmenu", preventMenu);
     };
-  }, [mutate, seedNoise]);
+  }, [mutate, recursiveBoundary, refreshAudioGranules, replaceBoundary, seedNoise, sendLiveSpectrumField]);
 
   const setScalar = (key: "dt" | "decay" | "noise", value: number) => setConfig((current) => ({ ...current, [key]: value }));
   const setExponent = (channel: number, value: number) => setConfig((current) => ({ ...current, exponent: current.exponent.map((item, index) => index === channel ? value : item) }));
@@ -577,18 +1140,91 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
     return { ...current, k };
   });
   const subsequentPresets = sharedPresets.filter((preset) => !archivedFingerprints.has(JSON.stringify(preset.config)));
-  const bankSize = presets.length + archivedPresets.length + (anchorBank !== "curated" ? subsequentPresets.length : 0);
+  const bankSize = anchorBank === "curated" ? curatedAnchorConfigs.length : completeAnchorConfigs.length;
   const bankSizeLabel = anchorBank === "color-cycle"
-    ? `${bankSize} states · 6 color identities each`
+    ? `${bankSize} complete-bank states · ${bankSize * channelPermutations.length} RGB variants`
     : `${bankSize} states`;
 
   return (
-    <section className="deq-lab">
-      <div className="deq-stage">
+    <section className={`deq-lab ${recursiveBoundary ? "luckfield-lab" : ""}`}>
+      <div ref={stageRef} className={`deq-stage ${recursiveBoundary ? "luckfield-stage" : ""}`}>
         <canvas ref={canvasRef} width={W} height={H} className="deq-canvas" aria-label="Interactive three-channel nonlinear differential-equation field. Drag to paint into the system." />
-        <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{mutationCount} parameter mutations</span></div>
+        {recursiveBoundary && <>
+          <div className={`luckfield-crosshair ${audioEnabled&&audioMode==="crosshair" ? "active" : ""}`} aria-hidden="true" />
+          <div className={`luckfield-raster-scan ${audioEnabled&&audioMode==="raster" ? "active" : ""}`} aria-hidden="true" />
+          <div className={`luckfield-spectrum-scan ${audioEnabled&&audioMode==="spectrogram" ? "active" : ""}`} aria-hidden="true" />
+          <div ref={liveSweepMarkerRef} className={`luckfield-live-scan ${audioEnabled&&audioMode==="live-spectrum" ? "active" : ""}`} aria-hidden="true" />
+        </>}
+        {recursiveBoundary&&<button className="luckfield-fullscreen" onClick={()=>void toggleFieldFullscreen()} aria-label={fieldFullscreen?"Exit fullscreen field":"View field fullscreen"}>{fieldFullscreen?"Exit fullscreen":"Fullscreen field"}</button>}
+        <div className="deq-status"><b>{paused ? "FIELD PAUSED" : "FIELD RUNNING"}</b><span>{recursiveBoundary ? `${boundaryMutations} boundary captures` : `${mutationCount} parameter mutations`}</span></div>
       </div>
       <aside className="deq-controls">
+        {recursiveBoundary && <>
+          <div className="deq-top-controls">
+            <label className="preset-select"><span className="control-label">Equation preset</span><select value={presetName} onChange={(event) => applyPreset(event.target.value)}>{presets.map((preset) => <option key={preset.name}>{preset.name}</option>)}</select></label>
+            <div className="transport deq-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume field" : "Pause field"}</button><button onClick={seedNoise}>Re-seed</button><button onClick={mutate}>Mutate equation</button></div>
+          </div>
+          <div className="control-block luckfield-console">
+            <div className="luckfield-title"><span className="control-label">Recursive boundary engine</span><b>{boundaryHeld ? "HELD" : recursiveMode.toUpperCase()}</b></div>
+            <div className="deq-foundry-tabs" role="tablist" aria-label="Boundary replacement mode">
+              {(["luckfield","periodic","manual"] as RecursiveMode[]).map((mode) => <button key={mode} role="tab" aria-selected={recursiveMode===mode} className={recursiveMode===mode?"active":""} onClick={()=>setRecursiveMode(mode)}>{mode === "luckfield" ? "The Luckfield" : mode}</button>)}
+            </div>
+            <div className="luckfield-actions transport">
+              <button className={boundaryHeld ? "active" : ""} onClick={()=>setBoundaryHeld((value)=>!value)}>{boundaryHeld ? "Resume boundaries" : "Hold boundaries"}</button>
+              <button onClick={resetBoundary}>Reset boundary conditions</button>
+              <button className="luckfield-mutate" onClick={()=>replaceBoundary("Manual field capture")}>Mutate from current field</button>
+            </div>
+            <p className="luckfield-status" aria-live="polite">{boundaryStatus}</p>
+            <div className="luckfield-meter" aria-label="Current field interestingness">
+              <span><i style={{width:`${fieldMetrics.brightness*100}%`}}/>Amplitude <b>{Math.round(fieldMetrics.brightness*100)}</b></span>
+              <span><i style={{width:`${fieldMetrics.detail*100}%`}}/>Detail <b>{Math.round(fieldMetrics.detail*100)}</b></span>
+              <small>Entropy {Math.round(fieldMetrics.entropy*100)} · multiscale {Math.round(fieldMetrics.multiscale*100)} · scale balance {Math.round(fieldMetrics.scaleBalance*100)} · color variance {Math.round(fieldMetrics.colorVariance*100)}</small>
+            </div>
+            <div className="deq-morph-sliders luckfield-sliders">
+              <label><span>{recursiveMode === "periodic" ? "Capture interval" : "Interestingness scan"}</span><output>{recursiveSettings.interval.toFixed(1)} s</output><input type="range" min="1" max="20" step=".5" value={recursiveSettings.interval} onChange={(event)=>setRecursiveValue("interval",Number(event.target.value))}/></label>
+              {recursiveMode === "luckfield" && <>
+                <label><span>Brightness gate</span><output>{Math.round(recursiveSettings.brightnessGate*100)}%</output><input type="range" min="0" max=".8" step=".01" value={recursiveSettings.brightnessGate} onChange={(event)=>setRecursiveValue("brightnessGate",Number(event.target.value))}/></label>
+                <label><span>True detail gate</span><output>{Math.round(recursiveSettings.detailGate*100)}%</output><input type="range" min=".05" max=".9" step=".01" value={recursiveSettings.detailGate} onChange={(event)=>setRecursiveValue("detailGate",Number(event.target.value))}/></label>
+                <label><span>Luck at the gate</span><output>{Math.round(recursiveSettings.luckChance*100)}%</output><input type="range" min=".02" max="1" step=".01" value={recursiveSettings.luckChance} onChange={(event)=>setRecursiveValue("luckChance",Number(event.target.value))}/></label>
+              </>}
+              <label><span>Boundary morph time</span><output>{recursiveSettings.transitionTime.toFixed(1)} s</output><input type="range" min=".15" max="10" step=".05" value={recursiveSettings.transitionTime} onChange={(event)=>setRecursiveValue("transitionTime",Number(event.target.value))}/></label>
+              <label><span>Replacement wildness</span><output>{Math.round(recursiveSettings.transitionWildness*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.transitionWildness} onChange={(event)=>setRecursiveValue("transitionWildness",Number(event.target.value))}/></label>
+              <label><span>Old-chunk glitch carry</span><output>{Math.round(recursiveSettings.glitchCarry*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchCarry} onChange={(event)=>setRecursiveValue("glitchCarry",Number(event.target.value))}/></label>
+              <label><span>Glitch hue / saturation / contrast</span><output>{Math.round(recursiveSettings.glitchColor*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchColor} onChange={(event)=>setRecursiveValue("glitchColor",Number(event.target.value))}/></label>
+              <label><span>Glitch block zoom</span><output>{Math.round(recursiveSettings.glitchZoom*100)}%</output><input type="range" min="0" max="1" step=".01" value={recursiveSettings.glitchZoom} onChange={(event)=>setRecursiveValue("glitchZoom",Number(event.target.value))}/></label>
+            </div>
+          </div>
+          <div className="control-block luckfield-audio">
+            <div className="luckfield-title"><span className="control-label">Experimental field audio</span><b>{audioEnabled ? "LIVE" : "MUTED"}</b></div>
+            <div className="deq-foundry-tabs luckfield-audio-tabs" role="tablist" aria-label="Field audio reading mode">
+              <button role="tab" aria-selected={audioMode==="crosshair"} className={audioMode==="crosshair"?"active":""} onClick={()=>switchAudioMode("crosshair")}>Crosshairs</button>
+              <button role="tab" aria-selected={audioMode==="raster"} className={audioMode==="raster"?"active":""} onClick={()=>switchAudioMode("raster")}>Full raster</button>
+              <button role="tab" aria-selected={audioMode==="spectrogram"} className={audioMode==="spectrogram"?"active":""} onClick={()=>switchAudioMode("spectrogram")}>Fourier field</button>
+              <button role="tab" aria-selected={audioMode==="live-spectrum"} className={audioMode==="live-spectrum"?"active":""} onClick={()=>switchAudioMode("live-spectrum")}>Live sweep</button>
+            </div>
+            <button className={`toggle-wide ${audioEnabled ? "active" : ""}`} onClick={()=>void toggleFieldAudio()}>{audioEnabled ? "Mute field audio" : "Interpret field as sound"}</button>
+            <div className="deq-morph-sliders">
+              <label><span>Output volume</span><output>{Math.round(audioVolume*100)}%</output><input type="range" min="0" max=".4" step=".01" value={audioVolume} onChange={(event)=>setAudioVolume(Number(event.target.value))}/></label>
+              {audioMode==="live-spectrum"?<label><span>Time step per x pixel</span><output>{Math.pow(10,liveStepPower)>=1000?`${(Math.pow(10,liveStepPower)/1000).toFixed(2)} s`:Math.pow(10,liveStepPower)<1?`${Math.pow(10,liveStepPower).toFixed(2)} ms`:`${Math.pow(10,liveStepPower).toFixed(1)} ms`}</output><input type="range" min="-1" max="3" step=".01" value={liveStepPower} onChange={(event)=>setLiveStepPower(Number(event.target.value))}/></label>:<label><span>{audioMode==="spectrogram"?"Spectral playback rate":audioMode==="raster"?"Raster scan rate":"Granule loop rate"}</span><output>{audioPitch.toFixed(2)}×</output><input type="range" min=".2" max="4" step=".05" value={audioPitch} onChange={(event)=>setAudioPitch(Number(event.target.value))}/></label>}
+              {audioMode==="live-spectrum"&&<label className="luckfield-quantization"><span>Frequency quantization</span><output>{liveQuantization==="unquantized"?"Free":liveQuantization==="melodic-minor"?"C melodic minor":`C ${liveQuantization}`}</output><select value={liveQuantization} onChange={(event)=>setLiveQuantization(event.target.value as LiveQuantization)}><option value="unquantized">Unquantized</option><option value="pentatonic">Pentatonic</option><option value="blues">Blues</option><option value="melodic-minor">Melodic minor</option></select></label>}
+              {audioMode!=="live-spectrum"&&<label><span>Field refresh cadence</span><output>{audioRefreshFrames} frames</output><input type="range" min="2" max="180" step="1" value={audioRefreshFrames} onChange={(event)=>setAudioRefreshFrames(Number(event.target.value))}/></label>}
+              {audioMode==="raster"&&<label><span>Color identity depth</span><output>{Math.round(audioColorDepth*100)}%</output><input type="range" min="0" max="1" step=".01" value={audioColorDepth} onChange={(event)=>setAudioColorDepth(Number(event.target.value))}/></label>}
+            </div>
+            {audioMode==="raster"&&<div className="luckfield-color-key"><span className="red">R<b>pitch / upper motion</b></span><span className="green">G<b>micro-granularity</b></span><span className="blue">B<b>high-frequency damping</b></span></div>}
+            {audioMode==="spectrogram"&&<div className="luckfield-spectrum-key"><span>↑ High frequency</span><b>Brightness → amplitude</b><b>Hue → phase</b><span>↓ Low frequency</span></div>}
+            {audioMode==="live-spectrum"&&<div className="luckfield-spectrum-key"><span>↑ 10 kHz</span><b>Brightness → amplitude</b><b>Hue → phase</b><span>↓ 20 Hz</span></div>}
+            <p className="lab-note">{audioMode==="live-spectrum"?`A live 90-oscillator bank reads the current field column under the audio playhead. X is time; Y spans 20 Hz to 10 kHz. ${liveQuantization==="unquantized"?"Unquantized keeps the continuous logarithmic tuning.":`The bins are snapped across octaves to the C ${liveQuantization==="melodic-minor"?"melodic minor":liveQuantization} scale.`} The evolving field streams continuously into the sound.`:audioMode==="spectrogram"?"Each vertical field column becomes a Fourier spectrum and one overlapping audio window. Brightness supplies every bin's amplitude; hue supplies its phase. The right channel mirrors phase orientation for spectral width.":audioMode==="raster"?"Every pixel enters a long serpentine scan: horizontal motion in the left channel, vertical motion in the right. Color continuously reshapes the sound before each new field crossfades in.":"The center row loops in the left channel; the center column loops in the right. Each new pair crossfades into the moving field signal."}</p>
+          </div>
+          <div className="control-block luckfield-morph-bank">
+            <label className="preset-select deq-bank-select"><span className="control-label">Equation morph bank · {bankSizeLabel}</span><select value={anchorBank} onChange={(event)=>setAnchorBank(event.target.value as AnchorBank)}><option value="color-cycle">Full bank · all six RGB permutations</option><option value="all">All anchors · original colors</option><option value="curated">Curated · locked clean set</option></select></label>
+            <div className="transport deq-foundry-actions"><button className={morphing ? "active" : ""} onClick={()=>setMorphing((value)=>!value)}>{morphing ? "Hold equation morph" : "Resume equation morph"}</button><button onClick={mutate}>Wild-card mutation</button></div>
+            <div className="deq-morph-sliders">
+              <label><span>Equation traversal rate</span><output>{morphRate.toFixed(2)}×</output><input type="range" min=".15" max="3" step=".05" value={morphRate} onChange={(event)=>{const value=Number(event.target.value);morphRateRef.current=value;setMorphRate(value);}}/></label>
+              <label><span>Equation transition wildness</span><output>{Math.round(morphRandomness*100)}%</output><input type="range" min="0" max="1" step=".01" value={morphRandomness} onChange={(event)=>{const value=Number(event.target.value);morphRandomnessRef.current=value;setMorphRandomness(value);}}/></label>
+            </div>
+            <b className="deq-bank-summary">{bankLoadStatus}{anchorBank==="color-cycle"?` · ${completeAnchorConfigs.length * channelPermutations.length} full-bank permutation routes armed`:""}</b>
+          </div>
+        </>}
         {presetFoundry && <div className="control-block deq-foundry">
           <div className="deq-foundry-title"><span className="control-label">Anonymous master bank</span><b>{archivedPresets.length} archived · {sharedPresets.length}/{sharedPresetTotal || "?"} live</b></div>
           <b className="deq-bank-summary">{archivedPresets.length} curated · {subsequentPresets.length} subsequent · {bankLoadStatus}</b>
@@ -633,10 +1269,10 @@ export function NonlinearDeq({ presetFoundry = false }: { presetFoundry?: boolea
           <label className="preset-select deq-shared-select"><span className="control-label">Jump to a found state</span><select defaultValue="" onChange={(event) => applySavedPreset(event.target.value)}><option value="" disabled>Select saved anchor</option><optgroup label="Curated">{archivedPresets.map((preset) => <option key={`archive-${preset.id}`} value={`archive:${preset.id}`}>Curated {String(preset.id).padStart(3, "0")}</option>)}</optgroup>{anchorBank!=="curated"&&<optgroup label="Subsequent saves">{subsequentPresets.map((preset) => <option key={`live-${preset.id}`} value={`live:${preset.id}`}>All {String(preset.id).padStart(3, "0")}</option>)}</optgroup>}</select></label>
           <p className="deq-save-status" aria-live="polite">{saveStatus}</p>
         </div>}
-        <div className="deq-top-controls">
+        {!recursiveBoundary && <div className="deq-top-controls">
           <label className="preset-select"><span className="control-label">Preset</span><select value={presetName} onChange={(event) => applyPreset(event.target.value)}>{presets.map((preset) => <option key={preset.name}>{preset.name}</option>)}</select></label>
           <div className="transport deq-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={seedNoise}>Re-seed</button><button onClick={mutate}>Mutate now</button></div>
-        </div>
+        </div>}
         <div className="control-block">
           <span className="control-label">Screensaver evolution</span>
           <button className={`toggle-wide ${autoMutate ? "active" : ""}`} onClick={() => setAutoMutate((value) => !value)}>Auto-mutate every 5 seconds · {autoMutate ? "on" : "off"}</button>
