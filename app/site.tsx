@@ -107,6 +107,8 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "vanish-lines", weight: 1.45, sound: "laser", label: "DIMENSIONAL COLLAPSE" },
       { id: "bite", weight: 1.2, sound: "bonk", label: "WE'RE GONNA NEED A BIGGER BUTTON" },
       { id: "balloon", weight: 1.05, sound: "spring", label: "CAPACITY EXCEEDED" },
+      { id: "pneumatic", weight: 1.5, sound: "spring", label: "CURRENT LOCATION: RECEIVED" },
+      { id: "elevator", weight: 1.35, sound: "sparkle", label: "THIS FLOOR: HERE" },
       { id: "closing-time", weight: 4.5, sound: "bonk", label: "YOU DON'T HAVE TO GO HOME, BUT YOU CAN'T STAY HERE!" },
       { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
     ];
@@ -133,7 +135,7 @@ export function ColorIndex({ active }: { active: Room }) {
       const target = destinations[Math.floor(random * destinations.length)];
       timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
     } else {
-      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon","pneumatic","elevator"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
       timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); setRandomColor(""); }, duration);
     }
   }, [synth]);
@@ -256,6 +258,8 @@ export function ColorIndex({ active }: { active: Room }) {
       {gag === "powerpoint" && <div className="gag-powerpoint" aria-hidden="true">{Array.from({length:12},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
       {gag === "stairs" && <div className="gag-stair-dot" aria-hidden="true"/>}
       {gag === "balloon" && <div className="gag-confetti" aria-hidden="true">{Array.from({length:42},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
+      {gag === "pneumatic" && <div className="gag-pneumatic" aria-hidden="true"><i/><b>CURRENT LOCATION: RECEIVED</b></div>}
+      {gag === "elevator" && <div className="gag-elevator" aria-hidden="true"><i>BASEMENT π<br/>MEZZANINE −0<br/>HERE</i></div>}
     </main>
   );
 }

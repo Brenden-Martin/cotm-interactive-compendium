@@ -132,7 +132,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 3. Establish Recommended Reading and Tales from the Ruliad structures in **READ-001** and **RULIAD-001** through **RULIAD-003**.
 4. Build persistent Music playback before adding instruments and recordings.
 5. Add Private Research interest signals only after the privacy and retention design is explicit.
-6. Open the hidden puzzle labyrinth gradually, beginning with one discoverable anomaly and one complete room.
+6. Open **The Outernet** gradually, beginning with one discoverable anomaly and one complete Easter-egg-titled room.
 
 ### Recurring cadence
 
@@ -199,6 +199,8 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **YAH-002 — Next — Probability rebalance.** Make full visual/physical effects more common, text-or-sound-only outcomes less common, and the rarest events less vanishingly rare.
 - **YAH-003 — Exploration — Novelty-weighted selection.** As the gag library grows, prefer a recent-history/novelty system over rigid rarity tiers so repeat clicks remain surprising without forcing users through a fixed cycle.
 - **YAH-004 — Safeguard — Interaction authority.** A direct button press always takes control from ambient menu animation until the selected gag finishes or intentionally navigates away.
+- **YAH-005 — Working — Museum Pneumatic Tube.** Vacuum the YOU ARE HERE control into a theatrical museum tube, then return it stamped `CURRENT LOCATION: RECEIVED`; preserve the real control, reduced-motion fallback, captions, and optional audio.
+- **YAH-006 — Working — Elevator to This Floor.** Close brass elevator doors over YOU ARE HERE, race through impossible floor labels, and reopen on HERE; preserve the real control, reduced-motion fallback, captions, and optional audio.
 
 ### Daily archive-mining routine
 
@@ -225,6 +227,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **FORTUNE-003 — Testing — Repeat delight.** Repeated openings quickly fold the cookie shut, select a different fortune, and crack it again. Preserve room for rarer visual or textual surprises in a later pass.
 - **FORTUNE-004 — Testing — Durable suggestion queue.** Accept a proposed fortune of 3–240 characters into a D1-backed pending-review table. Store the text, duplicate-prevention hash, review status, and timestamp only. A one-time promotion marker approves the owner batch that existed on 2026-08-02; the public endpoint lists approved text only, while later friend submissions remain pending and unlisted.
 - **FORTUNE-005 — Testing — Workbench bank bridge.** The owner-only private workbench keeps its own review queue, but its generator also reads and deduplicates the public site's approved fortune bank through the public read-only endpoint. This repairs the data split without pointing private submissions at production.
+- **FORTUNE-008 — Working — Golden Ticket to The Outernet.** Add a rare Golden Ticket outcome that becomes an Easter-egg entrance into The Outernet. Its destination page takes its visible title from the triggering Easter egg rather than a generic labyrinth label.
 
 ### Private Research and hypothetical devices
 
@@ -298,16 +301,17 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **MUSIC-010 — Planned — Per-song morph direction.** Give each later track an intentionally chosen subset of the full Glitch Goo preset bank; analyze tempo offline, store a beat/measure grid with the track, and let each song specify whether anchor changes happen every beat, measure, phrase, or another authored interval. Preserve amplitude-to-wildness as an independent, tunable mapping rather than conflating it with the beat clock.
 - **MUSIC-011 — Planned — Track-derived art direction.** Let individual song pages borrow their palette, CRT boundary image, logo, typography, and control styling from the selected band/album assets while preserving the common player and field architecture.
 
-### Easter-egg labyrinth
+### The Outernet
 
-- **EGG-001 — Exploration — Labyrinth architecture.** Build a hidden network of abstract graphical puzzle pages and digital escape rooms beneath the ordinary museum.
-- **EGG-002 — Planned — Hidden counters.** Track how many visitors pass through secret areas, echoing the YOU ARE HERE counter, but reveal these counts only inside the labyrinth.
+- **EGG-001 — Exploration — The Outernet architecture.** Build a hidden network of abstract graphical puzzle pages and digital escape rooms beneath the ordinary museum. The network is named **The Outernet**; individual rooms take their visible page titles from the Easter eggs that provide entry.
+- **EGG-002 — Planned — Hidden counters.** Track how many visitors pass through secret areas, echoing the YOU ARE HERE counter, but reveal these counts only inside The Outernet.
 - **EGG-003 — Planned — Warp-zone spoof.** Make one puzzle page a playful NES-era Mario warp-zone homage without copying protected game assets.
 - **EGG-004 — Planned — Imperfect entry points.** Favor discoverable oddities over uniformly invisible hotspots: a missing pixel, an occasional twitch, a rare critter that skitters onto an exhibit, or a tappable/squashable anomaly that opens a hidden route. A few truly invisible triggers may still exist.
 - **EGG-005 — Planned — Surreal puzzle vocabulary.** Include non-Euclidean-captcha behavior, a square peg forced into a round hole, abstract graphical riddles, and comical actions with dream logic.
 - **EGG-006 — Design required — Inspector-resistant puzzles.** Client-side secrets cannot be made truly uncheatable. Keep passcodes and validation logic server-side when resistance matters, avoid shipping answers in client bundles, and design puzzles whose pleasure survives spoilers.
 - **EGG-007 — Planned — Layered progression.** Let one hidden room lead to additional rooms and cross-page clues so accidental discovery can become a sustained puzzle trail.
 - **EGG-008 — Safeguard — Accessibility and escape.** Surreal interactions still need a reliable way out, reduced-motion behavior, keyboard reachability where practical, and no unavoidable audio.
+- **EGG-009 — Working — Interactive computer-poster entrance.** Preserve the old COTM computer poster as the visual base, make its keyboard interactive, and let key presses glitch the falling figure. A traced/vector-derived presentation may accompany but must not overwrite the source poster; the resulting Easter egg may title and enter its corresponding Outernet page.
 
 ### Tales from the Ruliad
 
