@@ -37,6 +37,13 @@ export default function Music() {
           <strong>Four Small Signals</strong>
           <small>Play the instrument →</small>
         </Link>
+
+        <Link className="music-entry music-terminal-entry" href="/music/child-of-the-machine-terminal">
+          <span className="eyebrow">Listening Room 03 / Poster Instrument</span>
+          <div className="music-terminal-figure" aria-hidden="true"><i /><i /><i /></div>
+          <strong>Child of the Machine Terminal</strong>
+          <small>Wake the computer →</small>
+        </Link>
       </section>
     </main>
   );

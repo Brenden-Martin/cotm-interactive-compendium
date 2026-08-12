@@ -21,7 +21,8 @@ const marks = [
 ] as const;
 
 export function RandomCotmMark() {
-  const [selected, setSelected] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -31,11 +32,15 @@ export function RandomCotmMark() {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  if (selected === null) return <div className="sold-mark sold-mark-placeholder" aria-hidden="true" />;
   const [slug, label] = marks[selected];
   return (
-    <figure className="sold-mark">
-      <img src={`/music/logos/${slug}.png`} alt={`Child of the Machine ${label} logo variation`} />
-      <figcaption>COTM_{label.replaceAll(" ", "_")}</figcaption>
+    <figure className={`sold-mark${loaded ? " is-loaded" : ""}`}>
+      <img
+        src={`/music/logos/${slug}.png`}
+        alt={`Child of the Machine ${label} logo variation`}
+        onLoad={() => setLoaded(true)}
+      />
     </figure>
   );
 }
