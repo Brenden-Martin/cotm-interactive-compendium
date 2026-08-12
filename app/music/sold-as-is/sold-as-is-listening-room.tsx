@@ -2,6 +2,8 @@
 
 /* eslint-disable @next/next/no-img-element -- user-owned archive art is served without a proxy */
 import { useEffect, useRef, useState } from "react";
+import archivedPresetData from "../../gallery/deq-morph-bank/saved-presets.json";
+import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
 import type { MorphBank, SoldAsIsTrack } from "./tracks";
 
 const GRID_WIDTH = 112;
@@ -9,6 +11,15 @@ const GRID_HEIGHT = 84;
 const CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
 type Field = [Float32Array, Float32Array, Float32Array];
 type Anchor = { diffusion: [number, number, number]; coupling: [number, number, number]; drift: number };
+type DeqConfig = { k: number[]; exponent: number[]; dt: number; decay: number; noise: number };
+type DeqPreset = { id: number; config: DeqConfig };
+type ComputerControls = { randomize: () => void; capture: () => void; clear: () => void };
+
+const indexK = (destination: number, source: number, template: number) => (destination * 3 + source) * 5 + template;
+const fullPresetBank = Array.from(new Map(
+  ([...(archivedPresetData.presets as DeqPreset[]), ...(sharedPresetArchiveData.presets as DeqPreset[])])
+    .map((preset) => [JSON.stringify(preset.config), preset]),
+).values());
 
 const banks: Record<MorphBank, Anchor[]> = {
   calculator: [
@@ -41,6 +52,28 @@ const banks: Record<MorphBank, Anchor[]> = {
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const smoothstep = (value: number) => value * value * (3 - 2 * value);
+
+function presetToAnchor(config: DeqConfig): Anchor {
+  const diffusion = [0, 1, 2].map((channel) => {
+    const laplacian = Math.abs(config.k[indexK(channel, channel, 4)] ?? 0);
+    return Math.max(.035, Math.min(.19, .055 + Math.log1p(laplacian) * .037 + Math.abs(config.dt) * .012));
+  }) as [number, number, number];
+  const coupling = [0, 1, 2].map((channel) => {
+    let crossChannel = 0;
+    for (let source = 0; source < 3; source += 1) {
+      if (source === channel) continue;
+      crossChannel += (config.k[indexK(channel, source, 0)] ?? 0) * .65;
+      crossChannel += (config.k[indexK(channel, source, 3)] ?? 0) * .18;
+      crossChannel += (config.k[indexK(channel, source, 4)] ?? 0) * .12;
+    }
+    return Math.tanh(crossChannel * .14) * .062;
+  }) as [number, number, number];
+  return {
+    diffusion,
+    coupling,
+    drift: Math.max(.0015, Math.min(.008, .002 + Math.abs(config.decay) * .018 + config.noise * .3)),
+  };
+}
 
 function seededRandom(seed: number) {
   let state = seed >>> 0;
@@ -140,9 +173,24 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const analysisStartedRef = useRef(false);
   const tempoRef = useRef({ bpm: track.fallbackBpm, offset: 0 });
   const bandsRef = useRef<[number, number, number]>([0, 0, 0]);
+  const spectrumSettingsRef = useRef({ bins: 96, refreshRate: 24 });
+  const computerControlsRef = useRef<ComputerControls | null>(null);
+  const seekingRef = useRef(false);
   const [amplitude, setAmplitude] = useState(0);
   const [duration, setDuration] = useState("—:—");
   const [tempo, setTempo] = useState({ bpm: track.fallbackBpm, confidence: 0, detected: false });
+  const [durationSeconds, setDurationSeconds] = useState(0);
+  const [currentSeconds, setCurrentSeconds] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [fourierBins, setFourierBins] = useState(96);
+  const [spectrumRefreshRate, setSpectrumRefreshRate] = useState(24);
+  const [presetLabel, setPresetLabel] = useState(`AUTO BANK · ${fullPresetBank.length}`);
+  const [boundaryMode, setBoundaryMode] = useState("LIVE ART + SPECTRUM");
+
+  useEffect(() => {
+    spectrumSettingsRef.current = { bins: fourierBins, refreshRate: spectrumRefreshRate };
+    if (analyserRef.current) analyserRef.current.fftSize = Math.max(256, 2 ** Math.ceil(Math.log2(fourierBins * 2)));
+  }, [fourierBins, spectrumRefreshRate]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -183,15 +231,28 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
 
     const reportDuration = () => {
       if (!Number.isFinite(audio.duration)) return;
+      setDurationSeconds(audio.duration);
       const minutes = Math.floor(audio.duration / 60);
       const seconds = Math.floor(audio.duration % 60).toString().padStart(2, "0");
       setDuration(`${minutes}:${seconds}`);
     };
+    const reportTime = () => {
+      if (!seekingRef.current) setCurrentSeconds(audio.currentTime);
+    };
+    const reportPlayState = () => setIsPlaying(!audio.paused);
     audio.addEventListener("play", connect);
+    audio.addEventListener("play", reportPlayState);
+    audio.addEventListener("pause", reportPlayState);
+    audio.addEventListener("ended", reportPlayState);
+    audio.addEventListener("timeupdate", reportTime);
     audio.addEventListener("loadedmetadata", reportDuration);
     if (audio.readyState >= 1) reportDuration();
     return () => {
       audio.removeEventListener("play", connect);
+      audio.removeEventListener("play", reportPlayState);
+      audio.removeEventListener("pause", reportPlayState);
+      audio.removeEventListener("ended", reportPlayState);
+      audio.removeEventListener("timeupdate", reportTime);
       audio.removeEventListener("loadedmetadata", reportDuration);
       void audioContextRef.current?.close();
     };
@@ -208,12 +269,16 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     let field: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
     let next: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
     let artwork: Field | null = null;
+    let capturedBoundary: Field | null = null;
+    let boundaryEnabled = true;
+    let forcedAnchor: Anchor | null = null;
     const spectrum: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
     let frame = 0;
     let animation = 0;
     let last = performance.now();
     let elapsed = 0;
     let envelope = 0;
+    let lastSpectrumUpdate = 0;
     const waveform = new Uint8Array(512);
     const frequency = new Uint8Array(256);
 
@@ -235,6 +300,33 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       }
     };
 
+    computerControlsRef.current = {
+      randomize: () => {
+        const preset = fullPresetBank[Math.floor(Math.random() * fullPresetBank.length)];
+        forcedAnchor = presetToAnchor(preset.config);
+        setPresetLabel(`PRESET ${preset.id} · ${fullPresetBank.length} BANK`);
+      },
+      capture: () => {
+        const audio = audioRef.current;
+        const beatPosition = audio ? Math.max(0, audio.currentTime - tempoRef.current.offset) * tempoRef.current.bpm / 60 : 0;
+        const mix = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
+        capturedBoundary = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
+        for (let index = 0; index < CELL_COUNT; index += 1) {
+          for (let channel = 0; channel < 3; channel += 1) {
+            const artValue = artwork?.[channel][index] ?? 0;
+            capturedBoundary[channel][index] = artValue * (1 - mix) + spectrum[channel][index] * mix;
+          }
+        }
+        boundaryEnabled = true;
+        setBoundaryMode("CAPTURED ART + SPECTRUM");
+      },
+      clear: () => {
+        capturedBoundary = null;
+        boundaryEnabled = false;
+        setBoundaryMode("CLEARED · SPECTRUM MONITOR ONLY");
+      },
+    };
+
     const sampleAudio = () => {
       const analyser = analyserRef.current;
       if (!analyser) {
@@ -254,9 +346,12 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
         return total / ((end - start) * 255);
       }) as [number, number, number];
 
-      if (frame % 3 === 0) {
+      const refreshInterval = 1000 / spectrumSettingsRef.current.refreshRate;
+      if (performance.now() - lastSpectrumUpdate >= refreshInterval) {
+        lastSpectrumUpdate = performance.now();
+        const binCount = Math.min(spectrumSettingsRef.current.bins, analyser.frequencyBinCount, frequency.length);
         for (let y = 0; y < GRID_HEIGHT; y += 1) {
-          const bin = Math.min(frequency.length - 1, Math.floor(((GRID_HEIGHT - 1 - y) / GRID_HEIGHT) ** 1.65 * frequency.length));
+          const bin = Math.min(binCount - 1, Math.floor(((GRID_HEIGHT - 1 - y) / GRID_HEIGHT) ** 1.65 * binCount));
           const intensity = frequency[bin] / 255;
           for (let x = 0; x < GRID_WIDTH - 1; x += 1) {
             const index = y * GRID_WIDTH + x;
@@ -279,18 +374,18 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       const anchorPosition = (beatPosition / track.cadenceBeats) % anchors.length;
       const anchorIndex = Math.floor(anchorPosition);
       const blend = smoothstep(anchorPosition - anchorIndex);
-      const from = anchors[anchorIndex];
-      const to = anchors[(anchorIndex + 1) % anchors.length];
+      const from = forcedAnchor ?? anchors[anchorIndex];
+      const to = forcedAnchor ?? anchors[(anchorIndex + 1) % anchors.length];
       const spectrumMix = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
       const wildness = .07 + Math.min(1, envelope) * .88;
       const bands = bandsRef.current;
 
       for (let y = 0; y < GRID_HEIGHT; y += 1) {
-        const up = (y + GRID_HEIGHT - 1) % GRID_HEIGHT;
-        const down = (y + 1) % GRID_HEIGHT;
+        const up = y === 0 ? 1 : y - 1;
+        const down = y === GRID_HEIGHT - 1 ? GRID_HEIGHT - 2 : y + 1;
         for (let x = 0; x < GRID_WIDTH; x += 1) {
-          const left = (x + GRID_WIDTH - 1) % GRID_WIDTH;
-          const right = (x + 1) % GRID_WIDTH;
+          const left = x === 0 ? 1 : x - 1;
+          const right = x === GRID_WIDTH - 1 ? GRID_WIDTH - 2 : x + 1;
           const index = y * GRID_WIDTH + x;
           const neighbors = [up * GRID_WIDTH + x, down * GRID_WIDTH + x, y * GRID_WIDTH + left, y * GRID_WIDTH + right];
           const current = [field[0][index], field[1][index], field[2][index]];
@@ -302,11 +397,12 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
             const diffusion = from.diffusion[channel] * (1 - blend) + to.diffusion[channel] * blend;
             const coupling = from.coupling[channel] * (1 - blend) + to.coupling[channel] * blend;
             const artValue = artwork?.[channel][index] ?? .5;
-            const boundaryValue = artValue * (1 - spectrumMix) + spectrum[channel][index] * spectrumMix;
+            const liveBoundary = artValue * (1 - spectrumMix) + spectrum[channel][index] * spectrumMix;
+            const boundaryValue = capturedBoundary?.[channel][index] ?? liveBoundary;
             const companion = current[(channel + 1) % 3] - current[(channel + 2) % 3];
             const phase = time * .00016 + x * .071 - y * .047 + channel * 2.094;
             const forcing = Math.sin(phase + companion * 8.2) * wildness * (.007 + bands[channel] * .008);
-            const memory = (boundaryValue - current[channel]) * (.0012 + spectrumMix * .0024);
+            const memory = boundaryEnabled ? (boundaryValue - current[channel]) * (.0012 + spectrumMix * .0024) : 0;
             const drift = from.drift * (1 - blend) + to.drift * blend;
             next[channel][index] = clamp01(current[channel] + diffusion * (.38 + boundaryValue * 1.08) * (average - current[channel]) + coupling * companion + forcing + memory - drift * (current[channel] - .48));
           }
@@ -324,9 +420,10 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       step(now + 8);
       for (let index = 0; index < CELL_COUNT; index += 1) {
         const offset = index * 4;
-        imageData.data[offset] = Math.round(255 * clamp01((field[0][index] - .14) * 1.36));
-        imageData.data[offset + 1] = Math.round(255 * clamp01((field[1][index] - .1) * 1.32));
-        imageData.data[offset + 2] = Math.round(255 * clamp01((field[2][index] - .18) * 1.42));
+        const spectrumGlow = Math.max(spectrum[0][index], spectrum[1][index], spectrum[2][index]);
+        imageData.data[offset] = Math.round(255 * clamp01((field[0][index] - .14) * 1.3 + spectrum[0][index] * .38));
+        imageData.data[offset + 1] = Math.round(255 * clamp01((field[1][index] - .1) * 1.26 + spectrum[1][index] * .42));
+        imageData.data[offset + 2] = Math.round(255 * clamp01((field[2][index] - .18) * 1.34 + spectrum[2][index] * .5 + spectrumGlow * .08));
         imageData.data[offset + 3] = 255;
       }
       context.putImageData(imageData, 0, 0);
@@ -338,6 +435,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     return () => {
       cancelAnimationFrame(animation);
       image.onload = null;
+      computerControlsRef.current = null;
     };
   }, [track]);
 
@@ -369,13 +467,18 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           </div>
           <div className="goo-crt-panel">
             <div className="goo-crt-brand">COTM<br /><small>LISTENING COMPUTER</small></div>
-            <div className="goo-crt-knobs" aria-hidden="true"><i /><i /><i /></div>
+            <div className="goo-crt-knobs">
+              <button type="button" title="Randomize from the full DEQ preset bank" aria-label="Randomize from the full DEQ preset bank" onClick={() => computerControlsRef.current?.randomize()}><i /><span>RND</span></button>
+              <button type="button" title="Capture the current artwork and song spectrum as boundary conditions" aria-label="Capture the current boundary conditions" onClick={() => computerControlsRef.current?.capture()}><i /><span>CAP</span></button>
+              <button type="button" title="Clear boundary conditions" aria-label="Clear boundary conditions" onClick={() => computerControlsRef.current?.clear()}><i /><span>CLR</span></button>
+            </div>
           </div>
         </div>
         <div className="goo-readout">
-          <span>Boundary <b>{track.boundaryLabel} ↔ live spectrum</b></span>
+          <span>Boundary <b>{boundaryMode}</b></span>
           <span>Tempo <b>{tempo.bpm} BPM {tempo.detected ? `· ${Math.round(tempo.confidence * 100)}%` : "· awaiting play"}</b></span>
-          <span>Envelope <b>{Math.round(amplitude * 100)}% · three-band</b></span>
+          <span>Spectrum <b>{fourierBins} BINS · {spectrumRefreshRate} HZ · {Math.round(amplitude * 100)}%</b></span>
+          <span>Preset <b>{presetLabel}</b></span>
         </div>
       </section>
 
@@ -385,7 +488,49 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           <h2>{track.title}</h2>
           <p>Press play to detect the track’s pulse. Tempo moves the morph bank; loudness and low, middle, and high frequency energy bend the field independently.</p>
         </div>
-        <audio ref={audioRef} controls preload="metadata" src={track.audioSrc}>Your browser does not support the audio element.</audio>
+        <audio ref={audioRef} preload="auto" src={track.audioSrc}>Your browser does not support the audio element.</audio>
+        <div className="sai-transport">
+          <button type="button" onClick={() => { const audio = audioRef.current; if (!audio) return; if (audio.paused) void audio.play(); else audio.pause(); }}>{isPlaying ? "PAUSE" : "PLAY"}</button>
+          <input
+            type="range"
+            min="0"
+            max={Math.max(durationSeconds, .01)}
+            step=".01"
+            value={Math.min(currentSeconds, Math.max(durationSeconds, .01))}
+            aria-label={`Seek through ${track.title}`}
+            onPointerDown={() => { seekingRef.current = true; }}
+            onInput={(event) => {
+              const value = Number(event.currentTarget.value);
+              setCurrentSeconds(value);
+              if (audioRef.current && Number.isFinite(audioRef.current.duration)) audioRef.current.currentTime = value;
+            }}
+            onPointerUp={(event) => {
+              const value = Number(event.currentTarget.value);
+              if (audioRef.current) audioRef.current.currentTime = value;
+              seekingRef.current = false;
+              setCurrentSeconds(value);
+            }}
+            onKeyUp={(event) => {
+              const value = Number(event.currentTarget.value);
+              if (audioRef.current) audioRef.current.currentTime = value;
+              seekingRef.current = false;
+              setCurrentSeconds(value);
+            }}
+          />
+          <output>{Math.floor(currentSeconds / 60)}:{Math.floor(currentSeconds % 60).toString().padStart(2, "0")} / {duration}</output>
+        </div>
+        <div className="sai-spectrum-controls" aria-label="Spectrum analysis settings">
+          <label>Fourier bins
+            <select value={fourierBins} onChange={(event) => setFourierBins(Number(event.target.value))}>
+              {[32, 64, 96, 128, 256].map((value) => <option value={value} key={value}>{value}</option>)}
+            </select>
+          </label>
+          <label>Spectrum refresh
+            <select value={spectrumRefreshRate} onChange={(event) => setSpectrumRefreshRate(Number(event.target.value))}>
+              {[8, 12, 24, 30, 48, 60].map((value) => <option value={value} key={value}>{value} Hz</option>)}
+            </select>
+          </label>
+        </div>
         <dl className="sai-track-facts">
           <div><dt>Artist</dt><dd>Child of the Machine</dd></div>
           <div><dt>Archive</dt><dd>Sold As Is {"{No Returns}"}</dd></div>
