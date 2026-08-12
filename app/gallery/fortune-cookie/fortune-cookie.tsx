@@ -43,6 +43,9 @@ export function FortuneCookie() {
   const [fortuneIndex, setFortuneIndex] = useState(0);
   const [fortunes, setFortunes] = useState<string[]>(LOCAL_FORTUNES);
   const [open, setOpen] = useState(false);
+  const [golden, setGolden] = useState(false);
+  const [password, setPassword] = useState("");
+  const [secretMessage, setSecretMessage] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [trap, setTrap] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -73,13 +76,34 @@ export function FortuneCookie() {
   const crackCookie = () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     if (!open) {
-      setFortuneIndex((current) => nextFortune(current, fortunes.length));
+      const foundGoldenTicket = Math.random() < 1 / 250;
+      setGolden(foundGoldenTicket);
+      if (!foundGoldenTicket) setFortuneIndex((current) => nextFortune(current, fortunes.length));
       setOpen(true);
       return;
     }
     setOpen(false);
     timerRef.current = window.setTimeout(() => {
-      setFortuneIndex((current) => nextFortune(current, fortunes.length));
+      const foundGoldenTicket = Math.random() < 1 / 250;
+      setGolden(foundGoldenTicket);
+      if (!foundGoldenTicket) setFortuneIndex((current) => nextFortune(current, fortunes.length));
+      setOpen(true);
+      timerRef.current = null;
+    }, 420);
+  };
+
+  const tryPassword = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (password.trim().toUpperCase() !== "STAY GOLDEN") {
+      setSecretMessage("Nothing happens. Probably.");
+      return;
+    }
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    setPassword("");
+    setSecretMessage("A concealed mechanism accepts your answer.");
+    setOpen(false);
+    timerRef.current = window.setTimeout(() => {
+      setGolden(true);
       setOpen(true);
       timerRef.current = null;
     }, 420);
@@ -118,17 +142,25 @@ export function FortuneCookie() {
       <div className="fortune-stage">
         <div className="fortune-rays" aria-hidden="true" />
         <button
-          className={`fortune-machine ${open ? "open" : ""}`}
+          className={`fortune-machine ${open ? "open" : ""} ${golden ? "golden" : ""}`}
           type="button"
           onClick={crackCookie}
           aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"}
         >
-          <span className="fortune-paper"><b>{fortunes[fortuneIndex] ?? LOCAL_FORTUNES[0]}</b><i>Child of the Machine</i></span>
+          <span className="fortune-paper">
+            <b>{golden ? <>ADMIT ONE<br />THE OUTERNET</> : fortunes[fortuneIndex] ?? LOCAL_FORTUNES[0]}</b>
+            <i>{golden ? "Golden Ticket · Child of the Machine" : "Child of the Machine"}</i>
+          </span>
           <span className="cookie-half cookie-left"><i /></span>
           <span className="cookie-half cookie-right"><i /></span>
         </button>
         <button className="fortune-crack" type="button" onClick={crackCookie}>{open ? "Crack another" : "Crack the cookie"}</button>
         <p className="fortune-instruction">Tap the cookie. Accept no liability for subsequent synchronicities.</p>
+        <form className="fortune-secret" onSubmit={tryPassword}>
+          <input aria-label="Mysterious password" autoComplete="off" placeholder="Password" value={password} onChange={(event) => { setPassword(event.target.value); setSecretMessage(""); }} />
+          <button type="submit" aria-label="Try the mysterious password">???</button>
+        </form>
+        <p className="fortune-secret-message" role="status" aria-live="polite">{secretMessage}</p>
       </div>
       <aside className="fortune-suggestion">
         <span className="eyebrow">Feed the oracle</span>

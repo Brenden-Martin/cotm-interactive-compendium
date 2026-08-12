@@ -227,7 +227,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **FORTUNE-003 — Testing — Repeat delight.** Repeated openings quickly fold the cookie shut, select a different fortune, and crack it again. Preserve room for rarer visual or textual surprises in a later pass.
 - **FORTUNE-004 — Testing — Durable suggestion queue.** Accept a proposed fortune of 3–240 characters into a D1-backed pending-review table. Store the text, duplicate-prevention hash, review status, and timestamp only. A one-time promotion marker approves the owner batch that existed on 2026-08-02; the public endpoint lists approved text only, while later friend submissions remain pending and unlisted.
 - **FORTUNE-005 — Testing — Workbench bank bridge.** The owner-only private workbench keeps its own review queue, but its generator also reads and deduplicates the public site's approved fortune bank through the public read-only endpoint. This repairs the data split without pointing private submissions at production.
-- **FORTUNE-008 — Working — Golden Ticket to The Outernet.** Add a rare Golden Ticket outcome that becomes an Easter-egg entrance into The Outernet. Its destination page takes its visible title from the triggering Easter egg rather than a generic labyrinth label.
+- **FORTUNE-008 — Working — Golden Ticket to The Outernet.** Add a rare Golden Ticket outcome that becomes an Easter-egg entrance into The Outernet. The ticket can also be forced through the mysterious Fortune Cookie password control with `STAY GOLDEN`; ordinary openings retain a rare random chance. Its eventual destination page takes its visible title from the triggering Easter egg rather than a generic labyrinth label.
 
 ### Private Research and hypothetical devices
 
