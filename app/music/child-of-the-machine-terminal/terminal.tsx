@@ -27,7 +27,7 @@ export function ChildMachineTerminal() {
     window.setTimeout(() => setActiveKey(""), 130);
     if (!power) return;
     if (key === "SPACE") {
-      setFalling(true);
+      setFalling((value) => !value);
       setFallCycle((value) => value + 1);
     }
     const duration = 520 + Math.floor(Math.random() * 980);
@@ -161,7 +161,7 @@ export function ChildMachineTerminal() {
           </div>
         </div>
       </div>
-      <p className="terminal-instruction">POWER · SLIDERS · KEYS / sound begins only when you touch the machine</p>
+      <p className="terminal-instruction">POWER · SLIDERS · KEYS / SPACE toggles the fall / sound begins only when you touch the machine</p>
     </section>
   );
 }

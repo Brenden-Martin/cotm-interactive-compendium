@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { CSSProperties, FormEvent, useEffect, useRef, useState } from "react";
 import { ARCHIVED_FORTUNES } from "./fortune-bank";
 
 const STARTER_FORTUNES = [
@@ -32,6 +33,23 @@ const STARTER_FORTUNES = [
 
 const LOCAL_FORTUNES = [...STARTER_FORTUNES, ...ARCHIVED_FORTUNES];
 
+const DISSOLVE_BLOCKS = Array.from({ length: 64 }, (_, index) => {
+  const scramble = (seed: number) => ((seed * 9301 + 49297) % 233280) / 233280;
+  const direction = index % 2 ? 1 : -1;
+  return {
+    "--block-x": `${Math.floor(scramble(index * 11 + 3) * 96)}%`,
+    "--block-y": `${Math.floor(scramble(index * 17 + 7) * 96)}%`,
+    "--block-w": `${5 + Math.floor(scramble(index * 23 + 5) * 20)}vw`,
+    "--block-h": `${3 + Math.floor(scramble(index * 29 + 9) * 16)}vh`,
+    "--block-dx": `${direction * (12 + Math.floor(scramble(index * 31 + 4) * 58))}vw`,
+    "--block-dy": `${18 + Math.floor(scramble(index * 37 + 2) * 90)}vh`,
+    "--block-rot": `${direction * (20 + Math.floor(scramble(index * 41 + 8) * 220))}deg`,
+    "--block-delay": `${(index % 13) * .055}s`,
+    "--block-duration": `${1.45 + scramble(index * 43 + 6) * 1.8}s`,
+    "--block-hue": `${Math.floor(scramble(index * 47 + 1) * 330)}deg`,
+  } as CSSProperties;
+});
+
 function nextFortune(previous: number, bankSize: number) {
   if (bankSize < 2) return 0;
   let next = Math.floor(Math.random() * bankSize);
@@ -55,6 +73,12 @@ export function FortuneCookie() {
   useEffect(() => () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
   }, []);
+
+  useEffect(() => {
+    const active = golden && open;
+    document.body.classList.toggle("fortune-golden-dissolve", active);
+    return () => document.body.classList.remove("fortune-golden-dissolve");
+  }, [golden, open]);
 
   useEffect(() => {
     let active = true;
@@ -139,21 +163,32 @@ export function FortuneCookie() {
 
   return (
     <section className="fortune-lab">
+      {golden && open ? (
+        <div className="golden-dissolve-field" aria-hidden="true">
+          {DISSOLVE_BLOCKS.map((style, index) => <i key={index} style={style} />)}
+        </div>
+      ) : null}
       <div className="fortune-stage">
         <div className="fortune-rays" aria-hidden="true" />
-        <button
+        <div
           className={`fortune-machine ${open ? "open" : ""} ${golden ? "golden" : ""}`}
-          type="button"
-          onClick={crackCookie}
-          aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"}
         >
-          <span className="fortune-paper">
-            <b>{golden ? <>ADMIT ONE<br />THE OUTERNET</> : fortunes[fortuneIndex] ?? LOCAL_FORTUNES[0]}</b>
-            <i>{golden ? "Golden Ticket · Child of the Machine" : "Child of the Machine"}</i>
-          </span>
+          <button className="fortune-cookie-trigger" type="button" onClick={crackCookie} aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"} />
+          {golden ? (
+            <Link className="fortune-paper golden-ticket-link" href="/the-outernet" aria-label="Use the Golden Ticket to enter The Outernet">
+              <b>ADMIT ONE<br />THE OUTERNET</b>
+              <i>Golden Ticket · Child of the Machine</i>
+              <em>Touch ticket to depart</em>
+            </Link>
+          ) : (
+            <span className="fortune-paper">
+              <b>{fortunes[fortuneIndex] ?? LOCAL_FORTUNES[0]}</b>
+              <i>Child of the Machine</i>
+            </span>
+          )}
           <span className="cookie-half cookie-left"><i /></span>
           <span className="cookie-half cookie-right"><i /></span>
-        </button>
+        </div>
         <button className="fortune-crack" type="button" onClick={crackCookie}>{open ? "Crack another" : "Crack the cookie"}</button>
         <p className="fortune-instruction">Tap the cookie. Accept no liability for subsequent synchronicities.</p>
         <form className="fortune-secret" onSubmit={tryPassword}>
