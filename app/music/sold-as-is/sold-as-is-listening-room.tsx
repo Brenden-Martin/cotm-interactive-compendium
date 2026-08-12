@@ -4,13 +4,17 @@
 import { useEffect, useRef, useState } from "react";
 import archivedPresetData from "../../gallery/deq-morph-bank/saved-presets.json";
 import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
-import type { MorphBank, SoldAsIsTrack } from "./tracks";
+import type { SoldAsIsTrack } from "./tracks";
 
-const GRID_WIDTH = 112;
-const GRID_HEIGHT = 84;
-const CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
+const FIELD_RESOLUTIONS = {
+  "84 × 63": [84, 63],
+  "112 × 84": [112, 84],
+  "160 × 120": [160, 120],
+} as const;
+type FieldResolution = keyof typeof FIELD_RESOLUTIONS;
+type SpectrumLayout = "trail" | "slice";
+type SpectrumColor = "three-band" | "rainbow";
 type Field = [Float32Array, Float32Array, Float32Array];
-type Anchor = { diffusion: [number, number, number]; coupling: [number, number, number]; drift: number };
 type DeqConfig = { k: number[]; exponent: number[]; dt: number; decay: number; noise: number };
 type DeqPreset = { id: number; config: DeqConfig };
 type ComputerControls = { randomize: () => void; capture: () => void; clear: () => void };
@@ -21,58 +25,28 @@ const fullPresetBank = Array.from(new Map(
     .map((preset) => [JSON.stringify(preset.config), preset]),
 ).values());
 
-const banks: Record<MorphBank, Anchor[]> = {
-  calculator: [
-    { diffusion: [.145, .092, .121], coupling: [.042, -.031, .035], drift: .0036 },
-    { diffusion: [.082, .158, .106], coupling: [-.037, .048, .029], drift: .0028 },
-    { diffusion: [.126, .074, .167], coupling: [.031, .026, -.046], drift: .0042 },
-    { diffusion: [.102, .133, .087], coupling: [-.026, .039, .044], drift: .0032 },
-  ],
-  tube: [
-    { diffusion: [.074, .122, .096], coupling: [.018, -.021, .033], drift: .0023 },
-    { diffusion: [.132, .082, .061], coupling: [-.028, .036, .017], drift: .0031 },
-    { diffusion: [.093, .147, .111], coupling: [.034, .019, -.029], drift: .0026 },
-  ],
-  "stellar-a": [
-    { diffusion: [.061, .087, .162], coupling: [.036, -.018, .042], drift: .0021 },
-    { diffusion: [.139, .064, .124], coupling: [-.026, .044, .021], drift: .0038 },
-    { diffusion: [.077, .151, .092], coupling: [.029, .024, -.038], drift: .0027 },
-  ],
-  "stellar-b": [
-    { diffusion: [.118, .071, .154], coupling: [-.032, .027, .044], drift: .0034 },
-    { diffusion: [.069, .143, .103], coupling: [.041, -.025, .019], drift: .0024 },
-    { diffusion: [.151, .094, .072], coupling: [.018, .038, -.033], drift: .0030 },
-  ],
-  "stellar-c": [
-    { diffusion: [.164, .076, .091], coupling: [.047, -.036, .023], drift: .0041 },
-    { diffusion: [.083, .169, .067], coupling: [-.021, .051, .032], drift: .0036 },
-    { diffusion: [.104, .072, .178], coupling: [.035, .022, -.049], drift: .0044 },
-  ],
-};
-
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const smoothstep = (value: number) => value * value * (3 - 2 * value);
 
-function presetToAnchor(config: DeqConfig): Anchor {
-  const diffusion = [0, 1, 2].map((channel) => {
-    const laplacian = Math.abs(config.k[indexK(channel, channel, 4)] ?? 0);
-    return Math.max(.035, Math.min(.19, .055 + Math.log1p(laplacian) * .037 + Math.abs(config.dt) * .012));
-  }) as [number, number, number];
-  const coupling = [0, 1, 2].map((channel) => {
-    let crossChannel = 0;
-    for (let source = 0; source < 3; source += 1) {
-      if (source === channel) continue;
-      crossChannel += (config.k[indexK(channel, source, 0)] ?? 0) * .65;
-      crossChannel += (config.k[indexK(channel, source, 3)] ?? 0) * .18;
-      crossChannel += (config.k[indexK(channel, source, 4)] ?? 0) * .12;
-    }
-    return Math.tanh(crossChannel * .14) * .062;
-  }) as [number, number, number];
-  return {
-    diffusion,
-    coupling,
-    drift: Math.max(.0015, Math.min(.008, .002 + Math.abs(config.decay) * .018 + config.noise * .3)),
-  };
+const mix = (from: number, to: number, amount: number) => from + (to - from) * amount;
+const mixConfig = (from: DeqConfig, to: DeqConfig, amount: number): DeqConfig => ({
+  k: from.k.map((value, index) => mix(value, to.k[index], amount)),
+  exponent: from.exponent.map((value, index) => mix(value, to.exponent[index], amount)),
+  dt: mix(from.dt, to.dt, amount),
+  decay: mix(from.decay, to.decay, amount),
+  noise: mix(from.noise, to.noise, amount),
+});
+
+function spectrumHue(position: number): [number, number, number] {
+  const hue = (1 - position) * 300;
+  const section = hue / 60;
+  const x = 1 - Math.abs(section % 2 - 1);
+  if (section < 1) return [1, x, 0];
+  if (section < 2) return [x, 1, 0];
+  if (section < 3) return [0, 1, x];
+  if (section < 4) return [0, x, 1];
+  if (section < 5) return [x, 0, 1];
+  return [1, 0, x];
 }
 
 function seededRandom(seed: number) {
@@ -85,19 +59,20 @@ function seededRandom(seed: number) {
   };
 }
 
-function imageBoundary(image: HTMLImageElement) {
+function imageBoundary(image: HTMLImageElement, gridWidth: number, gridHeight: number) {
+  const cellCount = gridWidth * gridHeight;
   const canvas = document.createElement("canvas");
-  canvas.width = GRID_WIDTH;
-  canvas.height = GRID_HEIGHT;
+  canvas.width = gridWidth;
+  canvas.height = gridHeight;
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) return null;
-  const scale = Math.max(GRID_WIDTH / image.width, GRID_HEIGHT / image.height);
+  const scale = Math.max(gridWidth / image.width, gridHeight / image.height);
   const width = image.width * scale;
   const height = image.height * scale;
-  context.drawImage(image, (GRID_WIDTH - width) / 2, (GRID_HEIGHT - height) / 2, width, height);
-  const pixels = context.getImageData(0, 0, GRID_WIDTH, GRID_HEIGHT).data;
-  const boundary: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
-  for (let index = 0; index < CELL_COUNT; index += 1) {
+  context.drawImage(image, (gridWidth - width) / 2, (gridHeight - height) / 2, width, height);
+  const pixels = context.getImageData(0, 0, gridWidth, gridHeight).data;
+  const boundary: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
+  for (let index = 0; index < cellCount; index += 1) {
     boundary[0][index] = pixels[index * 4] / 255;
     boundary[1][index] = pixels[index * 4 + 1] / 255;
     boundary[2][index] = pixels[index * 4 + 2] / 255;
@@ -173,7 +148,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const analysisStartedRef = useRef(false);
   const tempoRef = useRef({ bpm: track.fallbackBpm, offset: 0 });
   const bandsRef = useRef<[number, number, number]>([0, 0, 0]);
-  const spectrumSettingsRef = useRef({ bins: 96, refreshRate: 24 });
+  const spectrumSettingsRef = useRef<{ bins: number; refreshRate: number; layout: SpectrumLayout; color: SpectrumColor }>({ bins: 96, refreshRate: 24, layout: "trail", color: "three-band" });
   const computerControlsRef = useRef<ComputerControls | null>(null);
   const seekingRef = useRef(false);
   const [amplitude, setAmplitude] = useState(0);
@@ -184,13 +159,16 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [fourierBins, setFourierBins] = useState(96);
   const [spectrumRefreshRate, setSpectrumRefreshRate] = useState(24);
+  const [spectrumLayout, setSpectrumLayout] = useState<SpectrumLayout>("trail");
+  const [spectrumColor, setSpectrumColor] = useState<SpectrumColor>("three-band");
+  const [fieldResolution, setFieldResolution] = useState<FieldResolution>("112 × 84");
   const [presetLabel, setPresetLabel] = useState(`AUTO BANK · ${fullPresetBank.length}`);
   const [boundaryMode, setBoundaryMode] = useState("LIVE ART + SPECTRUM");
 
   useEffect(() => {
-    spectrumSettingsRef.current = { bins: fourierBins, refreshRate: spectrumRefreshRate };
+    spectrumSettingsRef.current = { bins: fourierBins, refreshRate: spectrumRefreshRate, layout: spectrumLayout, color: spectrumColor };
     if (analyserRef.current) analyserRef.current.fftSize = Math.max(256, 2 ** Math.ceil(Math.log2(fourierBins * 2)));
-  }, [fourierBins, spectrumRefreshRate]);
+  }, [fourierBins, spectrumRefreshRate, spectrumLayout, spectrumColor]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -263,16 +241,18 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
-    const imageData = context.createImageData(GRID_WIDTH, GRID_HEIGHT);
+    const [gridWidth, gridHeight] = FIELD_RESOLUTIONS[fieldResolution];
+    const cellCount = gridWidth * gridHeight;
+    const imageData = context.createImageData(gridWidth, gridHeight);
     const random = seededRandom(track.seed);
-    const anchors = banks[track.morphBank];
-    let field: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
-    let next: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
+    const sequence = Array.from({ length: 4 }, () => fullPresetBank[Math.floor(random() * fullPresetBank.length)]);
+    let field: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
+    let next: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
     let artwork: Field | null = null;
     let capturedBoundary: Field | null = null;
     let boundaryEnabled = true;
-    let forcedAnchor: Anchor | null = null;
-    const spectrum: Field = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
+    let forcedConfig: DeqConfig | null = null;
+    const spectrum: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
     let frame = 0;
     let animation = 0;
     let last = performance.now();
@@ -282,7 +262,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     const waveform = new Uint8Array(512);
     const frequency = new Uint8Array(256);
 
-    for (let index = 0; index < CELL_COUNT; index += 1) {
+    for (let index = 0; index < cellCount; index += 1) {
       field[0][index] = .2 + random() * .55;
       field[1][index] = .2 + random() * .55;
       field[2][index] = .2 + random() * .55;
@@ -291,9 +271,9 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     const image = new Image();
     image.src = track.boundarySrc;
     image.onload = () => {
-      artwork = imageBoundary(image);
+      artwork = imageBoundary(image, gridWidth, gridHeight);
       if (!artwork) return;
-      for (let index = 0; index < CELL_COUNT; index += 1) {
+      for (let index = 0; index < cellCount; index += 1) {
         for (let channel = 0; channel < 3; channel += 1) {
           field[channel][index] = clamp01(field[channel][index] * .54 + artwork[channel][index] * .46);
         }
@@ -303,15 +283,15 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     computerControlsRef.current = {
       randomize: () => {
         const preset = fullPresetBank[Math.floor(Math.random() * fullPresetBank.length)];
-        forcedAnchor = presetToAnchor(preset.config);
+        forcedConfig = preset.config;
         setPresetLabel(`PRESET ${preset.id} · ${fullPresetBank.length} BANK`);
       },
       capture: () => {
         const audio = audioRef.current;
         const beatPosition = audio ? Math.max(0, audio.currentTime - tempoRef.current.offset) * tempoRef.current.bpm / 60 : 0;
         const mix = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
-        capturedBoundary = [new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT), new Float32Array(CELL_COUNT)];
-        for (let index = 0; index < CELL_COUNT; index += 1) {
+        capturedBoundary = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
+        for (let index = 0; index < cellCount; index += 1) {
           for (let channel = 0; channel < 3; channel += 1) {
             const artValue = artwork?.[channel][index] ?? 0;
             capturedBoundary[channel][index] = artValue * (1 - mix) + spectrum[channel][index] * mix;
@@ -349,62 +329,80 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       const refreshInterval = 1000 / spectrumSettingsRef.current.refreshRate;
       if (performance.now() - lastSpectrumUpdate >= refreshInterval) {
         lastSpectrumUpdate = performance.now();
-        const binCount = Math.min(spectrumSettingsRef.current.bins, analyser.frequencyBinCount, frequency.length);
-        for (let y = 0; y < GRID_HEIGHT; y += 1) {
-          const bin = Math.min(binCount - 1, Math.floor(((GRID_HEIGHT - 1 - y) / GRID_HEIGHT) ** 1.65 * binCount));
+        const settings = spectrumSettingsRef.current;
+        const binCount = Math.min(settings.bins, analyser.frequencyBinCount, frequency.length);
+        for (let y = 0; y < gridHeight; y += 1) {
+          const verticalPosition = (gridHeight - 1 - y) / Math.max(1, gridHeight - 1);
+          const bin = Math.min(binCount - 1, Math.floor(verticalPosition ** 1.65 * binCount));
           const intensity = frequency[bin] / 255;
-          for (let x = 0; x < GRID_WIDTH - 1; x += 1) {
-            const index = y * GRID_WIDTH + x;
+          if (settings.layout === "trail") for (let x = 0; x < gridWidth - 1; x += 1) {
+            const index = y * gridWidth + x;
             const source = index + 1;
             for (let channel = 0; channel < 3; channel += 1) spectrum[channel][index] = spectrum[channel][source] * .992;
           }
-          const edge = y * GRID_WIDTH + GRID_WIDTH - 1;
-          spectrum[0][edge] = clamp01(intensity * (1.1 + bandsRef.current[0]));
-          spectrum[1][edge] = clamp01(intensity * (.55 + bandsRef.current[1] * 1.4));
-          spectrum[2][edge] = clamp01(intensity * (.8 + bandsRef.current[2] * 1.25));
+          const color = settings.color === "rainbow"
+            ? spectrumHue(verticalPosition)
+            : [1.1 + bandsRef.current[0], .55 + bandsRef.current[1] * 1.4, .8 + bandsRef.current[2] * 1.25];
+          const firstX = settings.layout === "slice" ? 0 : gridWidth - 1;
+          for (let x = firstX; x < gridWidth; x += 1) {
+            const index = y * gridWidth + x;
+            for (let channel = 0; channel < 3; channel += 1) spectrum[channel][index] = clamp01(intensity * color[channel]);
+          }
         }
       }
     };
 
-    const step = (time: number) => {
+    const step = () => {
       const audio = audioRef.current;
       const beatPosition = audio && !audio.paused
         ? Math.max(0, audio.currentTime - tempoRef.current.offset) * tempoRef.current.bpm / 60
         : elapsed / 1000 * track.fallbackBpm / 60;
-      const anchorPosition = (beatPosition / track.cadenceBeats) % anchors.length;
-      const anchorIndex = Math.floor(anchorPosition);
-      const blend = smoothstep(anchorPosition - anchorIndex);
-      const from = forcedAnchor ?? anchors[anchorIndex];
-      const to = forcedAnchor ?? anchors[(anchorIndex + 1) % anchors.length];
+      const presetPosition = (beatPosition / track.cadenceBeats) % sequence.length;
+      const presetIndex = Math.floor(presetPosition);
+      const blend = smoothstep(presetPosition - presetIndex);
+      const config = forcedConfig ?? mixConfig(sequence[presetIndex].config, sequence[(presetIndex + 1) % sequence.length].config, blend);
       const spectrumMix = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
-      const wildness = .07 + Math.min(1, envelope) * .88;
       const bands = bandsRef.current;
 
-      for (let y = 0; y < GRID_HEIGHT; y += 1) {
+      for (let y = 0; y < gridHeight; y += 1) {
         const up = y === 0 ? 1 : y - 1;
-        const down = y === GRID_HEIGHT - 1 ? GRID_HEIGHT - 2 : y + 1;
-        for (let x = 0; x < GRID_WIDTH; x += 1) {
+        const down = y === gridHeight - 1 ? gridHeight - 2 : y + 1;
+        const row = y * gridWidth;
+        for (let x = 0; x < gridWidth; x += 1) {
           const left = x === 0 ? 1 : x - 1;
-          const right = x === GRID_WIDTH - 1 ? GRID_WIDTH - 2 : x + 1;
-          const index = y * GRID_WIDTH + x;
-          const neighbors = [up * GRID_WIDTH + x, down * GRID_WIDTH + x, y * GRID_WIDTH + left, y * GRID_WIDTH + right];
-          const current = [field[0][index], field[1][index], field[2][index]];
+          const right = x === gridWidth - 1 ? gridWidth - 2 : x + 1;
+          const index = row + x;
 
-          for (let channel = 0; channel < 3; channel += 1) {
-            let average = 0;
-            for (const neighbor of neighbors) average += field[channel][neighbor];
-            average *= .25;
-            const diffusion = from.diffusion[channel] * (1 - blend) + to.diffusion[channel] * blend;
-            const coupling = from.coupling[channel] * (1 - blend) + to.coupling[channel] * blend;
-            const artValue = artwork?.[channel][index] ?? .5;
-            const liveBoundary = artValue * (1 - spectrumMix) + spectrum[channel][index] * spectrumMix;
-            const boundaryValue = capturedBoundary?.[channel][index] ?? liveBoundary;
-            const companion = current[(channel + 1) % 3] - current[(channel + 2) % 3];
-            const phase = time * .00016 + x * .071 - y * .047 + channel * 2.094;
-            const forcing = Math.sin(phase + companion * 8.2) * wildness * (.007 + bands[channel] * .008);
-            const memory = boundaryEnabled ? (boundaryValue - current[channel]) * (.0012 + spectrumMix * .0024) : 0;
-            const drift = from.drift * (1 - blend) + to.drift * blend;
-            next[channel][index] = clamp01(current[channel] + diffusion * (.38 + boundaryValue * 1.08) * (average - current[channel]) + coupling * companion + forcing + memory - drift * (current[channel] - .48));
+          for (let destination = 0; destination < 3; destination += 1) {
+            let accumulator = 0;
+            for (let source = 0; source < 3; source += 1) {
+              const sourceField = field[source];
+              const center = sourceField[index];
+              const rightValue = sourceField[row + right];
+              const leftValue = sourceField[row + left];
+              const downValue = sourceField[down * gridWidth + x];
+              const upValue = sourceField[up * gridWidth + x];
+              const artValue = artwork?.[source][index] ?? 1;
+              const liveBoundary = artValue * (1 - spectrumMix) + spectrum[source][index] * spectrumMix;
+              const boundaryValue = capturedBoundary?.[source][index] ?? liveBoundary;
+              const weight = boundaryEnabled ? boundaryValue : 1;
+              const dx = (rightValue - center) * weight;
+              const dy = (downValue - center) * weight;
+              const gradient = Math.sqrt(dx * dx + dy * dy);
+              const laplacian = boundaryEnabled
+                ? (weight + (capturedBoundary?.[source][row + right] ?? (artwork?.[source][row + right] ?? 1) * (1 - spectrumMix) + spectrum[source][row + right] * spectrumMix)) * .5 * (rightValue - center)
+                  + (weight + (capturedBoundary?.[source][row + left] ?? (artwork?.[source][row + left] ?? 1) * (1 - spectrumMix) + spectrum[source][row + left] * spectrumMix)) * .5 * (leftValue - center)
+                  + (weight + (capturedBoundary?.[source][down * gridWidth + x] ?? (artwork?.[source][down * gridWidth + x] ?? 1) * (1 - spectrumMix) + spectrum[source][down * gridWidth + x] * spectrumMix)) * .5 * (downValue - center)
+                  + (weight + (capturedBoundary?.[source][up * gridWidth + x] ?? (artwork?.[source][up * gridWidth + x] ?? 1) * (1 - spectrumMix) + spectrum[source][up * gridWidth + x] * spectrumMix)) * .5 * (upValue - center)
+                : rightValue + leftValue + downValue + upValue - 4 * center;
+              const terms = [center * weight, dx, dy, gradient, laplacian];
+              for (let template = 0; template < 5; template += 1) accumulator += config.k[indexK(destination, source, template)] * terms[template];
+            }
+            const audioDrive = .98 + Math.min(1, envelope) * .04 + bands[destination] * .08;
+            let value = (1 - config.decay) * field[destination][index] + config.dt * accumulator * audioDrive;
+            value = Math.sign(value) * Math.pow(Math.abs(value), config.exponent[destination]);
+            if (config.noise > 0) value += (Math.random() - .5) * config.noise;
+            next[destination][index] = clamp01(value);
           }
         }
       }
@@ -416,9 +414,9 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       last = now;
       elapsed += delta;
       sampleAudio();
-      step(now);
-      step(now + 8);
-      for (let index = 0; index < CELL_COUNT; index += 1) {
+      step();
+      step();
+      for (let index = 0; index < cellCount; index += 1) {
         const offset = index * 4;
         const spectrumGlow = Math.max(spectrum[0][index], spectrum[1][index], spectrum[2][index]);
         imageData.data[offset] = Math.round(255 * clamp01((field[0][index] - .14) * 1.3 + spectrum[0][index] * .38));
@@ -437,7 +435,9 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       image.onload = null;
       computerControlsRef.current = null;
     };
-  }, [track]);
+  }, [fieldResolution, track]);
+
+  const [canvasWidth, canvasHeight] = FIELD_RESOLUTIONS[fieldResolution];
 
   const style = {
     "--track-page": track.palette.page,
@@ -463,7 +463,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       <section className="goo-crt" aria-label={`Audio-reactive listening monitor for ${track.title}`}>
         <div className="goo-crt-shell">
           <div className="goo-crt-screen">
-            <canvas ref={canvasRef} width={GRID_WIDTH} height={GRID_HEIGHT} aria-label={`A color field driven by ${track.boundaryLabel}, a live spectrogram, and the song`} />
+            <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} aria-label={`A simultaneous-update DEQ field driven by ${track.boundaryLabel}, a live spectrogram, and the song`} />
           </div>
           <div className="goo-crt-panel">
             <div className="goo-crt-brand">COTM<br /><small>LISTENING COMPUTER</small></div>
@@ -477,7 +477,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
         <div className="goo-readout">
           <span>Boundary <b>{boundaryMode}</b></span>
           <span>Tempo <b>{tempo.bpm} BPM {tempo.detected ? `· ${Math.round(tempo.confidence * 100)}%` : "· awaiting play"}</b></span>
-          <span>Spectrum <b>{fourierBins} BINS · {spectrumRefreshRate} HZ · {Math.round(amplitude * 100)}%</b></span>
+          <span>Spectrum <b>{fourierBins} BINS · {spectrumRefreshRate} HZ · {spectrumLayout.toUpperCase()} · {spectrumColor === "rainbow" ? "RAINBOW" : "RGB"} · {Math.round(amplitude * 100)}%</b></span>
           <span>Preset <b>{presetLabel}</b></span>
         </div>
       </section>
@@ -528,6 +528,23 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           <label>Spectrum refresh
             <select value={spectrumRefreshRate} onChange={(event) => setSpectrumRefreshRate(Number(event.target.value))}>
               {[8, 12, 24, 30, 48, 60].map((value) => <option value={value} key={value}>{value} Hz</option>)}
+            </select>
+          </label>
+          <label>Field resolution
+            <select value={fieldResolution} onChange={(event) => setFieldResolution(event.target.value as FieldResolution)}>
+              {Object.keys(FIELD_RESOLUTIONS).map((value) => <option value={value} key={value}>{value}</option>)}
+            </select>
+          </label>
+          <label>Spectrum shape
+            <select value={spectrumLayout} onChange={(event) => setSpectrumLayout(event.target.value as SpectrumLayout)}>
+              <option value="trail">Scrolling trail</option>
+              <option value="slice">Full-width slice</option>
+            </select>
+          </label>
+          <label>Spectrum color
+            <select value={spectrumColor} onChange={(event) => setSpectrumColor(event.target.value as SpectrumColor)}>
+              <option value="three-band">Three-band RGB</option>
+              <option value="rainbow">Vertical rainbow</option>
             </select>
           </label>
         </div>
