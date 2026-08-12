@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- direct user-owned artwork is intentionally served without an image proxy */
 import Link from "next/link";
 import { RandomCotmMark } from "./random-cotm-mark";
+import { soldAsIsAlbums } from "./tracks";
 
 export const metadata = {
   title: "Sold As Is {No Returns}",
@@ -36,6 +37,17 @@ export default function SoldAsIsPage() {
             <small>Alternate recording · Enter the listening room →</small>
           </div>
         </Link>
+        {soldAsIsAlbums.map((album) => (
+          <Link className="release-card" href={`/music/sold-as-is/${album.slug}`} key={album.slug}>
+            <span className="release-number">{album.catalogNumber}</span>
+            <img src={album.coverSrc} alt={album.coverAlt} />
+            <div className="release-card-copy">
+              <span>Child of the Machine · Album Directory</span>
+              <strong>{album.title}</strong>
+              <small>{album.tracks.length} {album.tracks.length === 1 ? "recording" : "tracks"} · Open the directory →</small>
+            </div>
+          </Link>
+        ))}
       </section>
     </main>
   );
