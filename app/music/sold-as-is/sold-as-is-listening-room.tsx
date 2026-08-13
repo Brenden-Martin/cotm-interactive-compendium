@@ -13,11 +13,21 @@ const FIELD_RESOLUTIONS = {
 } as const;
 type FieldResolution = keyof typeof FIELD_RESOLUTIONS;
 type SpectrumLayout = "trail" | "slice";
-type SpectrumColor = "three-band" | "rainbow";
+type SpectrumColor = "three-band" | "rainbow" | "white";
 type Field = [Float32Array, Float32Array, Float32Array];
 type DeqConfig = { k: number[]; exponent: number[]; dt: number; decay: number; noise: number };
 type DeqPreset = { id: number; config: DeqConfig };
 type ComputerControls = { randomize: () => void; capture: () => void; clear: () => void };
+type SpectrumSettings = {
+  bins: number;
+  refreshRate: number;
+  layout: SpectrumLayout;
+  color: SpectrumColor;
+  preamp: number;
+  gamma: number;
+  boundaryStrength: number;
+  overlayStrength: number;
+};
 
 const indexK = (destination: number, source: number, template: number) => (destination * 3 + source) * 5 + template;
 const fullPresetBank = Array.from(new Map(
@@ -148,7 +158,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const analysisStartedRef = useRef(false);
   const tempoRef = useRef({ bpm: track.fallbackBpm, offset: 0 });
   const bandsRef = useRef<[number, number, number]>([0, 0, 0]);
-  const spectrumSettingsRef = useRef<{ bins: number; refreshRate: number; layout: SpectrumLayout; color: SpectrumColor }>({ bins: 96, refreshRate: 24, layout: "trail", color: "three-band" });
+  const spectrumSettingsRef = useRef<SpectrumSettings>({ bins: 96, refreshRate: 24, layout: "trail", color: "three-band", preamp: 2, gamma: 1, boundaryStrength: 1, overlayStrength: 1 });
   const computerControlsRef = useRef<ComputerControls | null>(null);
   const seekingRef = useRef(false);
   const [amplitude, setAmplitude] = useState(0);
@@ -161,14 +171,18 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const [spectrumRefreshRate, setSpectrumRefreshRate] = useState(24);
   const [spectrumLayout, setSpectrumLayout] = useState<SpectrumLayout>("trail");
   const [spectrumColor, setSpectrumColor] = useState<SpectrumColor>("three-band");
+  const [spectrumPreamp, setSpectrumPreamp] = useState(2);
+  const [spectrumGamma, setSpectrumGamma] = useState(1);
+  const [spectrumBoundaryStrength, setSpectrumBoundaryStrength] = useState(1);
+  const [spectrumOverlayStrength, setSpectrumOverlayStrength] = useState(1);
   const [fieldResolution, setFieldResolution] = useState<FieldResolution>("112 × 84");
   const [presetLabel, setPresetLabel] = useState(`AUTO BANK · ${fullPresetBank.length}`);
   const [boundaryMode, setBoundaryMode] = useState("LIVE ART + SPECTRUM");
 
   useEffect(() => {
-    spectrumSettingsRef.current = { bins: fourierBins, refreshRate: spectrumRefreshRate, layout: spectrumLayout, color: spectrumColor };
+    spectrumSettingsRef.current = { bins: fourierBins, refreshRate: spectrumRefreshRate, layout: spectrumLayout, color: spectrumColor, preamp: spectrumPreamp, gamma: spectrumGamma, boundaryStrength: spectrumBoundaryStrength, overlayStrength: spectrumOverlayStrength };
     if (analyserRef.current) analyserRef.current.fftSize = Math.max(256, 2 ** Math.ceil(Math.log2(fourierBins * 2)));
-  }, [fourierBins, spectrumRefreshRate, spectrumLayout, spectrumColor]);
+  }, [fourierBins, spectrumRefreshRate, spectrumLayout, spectrumColor, spectrumPreamp, spectrumGamma, spectrumBoundaryStrength, spectrumOverlayStrength]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -289,7 +303,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       capture: () => {
         const audio = audioRef.current;
         const beatPosition = audio ? Math.max(0, audio.currentTime - tempoRef.current.offset) * tempoRef.current.bpm / 60 : 0;
-        const mix = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
+        const mix = (analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0) * spectrumSettingsRef.current.boundaryStrength;
         capturedBoundary = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
         for (let index = 0; index < cellCount; index += 1) {
           for (let channel = 0; channel < 3; channel += 1) {
@@ -331,10 +345,12 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
         lastSpectrumUpdate = performance.now();
         const settings = spectrumSettingsRef.current;
         const binCount = Math.min(settings.bins, analyser.frequencyBinCount, frequency.length);
+        const applySpectrumTransfer = (value: number) => Math.pow(clamp01(value * settings.preamp), settings.gamma);
+        const processedBands = bandsRef.current.map(applySpectrumTransfer) as [number, number, number];
         for (let y = 0; y < gridHeight; y += 1) {
           const verticalPosition = (gridHeight - 1 - y) / Math.max(1, gridHeight - 1);
           const bin = Math.min(binCount - 1, Math.floor(verticalPosition ** 1.65 * binCount));
-          const intensity = frequency[bin] / 255;
+          const intensity = applySpectrumTransfer(frequency[bin] / 255);
           if (settings.layout === "trail") for (let x = 0; x < gridWidth - 1; x += 1) {
             const index = y * gridWidth + x;
             const source = index + 1;
@@ -342,7 +358,9 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           }
           const color = settings.color === "rainbow"
             ? spectrumHue(verticalPosition)
-            : [1.1 + bandsRef.current[0], .55 + bandsRef.current[1] * 1.4, .8 + bandsRef.current[2] * 1.25];
+            : settings.color === "white"
+              ? [1, 1, 1]
+              : processedBands;
           const firstX = settings.layout === "slice" ? 0 : gridWidth - 1;
           for (let x = firstX; x < gridWidth; x += 1) {
             const index = y * gridWidth + x;
@@ -361,7 +379,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       const presetIndex = Math.floor(presetPosition);
       const blend = smoothstep(presetPosition - presetIndex);
       const config = forcedConfig ?? mixConfig(sequence[presetIndex].config, sequence[(presetIndex + 1) % sequence.length].config, blend);
-      const spectrumMix = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
+      const spectrumMix = (analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0) * spectrumSettingsRef.current.boundaryStrength;
       const bands = bandsRef.current;
 
       for (let y = 0; y < gridHeight; y += 1) {
@@ -416,12 +434,13 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       sampleAudio();
       step();
       step();
+      const overlayStrength = spectrumSettingsRef.current.overlayStrength;
       for (let index = 0; index < cellCount; index += 1) {
         const offset = index * 4;
         const spectrumGlow = Math.max(spectrum[0][index], spectrum[1][index], spectrum[2][index]);
-        imageData.data[offset] = Math.round(255 * clamp01((field[0][index] - .14) * 1.3 + spectrum[0][index] * .38));
-        imageData.data[offset + 1] = Math.round(255 * clamp01((field[1][index] - .1) * 1.26 + spectrum[1][index] * .42));
-        imageData.data[offset + 2] = Math.round(255 * clamp01((field[2][index] - .18) * 1.34 + spectrum[2][index] * .5 + spectrumGlow * .08));
+        imageData.data[offset] = Math.round(255 * clamp01((field[0][index] - .14) * 1.3 + spectrum[0][index] * .38 * overlayStrength));
+        imageData.data[offset + 1] = Math.round(255 * clamp01((field[1][index] - .1) * 1.26 + spectrum[1][index] * .42 * overlayStrength));
+        imageData.data[offset + 2] = Math.round(255 * clamp01((field[2][index] - .18) * 1.34 + (spectrum[2][index] * .5 + spectrumGlow * .08) * overlayStrength));
         imageData.data[offset + 3] = 255;
       }
       context.putImageData(imageData, 0, 0);
@@ -477,7 +496,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
         <div className="goo-readout">
           <span>Boundary <b>{boundaryMode}</b></span>
           <span>Tempo <b>{tempo.bpm} BPM {tempo.detected ? `· ${Math.round(tempo.confidence * 100)}%` : "· awaiting play"}</b></span>
-          <span>Spectrum <b>{fourierBins} BINS · {spectrumRefreshRate} HZ · {spectrumLayout.toUpperCase()} · {spectrumColor === "rainbow" ? "RAINBOW" : "RGB"} · {Math.round(amplitude * 100)}%</b></span>
+          <span>Spectrum <b>{fourierBins} BINS · {spectrumRefreshRate} HZ · {spectrumLayout.toUpperCase()} · {spectrumColor === "three-band" ? "RGB" : spectrumColor.toUpperCase()} · {spectrumPreamp.toFixed(2)}× / γ {spectrumGamma.toFixed(2)} · {Math.round(amplitude * 100)}%</b></span>
           <span>Preset <b>{presetLabel}</b></span>
         </div>
       </section>
@@ -545,9 +564,23 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
             <select value={spectrumColor} onChange={(event) => setSpectrumColor(event.target.value as SpectrumColor)}>
               <option value="three-band">Three-band RGB</option>
               <option value="rainbow">Vertical rainbow</option>
+              <option value="white">White spectrum</option>
             </select>
           </label>
+          <label className="sai-spectrum-slider">Linear preamp <output>{spectrumPreamp.toFixed(2)}×</output>
+            <input aria-label="Spectrum linear preamp" type="range" min=".25" max="8" step=".05" value={spectrumPreamp} onChange={(event) => setSpectrumPreamp(Number(event.target.value))} />
+          </label>
+          <label className="sai-spectrum-slider">Gamma nonlinearity <output>γ {spectrumGamma.toFixed(2)}</output>
+            <input aria-label="Spectrum gamma nonlinearity" type="range" min=".35" max="3" step=".05" value={spectrumGamma} onChange={(event) => setSpectrumGamma(Number(event.target.value))} />
+          </label>
+          <label className="sai-spectrum-slider">Boundary strength <output>{Math.round(spectrumBoundaryStrength * 100)}%</output>
+            <input aria-label="Spectrum boundary condition strength" type="range" min="0" max="1" step=".01" value={spectrumBoundaryStrength} onChange={(event) => setSpectrumBoundaryStrength(Number(event.target.value))} />
+          </label>
+          <label className="sai-spectrum-slider">Overlay strength <output>{Math.round(spectrumOverlayStrength * 100)}%</output>
+            <input aria-label="Spectrum overlay strength" type="range" min="0" max="2" step=".02" value={spectrumOverlayStrength} onChange={(event) => setSpectrumOverlayStrength(Number(event.target.value))} />
+          </label>
         </div>
+        <p className="sai-spectrum-note">Linear preamp acts first. Gamma is a separate nonlinear transfer: values above 1 suppress low-energy bins and sharpen peaks. Boundary strength changes the spectrum fed into the field equations; overlay strength changes only the spectrum drawn over the evolved field.</p>
         <dl className="sai-track-facts">
           <div><dt>Artist</dt><dd>Child of the Machine</dd></div>
           <div><dt>Archive</dt><dd>Sold As Is {"{No Returns}"}</dd></div>
