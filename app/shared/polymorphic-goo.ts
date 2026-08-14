@@ -181,11 +181,13 @@ export function renderPolymorphicGoo(context: CanvasRenderingContext2D, width: n
   polygonPath(context, points, centerX, centerY, radius);
   context.fillStyle = `hsl(${hue} 80% 47%)`;
   context.fill();
-  context.strokeStyle = `hsl(${(hue + 35) % 360} 82% 78%)`;
-  context.lineWidth = Math.max(1, (1.5 + frame.roundness * 5.5) * Math.min(width, height) / 256);
-  context.shadowColor = `hsla(${(hue + 42) % 360} 90% 86% / ${.15 + frame.roundness * .42})`;
-  context.shadowBlur = frame.roundness * Math.min(width, height) * .045;
-  context.stroke();
+  if (frame.roundness > 0) {
+    context.strokeStyle = `hsl(${(hue + 35) % 360} 82% 78%)`;
+    context.lineWidth = Math.max(1, frame.roundness * 7 * Math.min(width, height) / 256);
+    context.shadowColor = `hsla(${(hue + 42) % 360} 90% 86% / ${Math.min(.78, frame.roundness * .57)})`;
+    context.shadowBlur = frame.roundness * Math.min(width, height) * .045;
+    context.stroke();
+  }
   context.shadowBlur = 0;
 }
 
@@ -263,4 +265,8 @@ export function sampleGooWaveforms(bank: GooWaveformBank, buffers: GooWaveformBu
     result[key] = Math.max(-1, Math.min(1, buffer[buffer.length - 1]));
   });
   return result;
+}
+
+export function scaleGooAudioDrive(mode: GooDriveMode, key: GooBandKey, rms: GooAudioBands, waveforms: GooAudioBands, equalizer: GooEqualizer) {
+  return (mode === "waveform" ? waveforms[key] : rms[key]) * equalizer[key];
 }

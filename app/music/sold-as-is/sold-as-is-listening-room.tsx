@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import archivedPresetData from "../../gallery/deq-morph-bank/saved-presets.json";
 import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
-import { analyseGooAudio, createGooWaveformBank, createGooWaveformBuffers, DEFAULT_GOO_EQUALIZER, EMPTY_GOO_BANDS, GOO_BAND_LABELS, renderPolymorphicGoo, sampleGooWaveforms, smoothGooBands, type GooAudioBands, type GooBandKey, type GooDriveMode, type GooEqualizer, type GooWaveformBank, type GooWaveformBuffers } from "../../shared/polymorphic-goo";
+import { analyseGooAudio, createGooWaveformBank, createGooWaveformBuffers, DEFAULT_GOO_EQUALIZER, EMPTY_GOO_BANDS, GOO_BAND_LABELS, renderPolymorphicGoo, sampleGooWaveforms, scaleGooAudioDrive, smoothGooBands, type GooAudioBands, type GooBandKey, type GooDriveMode, type GooEqualizer, type GooWaveformBank, type GooWaveformBuffers } from "../../shared/polymorphic-goo";
 import type { SoldAsIsTrack } from "./tracks";
 
 const FIELD_RESOLUTIONS = {
@@ -418,21 +418,23 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       const waveforms = gooWaveformsRef.current;
       const eq = gooEqualizerRef.current;
       const waveformMode = gooDriveModeRef.current === "waveform";
-      const normalizedDrive = (key: GooBandKey) => waveformMode
-        ? clamp01(.5 + waveforms[key] * eq[key] * .5)
-        : clamp01(bands[key] * eq[key]);
-      const rotationDrive = waveformMode ? waveforms.low * eq.low : normalizedDrive("low");
-      gooRotation += deltaSeconds * (waveformMode ? rotationDrive * 2.5 : .06 + rotationDrive * 2.3);
-      gooWobblePhase += deltaSeconds * (.7 + normalizedDrive("high") * 5);
+      const drive = (key: GooBandKey) => scaleGooAudioDrive(gooDriveModeRef.current, key, bands, waveforms, eq);
+      const rotationDrive = drive("low");
+      const shapeDrive = drive("mid");
+      const wobbleDrive = Math.abs(drive("high"));
+      const shadowDrive = Math.abs(drive("transitionLow"));
+      const roundnessDrive = Math.abs(drive("transitionHigh"));
+      gooRotation += deltaSeconds * rotationDrive * (waveformMode ? 2.5 : 2.3);
+      gooWobblePhase += deltaSeconds * (.7 + wobbleDrive * 5);
       if (gooHueAudioRef.current && waveformMode) gooHue = (gooHue + deltaSeconds * waveforms.overall * eq.overall * 190 + 360) % 360;
-      else gooHue = (gooHue + deltaSeconds * (gooHueAudioRef.current ? 4 + bands.overall * eq.overall * 180 : 18)) % 360;
+      else gooHue = (gooHue + deltaSeconds * (gooHueAudioRef.current ? bands.overall * eq.overall * 180 : 18)) % 360;
       renderPolymorphicGoo(gooContext, gridWidth, gridHeight, {
-        shape: (normalizedDrive("mid") * 4 + elapsed / 24000) % 4,
-        wobble: normalizedDrive("high") * 1.45,
+        shape: shapeDrive * 4,
+        wobble: wobbleDrive * 1.45,
         rotation: gooRotation,
         wobblePhase: gooWobblePhase,
-        shadowDepth: .1 + normalizedDrive("transitionLow") * 1.15,
-        roundness: normalizedDrive("transitionHigh"),
+        shadowDepth: shadowDrive * 1.15,
+        roundness: roundnessDrive,
         hue: gooHue,
         background: "#160b1b",
       });
@@ -677,7 +679,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           <label className="sai-spectrum-slider">Overlay strength <output>{Math.round(spectrumOverlayStrength * 100)}%</output>
             <input aria-label="Spectrum overlay strength" type="range" min="0" max="2" step=".02" value={spectrumOverlayStrength} onChange={(event) => setSpectrumOverlayStrength(Number(event.target.value))} />
           </label>
-          <fieldset className="sai-goo-eq"><legend>Goo coupling equalizer</legend>{(Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => <label className="sai-spectrum-slider" key={key}>{GOO_BAND_LABELS[key]} <output>{gooEqualizer[key].toFixed(2)}×</output><input type="range" min="0" max="3" step=".05" value={gooEqualizer[key]} onChange={(event) => setGooEqualizer((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</fieldset>
+          <fieldset className="sai-goo-eq"><legend>Goo coupling equalizer</legend>{(Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => <label className="sai-spectrum-slider" key={key}>{GOO_BAND_LABELS[key]} <output>{gooEqualizer[key].toFixed(2)}×</output><input type="range" min="0" max="8" step=".05" value={gooEqualizer[key]} onChange={(event) => setGooEqualizer((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</fieldset>
         </div>
         <p className="sai-spectrum-note">Linear preamp acts first. Frequency gain then rises proportionally from 1× at the lowest bin to the selected multiplier at the highest bin. Gamma remains a separate nonlinear transfer: values above 1 suppress low-energy bins and sharpen peaks. Boundary strength can overdrive the spectrum into the field equations up to 500%; overlay strength changes only the spectrum drawn over the evolved field.</p>
         <dl className="sai-track-facts">

@@ -10,6 +10,7 @@ import {
   GOO_BAND_LABELS,
   renderPolymorphicGoo,
   sampleGooWaveforms,
+  scaleGooAudioDrive,
   smoothGooBands,
   type GooAudioBands,
   type GooBandKey,
@@ -27,6 +28,7 @@ type HueMode = "slider" | "drift" | "audio";
 
 const INITIAL_SOURCES: SourceMap = { shape: "random", rotation: "slider", wobble: "random", shadowDepth: "slider", roundness: "slider" };
 const INITIAL_VALUES: ValueMap = { shape: .45, rotation: .26, wobble: .55, shadowDepth: .62, roundness: .68 };
+const PARAMETER_MAX: ValueMap = { shape: 1, rotation: 4, wobble: 3, shadowDepth: 3, roundness: 3 };
 
 const LABELS: Record<ParameterKey, string> = {
   shape: "Polygon morph",
@@ -142,7 +144,7 @@ export function PolymorphicGooLab() {
 
     const resolve = (key: ParameterKey, audioValue: number) => {
       const mode = sourceRef.current[key];
-      return mode === "audio" ? clamp01(audioValue) : mode === "random" ? randomValues[key] : valueRef.current[key];
+      return mode === "audio" ? audioValue : mode === "random" ? randomValues[key] : valueRef.current[key];
     };
 
     const draw = (now: number) => {
@@ -168,20 +170,17 @@ export function PolymorphicGooLab() {
         waveforms = { ...EMPTY_GOO_BANDS };
       }
       const eq = equalizerRef.current;
-      const normalizedDrive = (key: GooBandKey) => driveModeRef.current === "waveform"
-        ? clamp01(.5 + waveforms[key] * eq[key] * .5)
-        : clamp01(smoothedBands[key] * eq[key]);
-      const shape = resolve("shape", normalizedDrive("mid"));
-      const wobble = resolve("wobble", normalizedDrive("high"));
-      const rotationAudio = driveModeRef.current === "waveform" ? waveforms.low * eq.low : normalizedDrive("low");
-      const rotationSpeed = sourceRef.current.rotation === "audio" ? rotationAudio : resolve("rotation", normalizedDrive("low"));
-      const shadowDepth = resolve("shadowDepth", normalizedDrive("transitionLow"));
-      const roundness = resolve("roundness", normalizedDrive("transitionHigh"));
-      rotation += delta * (sourceRef.current.rotation === "audio" && driveModeRef.current === "waveform" ? rotationSpeed * 2.2 : .08 + rotationSpeed * 1.55);
+      const drive = (key: GooBandKey) => scaleGooAudioDrive(driveModeRef.current, key, smoothedBands, waveforms, eq);
+      const shape = resolve("shape", drive("mid"));
+      const wobble = resolve("wobble", Math.abs(drive("high")));
+      const rotationSpeed = resolve("rotation", drive("low"));
+      const shadowDepth = resolve("shadowDepth", Math.abs(drive("transitionLow")));
+      const roundness = resolve("roundness", Math.abs(drive("transitionHigh")));
+      rotation += delta * rotationSpeed * (driveModeRef.current === "waveform" && sourceRef.current.rotation === "audio" ? 2.2 : 1.55);
       wobblePhase += delta * (.7 + wobble * 4.5);
       if (hueModeRef.current === "slider") movingHue = hueRef.current;
       else if (hueModeRef.current === "audio" && driveModeRef.current === "waveform") movingHue = (movingHue + delta * waveforms.overall * eq.overall * 180 + 360) % 360;
-      else movingHue = (movingHue + delta * (hueModeRef.current === "audio" ? 5 + smoothedBands.overall * eq.overall * 170 : 24)) % 360;
+      else movingHue = (movingHue + delta * (hueModeRef.current === "audio" ? smoothedBands.overall * eq.overall * 170 : 24)) % 360;
 
       const box = canvas.getBoundingClientRect();
       renderPolymorphicGoo(context, box.width, box.height, {
@@ -229,7 +228,7 @@ export function PolymorphicGooLab() {
               <select aria-label={`${LABELS[key]} source`} value={sources[key]} onChange={(event) => setSources((current) => ({ ...current, [key]: event.target.value as SourceMode }))}>
                 <option value="slider">Slider</option><option value="random">Random</option><option value="audio">Audio band</option>
               </select>
-              <input aria-label={`${LABELS[key]} manual value`} type="range" min="0" max="1" step=".01" value={values[key]} disabled={sources[key] !== "slider"} onChange={(event) => setValues((current) => ({ ...current, [key]: Number(event.target.value) }))} />
+              <input aria-label={`${LABELS[key]} manual value`} type="range" min="0" max={PARAMETER_MAX[key]} step=".01" value={values[key]} disabled={sources[key] !== "slider"} onChange={(event) => setValues((current) => ({ ...current, [key]: Number(event.target.value) }))} />
             </div>
           ))}
         </div>
@@ -237,7 +236,7 @@ export function PolymorphicGooLab() {
           <label>Hue traversal<select value={hueMode} onChange={(event) => setHueMode(event.target.value as HueMode)}><option value="slider">Fixed hue</option><option value="drift">Slow drift</option><option value="audio">Overall RMS speed</option></select></label>
           <input aria-label="Fixed hue" type="range" min="0" max="360" step="1" value={hue} disabled={hueMode !== "slider"} onChange={(event) => setHue(Number(event.target.value))} />
         </div>
-        <fieldset className="polymorph-eq"><legend>Coupling equalizer</legend>{(Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => <label key={key}><span>{GOO_BAND_LABELS[key]}</span><output>{equalizer[key].toFixed(2)}×</output><input type="range" min="0" max="3" step=".05" value={equalizer[key]} onChange={(event) => setEqualizer((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</fieldset>
+        <fieldset className="polymorph-eq"><legend>Coupling equalizer</legend>{(Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => <label key={key}><span>{GOO_BAND_LABELS[key]}</span><output>{equalizer[key].toFixed(2)}×</output><input type="range" min="0" max="8" step=".05" value={equalizer[key]} onChange={(event) => setEqualizer((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</fieldset>
         <div className="polymorph-meters" aria-label="Current audio band RMS levels">
           {(["low", "mid", "transitionLow", "transitionHigh", "high", "overall"] as const).map((key) => <span key={key}><i style={{ transform: `scaleX(${clamp01(bands[key] * 2.8)})` }} /><b>{key.replace("transition", "T")}</b></span>)}
         </div>
