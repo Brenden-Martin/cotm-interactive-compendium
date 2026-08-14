@@ -9,6 +9,7 @@ import {
   shapedSpeed,
   tickGate,
   wrapAgent,
+  wrapCoordinate,
   wrappedDelta,
   type TelegraphGate,
 } from "./agent-engine";
@@ -76,31 +77,32 @@ type Simulation = {
   cheese: { x: number; y: number };
   trail: Float32Array;
   trailNext: Float32Array;
+  briars: Float32Array;
   gridWidth: number;
   gridHeight: number;
   statsClock: number;
 };
 
 const DEFAULTS: Parameters = {
-  ratCorrelation: 3.46,
+  ratCorrelation: 5,
   catCorrelation: 4.1,
-  wandering: 0,
-  panic: 1.8,
-  socialAttraction: 2.55,
-  socialRadius: 30,
-  separation: 4,
-  separationRadius: 63,
-  cheeseAttraction: 1.1,
-  catPursuit: 4.85,
-  catRepulsion: 3.9,
-  trailAvoidance: 1.85,
-  trailDecay: 24,
-  fearStrength: 7.2,
-  fearMemory: 14.85,
-  burstGain: 3.25,
-  burstCurve: 1.85,
-  ratMaximum: 170,
-  catMaximum: 805,
+  wandering: 4,
+  panic: 8,
+  socialAttraction: 2.5,
+  socialRadius: 32,
+  separation: 6.9,
+  separationRadius: 42,
+  cheeseAttraction: 4.25,
+  catPursuit: 1.9,
+  catRepulsion: 5,
+  trailAvoidance: 3.35,
+  trailDecay: 17.1,
+  fearStrength: 8,
+  fearMemory: 8.85,
+  burstGain: 1.45,
+  burstCurve: 1.1,
+  ratMaximum: 325,
+  catMaximum: 465,
   catEnabled: true,
   fieldView: "hidden",
 };
@@ -169,6 +171,7 @@ function createSimulation(count: number, width: number, height: number): Simulat
     cheese: { x: width * .27, y: height * .46 },
     trail: new Float32Array(size),
     trailNext: new Float32Array(size),
+    briars: new Float32Array(size),
     gridWidth: GRID_WIDTH,
     gridHeight: GRID_HEIGHT,
     statsClock: 0,
@@ -192,6 +195,85 @@ function trailGradient(simulation: Simulation, x: number, y: number, width: numb
     x: (simulation.trail[right] - simulation.trail[left]) * .5,
     y: (simulation.trail[down] - simulation.trail[up]) * .5,
   };
+}
+
+function briarSample(simulation: Simulation, x: number, y: number, width: number, height: number) {
+  const gx = Math.floor(wrapCoordinate(x, width) / Math.max(1, width) * simulation.gridWidth) % simulation.gridWidth;
+  const gy = Math.floor(wrapCoordinate(y, height) / Math.max(1, height) * simulation.gridHeight) % simulation.gridHeight;
+  return simulation.briars[gy * simulation.gridWidth + gx];
+}
+
+function paintBriars(simulation: Simulation, x: number, y: number, width: number, height: number, radius = 34) {
+  const cellWidth = width / simulation.gridWidth;
+  const cellHeight = height / simulation.gridHeight;
+  for (let gy = 0; gy < simulation.gridHeight; gy++) {
+    const cellY = (gy + .5) * cellHeight;
+    const dy = wrappedDelta(y, cellY, height);
+    if (Math.abs(dy) > radius) continue;
+    for (let gx = 0; gx < simulation.gridWidth; gx++) {
+      const cellX = (gx + .5) * cellWidth;
+      const dx = wrappedDelta(x, cellX, width);
+      const distance = Math.hypot(dx, dy);
+      if (distance > radius) continue;
+      const index = gy * simulation.gridWidth + gx;
+      const strength = clamp(1.2 - distance / radius, .18, 1);
+      simulation.briars[index] = Math.max(simulation.briars[index], strength);
+    }
+  }
+}
+
+function catBriarRepulsion(simulation: Simulation, x: number, y: number, width: number, height: number) {
+  const cellWidth = width / simulation.gridWidth;
+  const cellHeight = height / simulation.gridHeight;
+  const radius = 92;
+  let forceX = 0;
+  let forceY = 0;
+  let weightTotal = 0;
+  for (let gy = 0; gy < simulation.gridHeight; gy++) {
+    const cellY = (gy + .5) * cellHeight;
+    const dy = wrappedDelta(cellY, y, height);
+    if (Math.abs(dy) > radius) continue;
+    for (let gx = 0; gx < simulation.gridWidth; gx++) {
+      const value = simulation.briars[gy * simulation.gridWidth + gx];
+      if (value < .08) continue;
+      const cellX = (gx + .5) * cellWidth;
+      const dx = wrappedDelta(cellX, x, width);
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      if (distance >= radius) continue;
+      const weight = value * (1 - distance / radius) ** 2;
+      forceX += dx / distance * weight;
+      forceY += dy / distance * weight;
+      weightTotal += weight;
+    }
+  }
+  if (weightTotal < 1e-6) return { x: 0, y: 0 };
+  return { x: forceX / weightTotal * 38, y: forceY / weightTotal * 38 };
+}
+
+function catTouchesBriars(simulation: Simulation, x: number, y: number, width: number, height: number) {
+  if (briarSample(simulation, x, y, width, height) > .12) return true;
+  for (let index = 0; index < 8; index++) {
+    const angle = index / 8 * Math.PI * 2;
+    if (briarSample(simulation, x + Math.cos(angle) * 17, y + Math.sin(angle) * 17, width, height) > .2) return true;
+  }
+  return false;
+}
+
+function ejectCatFromBriars(simulation: Simulation, width: number, height: number) {
+  const cat = simulation.cat;
+  for (let radius = 20; radius <= 150; radius += 10) {
+    for (let index = 0; index < 24; index++) {
+      const angle = index / 24 * Math.PI * 2;
+      const x = wrapCoordinate(cat.x + Math.cos(angle) * radius, width);
+      const y = wrapCoordinate(cat.y + Math.sin(angle) * radius, height);
+      if (catTouchesBriars(simulation, x, y, width, height)) continue;
+      cat.x = x;
+      cat.y = y;
+      cat.vx = Math.cos(angle) * Math.min(70, Math.hypot(cat.vx, cat.vy));
+      cat.vy = Math.sin(angle) * Math.min(70, Math.hypot(cat.vx, cat.vy));
+      return;
+    }
+  }
 }
 
 function updateTrail(simulation: Simulation, delta: number, parameters: Parameters, width: number, height: number) {
@@ -339,6 +421,7 @@ export function RatzField() {
   const boundsRef = useRef({ width: 1280, height: 720 });
   const frameRef = useRef(0);
   const pausedRef = useRef(false);
+  const controlsHiddenRef = useRef(false);
   const [ratCount, setRatCount] = useState(84);
   const [paused, setPaused] = useState(false);
   const [controlsHidden, setControlsHidden] = useState(false);
@@ -347,6 +430,7 @@ export function RatzField() {
 
   useEffect(() => { parametersRef.current = parameters; }, [parameters]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
+  useEffect(() => { controlsHiddenRef.current = controlsHidden; }, [controlsHidden]);
 
   const setParameter = <K extends keyof Parameters>(key: K, value: Parameters[K]) => {
     setParameters((current) => ({ ...current, [key]: value }));
@@ -365,12 +449,57 @@ export function RatzField() {
     simulation.cheese = { x: 42 + Math.random() * Math.max(1, width - 84), y: 42 + Math.random() * Math.max(1, height - 84) };
   };
 
+  const clearBriars = () => {
+    simulationRef.current?.briars.fill(0);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
     let lastTime = performance.now();
+    let drawingPointer: number | null = null;
+    let lastBriarPoint: { x: number; y: number } | null = null;
+
+    const paintBriarStroke = (x: number, y: number) => {
+      const simulation = simulationRef.current;
+      if (!simulation) return;
+      const { width, height } = boundsRef.current;
+      if (lastBriarPoint) {
+        const dx = x - lastBriarPoint.x;
+        const dy = y - lastBriarPoint.y;
+        const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 9));
+        for (let step = 1; step <= steps; step++) {
+          paintBriars(simulation, lastBriarPoint.x + dx * step / steps, lastBriarPoint.y + dy * step / steps, width, height);
+        }
+      } else {
+        paintBriars(simulation, x, y, width, height);
+      }
+      lastBriarPoint = { x, y };
+    };
+
+    const pointerDown = (event: PointerEvent) => {
+      if (!controlsHiddenRef.current || drawingPointer !== null) return;
+      event.preventDefault();
+      drawingPointer = event.pointerId;
+      lastBriarPoint = null;
+      canvas.setPointerCapture(event.pointerId);
+      paintBriarStroke(event.clientX, event.clientY);
+    };
+
+    const pointerMove = (event: PointerEvent) => {
+      if (event.pointerId !== drawingPointer) return;
+      event.preventDefault();
+      paintBriarStroke(event.clientX, event.clientY);
+    };
+
+    const pointerUp = (event: PointerEvent) => {
+      if (event.pointerId !== drawingPointer) return;
+      drawingPointer = null;
+      lastBriarPoint = null;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    };
 
     const resize = () => {
       const width = window.innerWidth;
@@ -507,6 +636,8 @@ export function RatzField() {
       });
 
       if (parameters.catEnabled) {
+        const previousCatX = cat.x;
+        const previousCatY = cat.y;
         cat.turnClock -= delta;
         if (cat.turnClock <= 0) {
           cat.wanderTarget += normalSample() * .78;
@@ -524,6 +655,9 @@ export function RatzField() {
           catFx += dx / distance * parameters.catPursuit;
           catFy += dy / distance * parameters.catPursuit;
         }
+        const briarForce = catBriarRepulsion(simulation, cat.x, cat.y, width, height);
+        catFx += briarForce.x;
+        catFy += briarForce.y;
         const forceMagnitude = Math.hypot(catFx, catFy);
         const catMaximum = Math.max(parameters.catMaximum, parameters.ratMaximum + 15);
         const speed = catActive
@@ -537,6 +671,13 @@ export function RatzField() {
         cat.x += cat.vx * delta;
         cat.y += cat.vy * delta;
         wrapAgent(cat, width, height);
+        if (catTouchesBriars(simulation, cat.x, cat.y, width, height)) {
+          cat.x = previousCatX;
+          cat.y = previousCatY;
+          cat.vx *= -.32;
+          cat.vy *= -.32;
+          if (catTouchesBriars(simulation, cat.x, cat.y, width, height)) ejectCatFromBriars(simulation, width, height);
+        }
         const before = simulation.rats.length;
         simulation.rats = simulation.rats.filter((rat) => {
           const dx = wrappedDelta(cat.x, rat.x, width);
@@ -598,6 +739,33 @@ export function RatzField() {
       }
     };
 
+    const drawBriars = (simulation: Simulation, width: number, height: number) => {
+      const cellWidth = width / simulation.gridWidth;
+      const cellHeight = height / simulation.gridHeight;
+      context.lineCap = "round";
+      for (let y = 0; y < simulation.gridHeight; y++) {
+        for (let x = 0; x < simulation.gridWidth; x++) {
+          const index = y * simulation.gridWidth + x;
+          const value = simulation.briars[index];
+          if (value < .08) continue;
+          const px = (x + .5) * cellWidth;
+          const py = (y + .5) * cellHeight;
+          const reach = Math.min(10, Math.max(4, Math.min(cellWidth, cellHeight) * .8)) * (.72 + value * .28);
+          const angle = ((index * 47) % 31) / 31 * Math.PI;
+          context.strokeStyle = `rgba(62, 73, 36, ${.42 + value * .48})`;
+          context.lineWidth = 1.2 + value * 1.5;
+          context.beginPath();
+          context.moveTo(px - Math.cos(angle) * reach, py - Math.sin(angle) * reach);
+          context.lineTo(px + Math.cos(angle) * reach, py + Math.sin(angle) * reach);
+          context.moveTo(px - Math.cos(angle + 1.15) * reach * .76, py - Math.sin(angle + 1.15) * reach * .76);
+          context.lineTo(px + Math.cos(angle + 1.15) * reach * .76, py + Math.sin(angle + 1.15) * reach * .76);
+          context.stroke();
+          context.fillStyle = `rgba(109, 83, 46, ${.32 + value * .42})`;
+          context.fillRect(px - 1, py - 1, 2.5, 2.5);
+        }
+      }
+    };
+
     const draw = (now: number) => {
       const delta = Math.min(.034, (now - lastTime) / 1000);
       lastTime = now;
@@ -616,6 +784,7 @@ export function RatzField() {
       for (let y = 0; y < height; y += 48) { context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); }
       if (simulation) {
         drawField(simulation, parametersRef.current.fieldView, width, height);
+        drawBriars(simulation, width, height);
         for (const offset of wrappedOffsets(simulation.cheese.x, simulation.cheese.y, width, height, 22)) {
           drawCheese(context, simulation.cheese, offset.offsetX, offset.offsetY);
         }
@@ -633,16 +802,24 @@ export function RatzField() {
 
     resize();
     window.addEventListener("resize", resize);
+    canvas.addEventListener("pointerdown", pointerDown);
+    canvas.addEventListener("pointermove", pointerMove, { passive: false });
+    canvas.addEventListener("pointerup", pointerUp);
+    canvas.addEventListener("pointercancel", pointerUp);
     frameRef.current = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(frameRef.current);
       window.removeEventListener("resize", resize);
+      canvas.removeEventListener("pointerdown", pointerDown);
+      canvas.removeEventListener("pointermove", pointerMove);
+      canvas.removeEventListener("pointerup", pointerUp);
+      canvas.removeEventListener("pointercancel", pointerUp);
     };
   }, []);
 
   return (
     <main className="ratz-page">
-      <canvas ref={canvasRef} className="ratz-canvas" aria-label="A live stochastic colony of rats seeking cheese, clustering in small groups, fleeing a cat, and remembering its fading scent trail." />
+      <canvas ref={canvasRef} className={`ratz-canvas${controlsHidden ? " is-briar-mode" : ""}`} aria-label="A live stochastic colony of rats seeking cheese, clustering in small groups, fleeing a cat, remembering its fading scent trail, and sheltering in drawable briar refuges." />
       <header className="ratz-chrome" hidden={controlsHidden}>
         <Link href="/gallery">← Gallery</Link>
         <span className="eyebrow">Interactive Exhibit 23</span>
@@ -704,10 +881,16 @@ export function RatzField() {
           <button type="button" onClick={() => setParameter("catEnabled", !parameters.catEnabled)}>{parameters.catEnabled ? "Cat off" : "Cat on"}</button>
           <button type="button" onClick={relocateCheese}>Move cheese</button>
           <button type="button" onClick={resetSimulation}>Reset ratz</button>
+          <button type="button" onClick={clearBriars}>Clear briars</button>
         </div>
-        <p>Each rat plans from the same frozen frame, follows no more than three neighbors, and carries its own fading memory of danger.</p>
+        <p>Each rat plans from the same frozen frame, follows no more than three neighbors, and carries its own fading memory of danger. Hide the UI, then draw briar refuges that the ratz can enter but the cat cannot.</p>
       </aside>
-      {controlsHidden && <button type="button" className="ratz-restore" onClick={() => setControlsHidden(false)}>Show Ratz UI</button>}
+      {controlsHidden && (
+        <div className="ratz-hidden-tools">
+          <span>Draw briars · rat refuge · cat proof</span>
+          <button type="button" className="ratz-restore" onClick={() => setControlsHidden(false)}>Show Ratz UI</button>
+        </div>
+      )}
     </main>
   );
 }
