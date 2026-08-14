@@ -6,9 +6,10 @@ import {
   clamp,
   exponentialInterval,
   normalSample,
-  reflectAgent,
   shapedSpeed,
   tickGate,
+  wrapAgent,
+  wrappedDelta,
   type TelegraphGate,
 } from "./agent-engine";
 
@@ -81,25 +82,25 @@ type Simulation = {
 };
 
 const DEFAULTS: Parameters = {
-  ratCorrelation: 1.8,
-  catCorrelation: 4.8,
-  wandering: 1.25,
-  panic: 3.6,
-  socialAttraction: .72,
-  socialRadius: 112,
-  separation: 2.8,
-  separationRadius: 30,
-  cheeseAttraction: 1.45,
-  catPursuit: 2.25,
-  catRepulsion: 3.2,
-  trailAvoidance: 1.75,
-  trailDecay: 7.5,
-  fearStrength: 2.6,
-  fearMemory: 4.8,
-  burstGain: 1.35,
-  burstCurve: 1.9,
+  ratCorrelation: 3.46,
+  catCorrelation: 4.1,
+  wandering: 0,
+  panic: 1.8,
+  socialAttraction: 2.55,
+  socialRadius: 30,
+  separation: 4,
+  separationRadius: 63,
+  cheeseAttraction: 1.1,
+  catPursuit: 4.85,
+  catRepulsion: 3.9,
+  trailAvoidance: 1.85,
+  trailDecay: 24,
+  fearStrength: 7.2,
+  fearMemory: 14.85,
+  burstGain: 3.25,
+  burstCurve: 1.85,
   ratMaximum: 170,
-  catMaximum: 260,
+  catMaximum: 805,
   catEnabled: true,
   fieldView: "hidden",
 };
@@ -181,12 +182,15 @@ function trailSample(simulation: Simulation, x: number, y: number, width: number
 }
 
 function trailGradient(simulation: Simulation, x: number, y: number, width: number, height: number) {
-  const gx = clamp(Math.round(x / Math.max(1, width) * (simulation.gridWidth - 1)), 1, simulation.gridWidth - 2);
-  const gy = clamp(Math.round(y / Math.max(1, height) * (simulation.gridHeight - 1)), 1, simulation.gridHeight - 2);
-  const index = gy * simulation.gridWidth + gx;
+  const gx = clamp(Math.round(x / Math.max(1, width) * (simulation.gridWidth - 1)), 0, simulation.gridWidth - 1);
+  const gy = clamp(Math.round(y / Math.max(1, height) * (simulation.gridHeight - 1)), 0, simulation.gridHeight - 1);
+  const left = gy * simulation.gridWidth + (gx - 1 + simulation.gridWidth) % simulation.gridWidth;
+  const right = gy * simulation.gridWidth + (gx + 1) % simulation.gridWidth;
+  const up = ((gy - 1 + simulation.gridHeight) % simulation.gridHeight) * simulation.gridWidth + gx;
+  const down = ((gy + 1) % simulation.gridHeight) * simulation.gridWidth + gx;
   return {
-    x: (simulation.trail[index + 1] - simulation.trail[index - 1]) * .5,
-    y: (simulation.trail[index + simulation.gridWidth] - simulation.trail[index - simulation.gridWidth]) * .5,
+    x: (simulation.trail[right] - simulation.trail[left]) * .5,
+    y: (simulation.trail[down] - simulation.trail[up]) * .5,
   };
 }
 
@@ -199,10 +203,10 @@ function updateTrail(simulation: Simulation, delta: number, parameters: Paramete
     for (let x = 0; x < gridWidth; x++) {
       const index = y * gridWidth + x;
       const center = simulation.trail[index] * decay;
-      const left = simulation.trail[y * gridWidth + Math.max(0, x - 1)];
-      const right = simulation.trail[y * gridWidth + Math.min(gridWidth - 1, x + 1)];
-      const up = simulation.trail[Math.max(0, y - 1) * gridWidth + x];
-      const down = simulation.trail[Math.min(gridHeight - 1, y + 1) * gridWidth + x];
+      const left = simulation.trail[y * gridWidth + (x - 1 + gridWidth) % gridWidth];
+      const right = simulation.trail[y * gridWidth + (x + 1) % gridWidth];
+      const up = simulation.trail[((y - 1 + gridHeight) % gridHeight) * gridWidth + x];
+      const down = simulation.trail[((y + 1) % gridHeight) * gridWidth + x];
       simulation.trailNext[index] = clamp(center + diffusion * (left + right + up + down - 4 * simulation.trail[index]), 0, 1);
     }
   }
@@ -210,27 +214,33 @@ function updateTrail(simulation: Simulation, delta: number, parameters: Paramete
   simulation.trail = simulation.trailNext;
   simulation.trailNext = previous;
   if (!parameters.catEnabled) return;
-  const catX = clamp(Math.round(simulation.cat.x / Math.max(1, width) * (gridWidth - 1)), 1, gridWidth - 2);
-  const catY = clamp(Math.round(simulation.cat.y / Math.max(1, height) * (gridHeight - 1)), 1, gridHeight - 2);
+  const catX = clamp(Math.round(simulation.cat.x / Math.max(1, width) * (gridWidth - 1)), 0, gridWidth - 1);
+  const catY = clamp(Math.round(simulation.cat.y / Math.max(1, height) * (gridHeight - 1)), 0, gridHeight - 1);
   for (let oy = -1; oy <= 1; oy++) {
     for (let ox = -1; ox <= 1; ox++) {
-      const index = (catY + oy) * gridWidth + catX + ox;
+      const y = (catY + oy + gridHeight) % gridHeight;
+      const x = (catX + ox + gridWidth) % gridWidth;
+      const index = y * gridWidth + x;
       simulation.trail[index] = clamp(simulation.trail[index] + delta * (ox === 0 && oy === 0 ? 3.6 : 1.4), 0, 1);
     }
   }
 }
 
-function chooseCatTarget(cat: Cat, rats: Rat[]) {
+function chooseCatTarget(cat: Cat, rats: Rat[], width: number, height: number) {
   const nearest = rats
-    .map((rat) => ({ id: rat.id, distance: (rat.x - cat.x) ** 2 + (rat.y - cat.y) ** 2 }))
+    .map((rat) => {
+      const dx = wrappedDelta(cat.x, rat.x, width);
+      const dy = wrappedDelta(cat.y, rat.y, height);
+      return { id: rat.id, distance: dx * dx + dy * dy };
+    })
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 10);
   cat.targetId = nearest.length ? nearest[Math.floor(Math.random() * nearest.length)].id : null;
 }
 
-function drawRat(context: CanvasRenderingContext2D, rat: Rat) {
+function drawRat(context: CanvasRenderingContext2D, rat: Rat, offsetX = 0, offsetY = 0) {
   context.save();
-  context.translate(Math.round(rat.x), Math.round(rat.y));
+  context.translate(Math.round(rat.x + offsetX), Math.round(rat.y + offsetY));
   context.rotate(rat.angle);
   context.scale(rat.scale, rat.scale);
   context.strokeStyle = "#3b332e";
@@ -264,9 +274,9 @@ function drawRat(context: CanvasRenderingContext2D, rat: Rat) {
   context.restore();
 }
 
-function drawCat(context: CanvasRenderingContext2D, cat: Cat, pursuing: boolean) {
+function drawCat(context: CanvasRenderingContext2D, cat: Cat, pursuing: boolean, offsetX = 0, offsetY = 0) {
   context.save();
-  context.translate(Math.round(cat.x), Math.round(cat.y));
+  context.translate(Math.round(cat.x + offsetX), Math.round(cat.y + offsetY));
   context.rotate(cat.angle);
   context.strokeStyle = "#512b18";
   context.lineWidth = 4;
@@ -295,9 +305,9 @@ function drawCat(context: CanvasRenderingContext2D, cat: Cat, pursuing: boolean)
   context.restore();
 }
 
-function drawCheese(context: CanvasRenderingContext2D, cheese: { x: number; y: number }) {
+function drawCheese(context: CanvasRenderingContext2D, cheese: { x: number; y: number }, offsetX = 0, offsetY = 0) {
   context.save();
-  context.translate(Math.round(cheese.x), Math.round(cheese.y));
+  context.translate(Math.round(cheese.x + offsetX), Math.round(cheese.y + offsetY));
   context.fillStyle = "#f1c83d";
   context.strokeStyle = "#7a5c12";
   context.lineWidth = 2;
@@ -310,6 +320,16 @@ function drawCheese(context: CanvasRenderingContext2D, cheese: { x: number; y: n
   context.arc(4, -3, 2.2, 0, Math.PI * 2);
   context.fill();
   context.restore();
+}
+
+function wrappedOffsets(x: number, y: number, width: number, height: number, margin: number) {
+  const xOffsets = [0];
+  const yOffsets = [0];
+  if (x < margin) xOffsets.push(width);
+  if (x > width - margin) xOffsets.push(-width);
+  if (y < margin) yOffsets.push(height);
+  if (y > height - margin) yOffsets.push(-height);
+  return xOffsets.flatMap((offsetX) => yOffsets.map((offsetY) => ({ offsetX, offsetY })));
 }
 
 export function RatzField() {
@@ -376,12 +396,12 @@ export function RatzField() {
       const catActiveBefore = cat.pursuitGate.active;
       const catActive = parameters.catEnabled && tickGate(cat.pursuitGate, delta, 1.15, parameters.catCorrelation);
       if (catActive && (!catActiveBefore || cat.targetId === null || !simulation.rats.some((rat) => rat.id === cat.targetId))) {
-        chooseCatTarget(cat, simulation.rats);
+        chooseCatTarget(cat, simulation.rats, width, height);
       }
 
       const nextVelocities = simulation.rats.map((rat) => {
-        const dxCat = rat.x - cat.x;
-        const dyCat = rat.y - cat.y;
+        const dxCat = wrappedDelta(cat.x, rat.x, width);
+        const dyCat = wrappedDelta(cat.y, rat.y, height);
         const catDistance = Math.max(1, Math.hypot(dxCat, dyCat));
         const localTrail = trailSample(simulation, rat.x, rat.y, width, height);
         const threat = parameters.catEnabled ? clamp(Math.exp(-catDistance / 92) * 1.35 + localTrail * .72, 0, 1) : 0;
@@ -402,8 +422,8 @@ export function RatzField() {
         fx -= gradient.x * trailScale;
         fy -= gradient.y * trailScale;
 
-        const cheeseDx = simulation.cheese.x - rat.x;
-        const cheeseDy = simulation.cheese.y - rat.y;
+        const cheeseDx = wrappedDelta(rat.x, simulation.cheese.x, width);
+        const cheeseDy = wrappedDelta(rat.y, simulation.cheese.y, height);
         const cheeseDistance = Math.max(1, Math.hypot(cheeseDx, cheeseDy));
         if (tickGate(rat.scentGate, delta, parameters.ratCorrelation * 1.1, parameters.ratCorrelation * .72)) {
           const scent = parameters.cheeseAttraction * clamp(1.15 - cheeseDistance / Math.max(width, height), .12, 1);
@@ -416,8 +436,8 @@ export function RatzField() {
         let separationY = 0;
         for (const other of simulation.rats) {
           if (other.id === rat.id) continue;
-          const dx = other.x - rat.x;
-          const dy = other.y - rat.y;
+          const dx = wrappedDelta(rat.x, other.x, width);
+          const dy = wrappedDelta(rat.y, other.y, height);
           const distance = Math.hypot(dx, dy);
           if (distance < parameters.separationRadius) {
             if (distance < .001) {
@@ -483,7 +503,7 @@ export function RatzField() {
         rat.angle = Math.atan2(rat.vy, rat.vx);
         rat.x += rat.vx * delta;
         rat.y += rat.vy * delta;
-        reflectAgent(rat, width, height, 18);
+        wrapAgent(rat, width, height);
       });
 
       if (parameters.catEnabled) {
@@ -498,8 +518,8 @@ export function RatzField() {
         let catFx = Math.cos(cat.wanderAngle) * .32;
         let catFy = Math.sin(cat.wanderAngle) * .32;
         if (target) {
-          const dx = target.x - cat.x;
-          const dy = target.y - cat.y;
+          const dx = wrappedDelta(cat.x, target.x, width);
+          const dy = wrappedDelta(cat.y, target.y, height);
           const distance = Math.max(1, Math.hypot(dx, dy));
           catFx += dx / distance * parameters.catPursuit;
           catFy += dy / distance * parameters.catPursuit;
@@ -516,13 +536,21 @@ export function RatzField() {
         cat.angle = Math.atan2(cat.vy, cat.vx);
         cat.x += cat.vx * delta;
         cat.y += cat.vy * delta;
-        reflectAgent(cat, width, height, 28);
+        wrapAgent(cat, width, height);
         const before = simulation.rats.length;
-        simulation.rats = simulation.rats.filter((rat) => Math.hypot(rat.x - cat.x, rat.y - cat.y) > 19);
-        if (simulation.rats.length !== before) chooseCatTarget(cat, simulation.rats);
+        simulation.rats = simulation.rats.filter((rat) => {
+          const dx = wrappedDelta(cat.x, rat.x, width);
+          const dy = wrappedDelta(cat.y, rat.y, height);
+          return Math.hypot(dx, dy) > 19;
+        });
+        if (simulation.rats.length !== before) chooseCatTarget(cat, simulation.rats, width, height);
       }
 
-      if (simulation.rats.some((rat) => Math.hypot(rat.x - simulation.cheese.x, rat.y - simulation.cheese.y) < 18)) {
+      if (simulation.rats.some((rat) => {
+        const dx = wrappedDelta(rat.x, simulation.cheese.x, width);
+        const dy = wrappedDelta(rat.y, simulation.cheese.y, height);
+        return Math.hypot(dx, dy) < 18;
+      })) {
         simulation.cheese = { x: 42 + Math.random() * Math.max(1, width - 84), y: 42 + Math.random() * Math.max(1, height - 84) };
       }
 
@@ -588,9 +616,17 @@ export function RatzField() {
       for (let y = 0; y < height; y += 48) { context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); }
       if (simulation) {
         drawField(simulation, parametersRef.current.fieldView, width, height);
-        drawCheese(context, simulation.cheese);
-        for (const rat of simulation.rats) drawRat(context, rat);
-        if (parametersRef.current.catEnabled) drawCat(context, simulation.cat, simulation.cat.pursuitGate.active);
+        for (const offset of wrappedOffsets(simulation.cheese.x, simulation.cheese.y, width, height, 22)) {
+          drawCheese(context, simulation.cheese, offset.offsetX, offset.offsetY);
+        }
+        for (const rat of simulation.rats) {
+          for (const offset of wrappedOffsets(rat.x, rat.y, width, height, 38)) drawRat(context, rat, offset.offsetX, offset.offsetY);
+        }
+        if (parametersRef.current.catEnabled) {
+          for (const offset of wrappedOffsets(simulation.cat.x, simulation.cat.y, width, height, 55)) {
+            drawCat(context, simulation.cat, simulation.cat.pursuitGate.active, offset.offsetX, offset.offsetY);
+          }
+        }
       }
       frameRef.current = requestAnimationFrame(draw);
     };

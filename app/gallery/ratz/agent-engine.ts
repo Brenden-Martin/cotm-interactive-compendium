@@ -36,9 +36,18 @@ export function unit(vector: Vector): Vector {
   return magnitude > 1e-8 ? { x: vector.x / magnitude, y: vector.y / magnitude } : { x: 0, y: 0 };
 }
 
-export function reflectAgent(agent: { x: number; y: number; vx: number; vy: number }, width: number, height: number, margin: number) {
-  if (agent.x < margin) { agent.x = margin; agent.vx = Math.abs(agent.vx); }
-  if (agent.x > width - margin) { agent.x = width - margin; agent.vx = -Math.abs(agent.vx); }
-  if (agent.y < margin) { agent.y = margin; agent.vy = Math.abs(agent.vy); }
-  if (agent.y > height - margin) { agent.y = height - margin; agent.vy = -Math.abs(agent.vy); }
+export function wrappedDelta(from: number, to: number, extent: number) {
+  let delta = to - from;
+  if (delta > extent / 2) delta -= extent;
+  else if (delta < -extent / 2) delta += extent;
+  return delta;
+}
+
+export function wrapCoordinate(value: number, extent: number) {
+  return ((value % extent) + extent) % extent;
+}
+
+export function wrapAgent(agent: { x: number; y: number }, width: number, height: number) {
+  agent.x = wrapCoordinate(agent.x, width);
+  agent.y = wrapCoordinate(agent.y, height);
 }
