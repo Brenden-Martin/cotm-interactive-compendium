@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The next Site version contains twenty gallery exhibits:
+The next Site version contains twenty-three gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -59,6 +59,9 @@ The next Site version contains twenty gallery exhibits:
 18. DEQ Atlas
 19. Manifold Golf
 20. Pendulum Laboratory
+21. The Luckfield
+22. Gibberish Generator
+23. Ratz
 
 The Compendium currently contains five linked theory entries:
 
@@ -84,6 +87,7 @@ Other established systems include:
 - **MOIRE-001 — Testing:** Moiré Field is being rebuilt as a stark-red optical tabletop with draggable printouts, corrected transparencies, sampled blur glass, and a localized fisheye lens. Preserve the title card's accidental sampling interference as an intentional feature.
 - **LAVA3D-001 — Testing:** Voxel Lava Volume extends the lamp into a true three-dimensional cylindrical particle neighborhood, projected as depth-sorted square voxels with orbit and zoom controls.
 - **BOIDS-001 — Testing:** Boids presents alignment, cohesion, and separation as a full-screen flock of black triangular agents in a flat baby-blue cloudscape, with live controls in a Moiré-style instrument panel.
+- **RATZ-001 — Testing:** Ratz adds a distinct stochastic animal-motion laboratory with intermittent locomotion and intent gates, three-neighbor clique attraction, renewable cheese scent, sparse cat pursuit, immediate and trail-mediated avoidance, per-rat fear hysteresis, panic variance, nonlinear burst-speed shaping, synchronized force updates, and a selectable cat-scent gradient view.
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
 - **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with a full UV-to-IR spectrum, an iconic linear wavelength view for Thermal temperatures, logarithmic Stellar/Cosmic views, tiered controls reaching the Planck scale, source presets, and a Wien-peak readout.
 - **HOME-001 — Testing:** The homepage now introduces COTM as “An interactive museum of emergent phenomenon in physics and art.”
@@ -191,6 +195,13 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 - **BOIDS-001 — Testing — Windowless flock.** Render a full-viewport wraparound sky containing simple black triangular agents and flat cartoon clouds built from white circles. The lower-right flight computer exposes alignment, cohesion, separation, neighborhood radius, cruise speed, cursor pressure, and staged flock size while preserving the graphic directness of the Moiré exhibit.
 - **BOIDS-002 — Tuning — Rule balance and scale.** After hands-on testing, tune the default flock density and rule strengths for desktop and mobile, then save any especially expressive parameter combinations as named presets.
+
+### Ratz
+
+- **RATZ-001 — Testing — Stochastic behavior field.** Keep Ratz as its own Gallery identity while expressing its clocks, telegraph gates, noisy heading plans, and saturating burst response through a reusable stochastic-agent core. Rats synchronously evaluate cheese scent, no more than three nearby social partners, the cat, and the cat's exponentially decaying trail before any positions advance.
+- **RATZ-002 — Testing — Cat pursuit and disappearance.** The cat chooses one target randomly from its ten nearest rats during sparse high-speed pursuit bursts. Rats saturate below the cat's effective maximum speed, cheese respawns when reached, caught rats disappear, Cat can be toggled, and Reset restores the selected population.
+- **RATZ-003 — Testing — Fear hysteresis and field inspection.** Each rat low-pass filters proximity and recent trail exposure into a persistent fear state that strengthens avoidance and panic variance after the immediate threat passes. Expose separate Fear strength and memory controls plus hidden, density, gradient-arrow, and combined scent-field views.
+- **RATZ-004 — Tuning — Motion character and mobile scale.** Hands-on review should tune burst curvature, correlation times, trail diffusion/decay, default population, pursuit sparsity, collision radii, and control-panel density without collapsing the deliberately intermittent little bursts into ordinary smooth flocking.
 
 ### YOU ARE HERE and homepage behavior
 

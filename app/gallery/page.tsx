@@ -141,6 +141,12 @@ export default function Gallery() {
           <strong>Gibberish Generator</strong>
           <small>Give a color its voice →</small>
         </Link>
+        <Link className="study ratz-entry" href="/gallery/ratz">
+          <span className="eyebrow">Exhibit 23 / Stochastic Behavior</span>
+          <div className="ratz-entry-den" aria-hidden="true"><i /><i /><i /><i /><b /><span /></div>
+          <strong>Ratz</strong>
+          <small>Follow the scent →</small>
+        </Link>
       </section>
     </main>
   );
