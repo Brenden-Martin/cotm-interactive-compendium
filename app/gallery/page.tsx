@@ -147,6 +147,12 @@ export default function Gallery() {
           <strong>Ratz</strong>
           <small>Follow the scent →</small>
         </Link>
+        <Link className="study polymorph-entry" href="/gallery/polymorphic-goo">
+          <span className="eyebrow">Exhibit 24 / Fourier Geometry</span>
+          <div className="polymorph-entry-figure" aria-hidden="true"><i /><b /><span /></div>
+          <strong>Polymorphic Goo</strong>
+          <small>Modulate the blob →</small>
+        </Link>
       </section>
     </main>
   );

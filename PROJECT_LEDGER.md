@@ -205,6 +205,12 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **RATZ-005 — Review — Brenden mobile preset.** Adopt the second photographed review settings as defaults: rat/cat correlation `5 s / 4.1 s`, wiggle `4`, panic `8`, clique attraction/radius `2.5 / 32 px`, separation/radius `6.9 / 42 px`, cheese `4.25`, pursuit `1.9`, cat repulsion `5`, trail avoidance/decay `3.35 / 17.1 s`, Fear/memory `8 / 8.85 s`, burst gain/curve `1.45 / 1.1`, and rat/cat maxima `325 / 465 px/s`.
 - **RATZ-006 — Review — Drawable briar refuges.** Hidden-UI mode becomes a touch and pointer drawing surface for toroidally wrapped briar patches. Ratz ignore and can shelter inside the bushes; the cat receives a strong anticipatory repulsion plus hard collision rejection and escape recovery so it cannot tunnel into the refuge at high speed. The laboratory can clear the briars independently, while Reset clears the complete field.
 
+### Polymorphic Goo
+
+- **GOO-001 — Review — Shared Fourier geometry engine.** Recover the original triangle → square → pentagon → hexagon Fourier-descriptor loop with cosine interpolation, dispersive rotation, a correlated fourfold harmonic wobble, stable recentering, and layered warm toon rims. Keep the contour and renderer in one shared module consumed by both Gallery and Music rather than allowing two implementations to drift.
+- **GOO-002 — Review — Five-band modulation laboratory.** The Gallery instrument independently couples shape, rotation, wobble, shadow thickness, and rim roundness to a direct slider, smooth correlated random motion, or an uploaded audio file. Audio uses instantaneous RMS from low, mid, high, and two narrower transition bands; overall waveform RMS optionally controls hue-traversal speed.
+- **MUSIC-013 — Review — Polymorphic Goo boundary geometry.** Every Sold As Is listening room can replace album art with the shared live goo raster before it enters the existing artwork-plus-spectrum DEQ boundary path. Track audio maps the same five RMS bands to the reusable geometry, and the hue can traverse at an overall-volume-dependent rate or a steady slow drift.
+
 ### YOU ARE HERE and homepage behavior
 
 - **HOME-001 — Testing — Museum identity line.** Replace the longer “evolving cabinet” introduction with the concise homepage statement “An interactive museum of emergent phenomenon in physics and art.”

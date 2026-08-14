@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import archivedPresetData from "../../gallery/deq-morph-bank/saved-presets.json";
 import sharedPresetArchiveData from "../../../analysis/deq-preset-space/data/shared-presets.json";
+import { analyseGooAudio, EMPTY_GOO_BANDS, renderPolymorphicGoo, smoothGooBands, type GooAudioBands } from "../../shared/polymorphic-goo";
 import type { SoldAsIsTrack } from "./tracks";
 
 const FIELD_RESOLUTIONS = {
@@ -14,6 +15,7 @@ const FIELD_RESOLUTIONS = {
 type FieldResolution = keyof typeof FIELD_RESOLUTIONS;
 type SpectrumLayout = "trail" | "slice";
 type SpectrumColor = "three-band" | "rainbow" | "white";
+type BoundarySource = "artwork" | "goo";
 type Field = [Float32Array, Float32Array, Float32Array];
 type DeqConfig = { k: number[]; exponent: number[]; dt: number; decay: number; noise: number };
 type DeqPreset = { id: number; config: DeqConfig };
@@ -159,6 +161,9 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const analysisStartedRef = useRef(false);
   const tempoRef = useRef({ bpm: track.fallbackBpm, offset: 0 });
   const bandsRef = useRef<[number, number, number]>([0, 0, 0]);
+  const gooBandsRef = useRef<GooAudioBands>({ ...EMPTY_GOO_BANDS });
+  const boundarySourceRef = useRef<BoundarySource>("artwork");
+  const gooHueAudioRef = useRef(true);
   const spectrumSettingsRef = useRef<SpectrumSettings>({ bins: 96, refreshRate: 24, layout: "trail", color: "three-band", preamp: 2, frequencyGain: 3, gamma: 1, boundaryStrength: 1, overlayStrength: 1 });
   const computerControlsRef = useRef<ComputerControls | null>(null);
   const seekingRef = useRef(false);
@@ -180,11 +185,15 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
   const [fieldResolution, setFieldResolution] = useState<FieldResolution>("112 × 84");
   const [presetLabel, setPresetLabel] = useState(`AUTO BANK · ${fullPresetBank.length}`);
   const [boundaryMode, setBoundaryMode] = useState("LIVE ART + SPECTRUM");
+  const [boundarySource, setBoundarySource] = useState<BoundarySource>("artwork");
+  const [gooHueAudio, setGooHueAudio] = useState(true);
 
   useEffect(() => {
     spectrumSettingsRef.current = { bins: fourierBins, refreshRate: spectrumRefreshRate, layout: spectrumLayout, color: spectrumColor, preamp: spectrumPreamp, frequencyGain: spectrumFrequencyGain, gamma: spectrumGamma, boundaryStrength: spectrumBoundaryStrength, overlayStrength: spectrumOverlayStrength };
     if (analyserRef.current) analyserRef.current.fftSize = Math.max(256, 2 ** Math.ceil(Math.log2(fourierBins * 2)));
   }, [fourierBins, spectrumRefreshRate, spectrumLayout, spectrumColor, spectrumPreamp, spectrumFrequencyGain, spectrumGamma, spectrumBoundaryStrength, spectrumOverlayStrength]);
+  useEffect(() => { boundarySourceRef.current = boundarySource; }, [boundarySource]);
+  useEffect(() => { gooHueAudioRef.current = gooHueAudio; }, [gooHueAudio]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -265,6 +274,11 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     let field: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
     let next: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
     let artwork: Field | null = null;
+    const gooBoundary: Field = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
+    const gooCanvas = document.createElement("canvas");
+    gooCanvas.width = gridWidth;
+    gooCanvas.height = gridHeight;
+    const gooContext = gooCanvas.getContext("2d", { willReadFrequently: true });
     let capturedBoundary: Field | null = null;
     let boundaryEnabled = true;
     let forcedConfig: DeqConfig | null = null;
@@ -275,6 +289,10 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
     let elapsed = 0;
     let envelope = 0;
     let lastSpectrumUpdate = 0;
+    let lastGooUpdate = 0;
+    let gooRotation = 0;
+    let gooWobblePhase = 0;
+    let gooHue = 28;
     const waveform = new Uint8Array(512);
     const frequency = new Uint8Array(256);
 
@@ -308,14 +326,15 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
         const spectrumPhase = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
         const spectrumGain = spectrumPhase * spectrumSettingsRef.current.boundaryStrength;
         capturedBoundary = [new Float32Array(cellCount), new Float32Array(cellCount), new Float32Array(cellCount)];
+        const sourceBoundary = boundarySourceRef.current === "goo" ? gooBoundary : artwork;
         for (let index = 0; index < cellCount; index += 1) {
           for (let channel = 0; channel < 3; channel += 1) {
-            const artValue = artwork?.[channel][index] ?? 0;
+            const artValue = sourceBoundary?.[channel][index] ?? 0;
             capturedBoundary[channel][index] = artValue * (1 - spectrumPhase) + spectrum[channel][index] * spectrumGain;
           }
         }
         boundaryEnabled = true;
-        setBoundaryMode("CAPTURED ART + SPECTRUM");
+        setBoundaryMode(`CAPTURED ${boundarySourceRef.current === "goo" ? "GOO" : "ART"} + SPECTRUM`);
       },
       clear: () => {
         capturedBoundary = null;
@@ -329,10 +348,10 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       if (!analyser) {
         envelope *= .94;
         bandsRef.current = bandsRef.current.map((value) => value * .94) as [number, number, number];
+        gooBandsRef.current = smoothGooBands(gooBandsRef.current, EMPTY_GOO_BANDS, .04);
         return;
       }
-      analyser.getByteTimeDomainData(waveform);
-      analyser.getByteFrequencyData(frequency);
+      gooBandsRef.current = smoothGooBands(gooBandsRef.current, analyseGooAudio(analyser, frequency, waveform), .2);
       let sum = 0;
       for (const value of waveform) sum += ((value - 128) / 128) ** 2;
       envelope = Math.max(Math.sqrt(sum / waveform.length) * 3.5, envelope * .86);
@@ -377,6 +396,32 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       }
     };
 
+    const updateGooBoundary = (deltaSeconds: number) => {
+      if (!gooContext || boundarySourceRef.current !== "goo") return;
+      if (performance.now() - lastGooUpdate < 1000 / 30) return;
+      lastGooUpdate = performance.now();
+      const bands = gooBandsRef.current;
+      gooRotation += deltaSeconds * (.08 + bands.low * 5.2);
+      gooWobblePhase += deltaSeconds * (.8 + bands.high * 8);
+      gooHue = (gooHue + deltaSeconds * (gooHueAudioRef.current ? 4 + bands.overall * 310 : 18)) % 360;
+      renderPolymorphicGoo(gooContext, gridWidth, gridHeight, {
+        shape: (bands.mid * 4.8 + elapsed / 18000) % 4,
+        wobble: Math.min(1.8, bands.high * 4.2),
+        rotation: gooRotation,
+        wobblePhase: gooWobblePhase,
+        shadowDepth: .18 + Math.min(1.2, bands.transitionLow * 3.6),
+        roundness: Math.min(1, .12 + bands.transitionHigh * 3.4),
+        hue: gooHue,
+        background: "#160b1b",
+      });
+      const pixels = gooContext.getImageData(0, 0, gridWidth, gridHeight).data;
+      for (let index = 0; index < cellCount; index++) {
+        gooBoundary[0][index] = pixels[index * 4] / 255;
+        gooBoundary[1][index] = pixels[index * 4 + 1] / 255;
+        gooBoundary[2][index] = pixels[index * 4 + 2] / 255;
+      }
+    };
+
     const step = () => {
       const audio = audioRef.current;
       const beatPosition = audio && !audio.paused
@@ -389,6 +434,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       const spectrumPhase = analyserRef.current ? .5 - .5 * Math.cos(beatPosition / track.boundaryCycleBeats * Math.PI) : 0;
       const spectrumGain = spectrumPhase * spectrumSettingsRef.current.boundaryStrength;
       const bands = bandsRef.current;
+      const sourceBoundary = boundarySourceRef.current === "goo" ? gooBoundary : artwork;
 
       for (let y = 0; y < gridHeight; y += 1) {
         const up = y === 0 ? 1 : y - 1;
@@ -408,7 +454,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
               const leftValue = sourceField[row + left];
               const downValue = sourceField[down * gridWidth + x];
               const upValue = sourceField[up * gridWidth + x];
-              const artValue = artwork?.[source][index] ?? 1;
+              const artValue = sourceBoundary?.[source][index] ?? 1;
               const liveBoundary = artValue * (1 - spectrumPhase) + spectrum[source][index] * spectrumGain;
               const boundaryValue = capturedBoundary?.[source][index] ?? liveBoundary;
               const weight = boundaryEnabled ? boundaryValue : 1;
@@ -416,10 +462,10 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
               const dy = (downValue - center) * weight;
               const gradient = Math.sqrt(dx * dx + dy * dy);
               const laplacian = boundaryEnabled
-                ? (weight + (capturedBoundary?.[source][row + right] ?? (artwork?.[source][row + right] ?? 1) * (1 - spectrumPhase) + spectrum[source][row + right] * spectrumGain)) * .5 * (rightValue - center)
-                  + (weight + (capturedBoundary?.[source][row + left] ?? (artwork?.[source][row + left] ?? 1) * (1 - spectrumPhase) + spectrum[source][row + left] * spectrumGain)) * .5 * (leftValue - center)
-                  + (weight + (capturedBoundary?.[source][down * gridWidth + x] ?? (artwork?.[source][down * gridWidth + x] ?? 1) * (1 - spectrumPhase) + spectrum[source][down * gridWidth + x] * spectrumGain)) * .5 * (downValue - center)
-                  + (weight + (capturedBoundary?.[source][up * gridWidth + x] ?? (artwork?.[source][up * gridWidth + x] ?? 1) * (1 - spectrumPhase) + spectrum[source][up * gridWidth + x] * spectrumGain)) * .5 * (upValue - center)
+                ? (weight + (capturedBoundary?.[source][row + right] ?? (sourceBoundary?.[source][row + right] ?? 1) * (1 - spectrumPhase) + spectrum[source][row + right] * spectrumGain)) * .5 * (rightValue - center)
+                  + (weight + (capturedBoundary?.[source][row + left] ?? (sourceBoundary?.[source][row + left] ?? 1) * (1 - spectrumPhase) + spectrum[source][row + left] * spectrumGain)) * .5 * (leftValue - center)
+                  + (weight + (capturedBoundary?.[source][down * gridWidth + x] ?? (sourceBoundary?.[source][down * gridWidth + x] ?? 1) * (1 - spectrumPhase) + spectrum[source][down * gridWidth + x] * spectrumGain)) * .5 * (downValue - center)
+                  + (weight + (capturedBoundary?.[source][up * gridWidth + x] ?? (sourceBoundary?.[source][up * gridWidth + x] ?? 1) * (1 - spectrumPhase) + spectrum[source][up * gridWidth + x] * spectrumGain)) * .5 * (upValue - center)
                 : rightValue + leftValue + downValue + upValue - 4 * center;
               const terms = [center * weight, dx, dy, gradient, laplacian];
               for (let template = 0; template < 5; template += 1) accumulator += config.k[indexK(destination, source, template)] * terms[template];
@@ -440,6 +486,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       last = now;
       elapsed += delta;
       sampleAudio();
+      updateGooBoundary(delta / 1000);
       step();
       step();
       const overlayStrength = spectrumSettingsRef.current.overlayStrength;
@@ -547,6 +594,18 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           <output>{Math.floor(currentSeconds / 60)}:{Math.floor(currentSeconds % 60).toString().padStart(2, "0")} / {duration}</output>
         </div>
         <div className="sai-spectrum-controls" aria-label="Spectrum analysis settings">
+          <label>Boundary geometry
+            <select value={boundarySource} onChange={(event) => { const source = event.target.value as BoundarySource; setBoundarySource(source); setBoundaryMode(`LIVE ${source === "goo" ? "POLYMORPHIC GOO" : "ART"} + SPECTRUM`); }}>
+              <option value="artwork">Album artwork</option>
+              <option value="goo">Polymorphic goo</option>
+            </select>
+          </label>
+          <label>Goo hue motion
+            <select value={gooHueAudio ? "audio" : "drift"} onChange={(event) => setGooHueAudio(event.target.value === "audio")}>
+              <option value="audio">Overall RMS speed</option>
+              <option value="drift">Steady slow drift</option>
+            </select>
+          </label>
           <label>Fourier bins
             <select value={fourierBins} onChange={(event) => setFourierBins(Number(event.target.value))}>
               {[32, 64, 96, 128, 256].map((value) => <option value={value} key={value}>{value}</option>)}
