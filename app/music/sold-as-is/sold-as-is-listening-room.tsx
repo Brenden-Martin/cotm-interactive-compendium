@@ -427,7 +427,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
       gooRotation += deltaSeconds * rotationDrive * (waveformMode ? 2.5 : 2.3);
       gooWobblePhase += deltaSeconds * (.7 + wobbleDrive * 5);
       if (gooHueAudioRef.current && waveformMode) gooHue = (gooHue + deltaSeconds * waveforms.overall * eq.overall * 190 + 360) % 360;
-      else gooHue = (gooHue + deltaSeconds * (gooHueAudioRef.current ? bands.overall * eq.overall * 180 : 18)) % 360;
+      else gooHue = (gooHue + deltaSeconds * (gooHueAudioRef.current ? drive("overall") * 180 : 18)) % 360;
       renderPolymorphicGoo(gooContext, gridWidth, gridHeight, {
         shape: shapeDrive * 4,
         wobble: wobbleDrive * 1.45,
@@ -632,7 +632,7 @@ export function SoldAsIsListeningRoom({ track }: { track: SoldAsIsTrack }) {
           </label>
           <label>Goo audio drive
             <select value={gooDriveMode} onChange={(event) => setGooDriveMode(event.target.value as GooDriveMode)}>
-              <option value="rms">Band RMS envelopes</option>
+              <option value="rms">Log RMS envelopes</option>
               <option value="waveform">Filtered waveforms</option>
             </select>
           </label>

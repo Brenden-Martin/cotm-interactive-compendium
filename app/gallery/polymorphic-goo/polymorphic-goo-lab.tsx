@@ -180,7 +180,7 @@ export function PolymorphicGooLab() {
       wobblePhase += delta * (.7 + wobble * 4.5);
       if (hueModeRef.current === "slider") movingHue = hueRef.current;
       else if (hueModeRef.current === "audio" && driveModeRef.current === "waveform") movingHue = (movingHue + delta * waveforms.overall * eq.overall * 180 + 360) % 360;
-      else movingHue = (movingHue + delta * (hueModeRef.current === "audio" ? smoothedBands.overall * eq.overall * 170 : 24)) % 360;
+      else movingHue = (movingHue + delta * (hueModeRef.current === "audio" ? drive("overall") * 170 : 24)) % 360;
 
       const box = canvas.getBoundingClientRect();
       renderPolymorphicGoo(context, box.width, box.height, {
@@ -219,7 +219,7 @@ export function PolymorphicGooLab() {
           <label><input type="file" accept="audio/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) chooseAudio(file); }} /><b>Choose audio file</b></label>
           <small>{audioName}</small>
           <audio ref={audioRef} controls onPlay={() => void connectAudio()}>Your browser does not support audio playback.</audio>
-          <label className="polymorph-drive-mode">Audio coupling<select value={driveMode} onChange={(event) => setDriveMode(event.target.value as GooDriveMode)}><option value="rms">Band RMS envelopes</option><option value="waveform">Filtered waveforms</option></select></label>
+          <label className="polymorph-drive-mode">Audio coupling<select value={driveMode} onChange={(event) => setDriveMode(event.target.value as GooDriveMode)}><option value="rms">Log RMS envelopes</option><option value="waveform">Filtered waveforms</option></select></label>
         </div>
         <div className="polymorph-parameter-list">
           {(Object.keys(LABELS) as ParameterKey[]).map((key) => (
@@ -233,14 +233,14 @@ export function PolymorphicGooLab() {
           ))}
         </div>
         <div className="polymorph-hue">
-          <label>Hue traversal<select value={hueMode} onChange={(event) => setHueMode(event.target.value as HueMode)}><option value="slider">Fixed hue</option><option value="drift">Slow drift</option><option value="audio">Overall RMS speed</option></select></label>
+          <label>Hue traversal<select value={hueMode} onChange={(event) => setHueMode(event.target.value as HueMode)}><option value="slider">Fixed hue</option><option value="drift">Slow drift</option><option value="audio">Overall log-RMS speed</option></select></label>
           <input aria-label="Fixed hue" type="range" min="0" max="360" step="1" value={hue} disabled={hueMode !== "slider"} onChange={(event) => setHue(Number(event.target.value))} />
         </div>
         <fieldset className="polymorph-eq"><legend>Coupling equalizer</legend>{(Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => <label key={key}><span>{GOO_BAND_LABELS[key]}</span><output>{equalizer[key].toFixed(2)}×</output><input type="range" min="0" max="8" step=".05" value={equalizer[key]} onChange={(event) => setEqualizer((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</fieldset>
         <div className="polymorph-meters" aria-label="Current audio band RMS levels">
           {(["low", "mid", "transitionLow", "transitionHigh", "high", "overall"] as const).map((key) => <span key={key}><i style={{ transform: `scaleX(${clamp01(bands[key] * 2.8)})` }} /><b>{key.replace("transition", "T")}</b></span>)}
         </div>
-        <p>The original triangle → square → pentagon → hexagon Fourier loop is intact. RMS mode follows band energy envelopes; Waveform mode feeds five genuinely band-filtered time-domain channels directly into the parameters. The equalizer trims coupling without changing playback volume.</p>
+        <p>The original triangle → square → pentagon → hexagon Fourier loop is intact. Log-RMS mode compresses sustained high band energy before modulation; Waveform mode feeds five genuinely band-filtered time-domain channels directly into the parameters. The equalizer trims coupling without changing playback volume.</p>
       </aside>
     </section>
   );

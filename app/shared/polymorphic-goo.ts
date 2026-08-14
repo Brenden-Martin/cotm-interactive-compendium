@@ -268,5 +268,6 @@ export function sampleGooWaveforms(bank: GooWaveformBank, buffers: GooWaveformBu
 }
 
 export function scaleGooAudioDrive(mode: GooDriveMode, key: GooBandKey, rms: GooAudioBands, waveforms: GooAudioBands, equalizer: GooEqualizer) {
-  return (mode === "waveform" ? waveforms[key] : rms[key]) * equalizer[key];
+  const sample = mode === "waveform" ? waveforms[key] : Math.log1p(Math.max(0, rms[key]));
+  return sample * equalizer[key];
 }
