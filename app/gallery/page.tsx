@@ -153,6 +153,12 @@ export default function Gallery() {
           <strong>Polymorphic Goo</strong>
           <small>Modulate the blob →</small>
         </Link>
+        <Link className="study chromadepth-entry" href="/gallery/chromadepth">
+          <span className="eyebrow">Exhibit 25 / Depth Encoding</span>
+          <div className="chromadepth-entry-figure" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+          <strong>ChromaDepth</strong>
+          <small>Put on the spectrum →</small>
+        </Link>
       </section>
     </main>
   );
