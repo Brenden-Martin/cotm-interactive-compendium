@@ -107,6 +107,19 @@ const randomNormal = () => {
 };
 const cloneSpecies = () => SPECIES_DEFAULTS.map((species) => ({ ...species }));
 
+function chromadepthRgb(depth: number, tension: number) {
+  const segment = clamp(depth, 0, 1) * 2;
+  const local = segment < 1 ? segment : segment - 1;
+  const power = 1 + tension * 6;
+  const towardNext = Math.pow(local, power) / Math.max(1e-8, Math.pow(local, power) + Math.pow(1 - local, power));
+  let red = segment < 1 ? 1 - towardNext : 0;
+  let green = segment < 1 ? towardNext : 1 - towardNext;
+  let blue = segment < 1 ? 0 : towardNext;
+  const brightest = Math.max(red, green, blue, 1e-8);
+  red /= brightest; green /= brightest; blue /= brightest;
+  return `rgb(${Math.round(red * 255)} ${Math.round(green * 255)} ${Math.round(blue * 255)})`;
+}
+
 function ControlSlider({ label, value, min, max, step, onChange }: { label: string; value: number; min: number; max: number; step: number; onChange: (value: number) => void }) {
   const decimals = step < .02 ? 2 : step < .1 ? 2 : step < 1 ? 1 : 0;
   return <label className="chromadepth-slider"><span>{label}</span><output>{value.toFixed(decimals)}</output><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>;
@@ -166,7 +179,9 @@ export function ChromadepthLab() {
   const routesRef = useRef<ModulationRoute[]>(DEFAULT_ROUTES);
   const driftRef = useRef(.32);
   const perspectiveRef = useRef(1.62);
+  const cameraDistanceRef = useRef(4.5);
   const particleScaleRef = useRef(1);
+  const colorTensionRef = useRef(.78);
   const viewRef = useRef({ yaw: -.28, pitch: .16 });
   const pointerRef = useRef({ active: false, x: 0, y: 0 });
   const [species, setSpecies] = useState<SpeciesParameters[]>(cloneSpecies());
@@ -175,7 +190,9 @@ export function ChromadepthLab() {
   const [particleCount, setParticleCount] = useState(720);
   const [parameterDrift, setParameterDrift] = useState(.32);
   const [perspective, setPerspective] = useState(1.62);
+  const [cameraDistance, setCameraDistance] = useState(4.5);
   const [particleScale, setParticleScale] = useState(1);
+  const [colorTension, setColorTension] = useState(.78);
   const [paused, setPaused] = useState(false);
   const [controlsHidden, setControlsHidden] = useState(false);
   const [routes, setRoutes] = useState<ModulationRoute[]>(DEFAULT_ROUTES);
@@ -189,7 +206,9 @@ export function ChromadepthLab() {
   useEffect(() => { routesRef.current = routes; }, [routes]);
   useEffect(() => { driftRef.current = parameterDrift; }, [parameterDrift]);
   useEffect(() => { perspectiveRef.current = perspective; }, [perspective]);
+  useEffect(() => { cameraDistanceRef.current = cameraDistance; }, [cameraDistance]);
   useEffect(() => { particleScaleRef.current = particleScale; }, [particleScale]);
+  useEffect(() => { colorTensionRef.current = colorTension; }, [colorTension]);
 
   const reset = useCallback(() => {
     particlesRef.current = seedParticles(particleCount, speciesCount, speciesRef.current);
@@ -379,13 +398,13 @@ export function ChromadepthLab() {
       const width = box.width;
       const height = box.height;
       const shortSide = Math.min(width, height);
-      context.fillStyle = "#05030a";
+      context.fillStyle = "#000";
       context.fillRect(0, 0, width, height);
       const yaw = viewRef.current.yaw;
       const pitch = viewRef.current.pitch;
       const cosineYaw = Math.cos(yaw), sineYaw = Math.sin(yaw);
       const cosinePitch = Math.cos(pitch), sinePitch = Math.sin(pitch);
-      const cameraDistance = 3.65;
+      const cameraDistance = cameraDistanceRef.current;
       const projection = particlesRef.current.map((particle) => {
         const xzX = particle.x * cosineYaw - particle.z * sineYaw;
         const xzZ = particle.x * sineYaw + particle.z * cosineYaw;
@@ -395,13 +414,6 @@ export function ChromadepthLab() {
         return { particle, viewZ, x: width * .5 + xzX * shortSide * scale, y: height * .5 + viewY * shortSide * scale, scale };
       }).sort((a, b) => a.viewZ - b.viewZ);
 
-      context.lineWidth = 1;
-      context.strokeStyle = "rgba(255,255,255,.08)";
-      context.beginPath();
-      context.arc(width * .5, height * .5, shortSide * .18, 0, TAU);
-      context.arc(width * .5, height * .5, shortSide * .34, 0, TAU);
-      context.stroke();
-
       let meanSpeed = 0;
       const params = speciesRef.current;
       for (const item of projection) {
@@ -410,19 +422,12 @@ export function ChromadepthLab() {
         meanSpeed += speed;
         const speedRatio = clamp(speed / Math.max(.01, params[particle.species].maximumSpeed), 0, 1);
         const depth = clamp((WORLD_RADIUS - item.viewZ) / WORLD_EXTENT, 0, 1);
-        const hue = depth * 240;
         const radius = clamp(6.8 * particleScaleRef.current * item.scale * (1 + speedRatio * .52), 1.2, 22);
         const exponent = 2 + speedRatio * 18;
         const angle = Math.atan2(particle.vy, particle.vx) + time * .09 * (particle.species - 1);
-        drawSuperellipse(context, item.x + radius * .18, item.y + radius * .28, radius, exponent, angle);
-        context.fillStyle = `hsla(${hue} 90% 12% / .72)`;
-        context.fill();
         drawSuperellipse(context, item.x, item.y, radius, exponent, angle);
-        context.fillStyle = `hsl(${hue} 96% ${44 + speedRatio * 24}%)`;
+        context.fillStyle = chromadepthRgb(depth, colorTensionRef.current);
         context.fill();
-        context.strokeStyle = `hsl(${hue} 100% ${78 + speedRatio * 12}%)`;
-        context.lineWidth = clamp(radius * .13, .65, 2.2);
-        context.stroke();
       }
       return meanSpeed / Math.max(1, projection.length);
     };
@@ -478,7 +483,7 @@ export function ChromadepthLab() {
     <main className={`chromadepth-page${controlsHidden ? " controls-hidden" : ""}`}>
       <canvas ref={canvasRef} className="chromadepth-canvas" aria-label="Perspective particle sculpture with red near particles and blue far particles" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} />
       <header className="chromadepth-head"><Link href="/gallery">← Gallery</Link><span className="eyebrow">Interactive Exhibit 25 · Depth Encoding</span><h1>Chroma<br />Depth</h1><p>A 3D kinetic sculpture living very insistently on a 2D plane. Drag the field to orbit the camera.</p></header>
-      <button className="chromadepth-ui-toggle" onClick={() => setControlsHidden((value) => !value)}>{controlsHidden ? "Show laboratory" : "Hide laboratory"}</button>
+      <button className="chromadepth-ui-toggle" onClick={() => setControlsHidden((value) => !value)}>{controlsHidden ? "UI" : "Hide laboratory"}</button>
       <aside className="chromadepth-controls" aria-label="Chromadepth particle laboratory">
         <div className="chromadepth-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={reset}>Reseed</button><span>{particleCount} particles · {stats.fps} fps · v̄ {stats.meanSpeed.toFixed(2)}</span></div>
         <details open><summary>Field and camera</summary>
@@ -486,7 +491,9 @@ export function ChromadepthLab() {
             <label className="chromadepth-select">Independent species<select value={speciesCount} onChange={(event) => { const value = Number(event.target.value); setSpeciesCount(value); setSelectedSpecies((current) => Math.min(current, value - 1)); }}><option value="1">One</option><option value="2">Two</option><option value="3">Three</option></select></label>
             <ControlSlider label="Particle count · reseeds" value={particleCount} min={120} max={1400} step={20} onChange={setParticleCount} />
             <ControlSlider label="Perspective strength" value={perspective} min={.65} max={2.8} step={.01} onChange={setPerspective} />
+            <ControlSlider label="Camera distance / zoom" value={cameraDistance} min={2.2} max={9} step={.02} onChange={setCameraDistance} />
             <ControlSlider label="Particle scale" value={particleScale} min={.35} max={3} step={.01} onChange={setParticleScale} />
+            <ControlSlider label="RGB anchor tension" value={colorTension} min={0} max={1.5} step={.01} onChange={setColorTension} />
             <ControlSlider label="Autonomous parameter drift" value={parameterDrift} min={0} max={1.5} step={.01} onChange={setParameterDrift} />
           </div>
         </details>
@@ -506,7 +513,7 @@ export function ChromadepthLab() {
             <label><span>Strength</span><output>{route.strength.toFixed(2)}</output><input type="range" min="-3" max="3" step=".05" value={route.strength} onChange={(event) => setRoutes((current) => current.map((item) => item.id === route.id ? { ...item, strength: Number(event.target.value) } : item))} /></label>
           </div>)}</div>
         </details>
-        <p className="chromadepth-footnote">Near → far is red → yellow → green → cyan → blue. Brightness remains available for speed accents, while projected size follows inverse camera distance.</p>
+        <p className="chromadepth-footnote">Near → far is pure red → green → blue. RGB tension compresses the mixed-color transitions while every emitted color keeps maximum display saturation and value. Projected size follows inverse camera distance.</p>
       </aside>
     </main>
   );
