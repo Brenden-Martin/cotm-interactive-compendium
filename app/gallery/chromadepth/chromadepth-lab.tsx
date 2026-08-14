@@ -51,6 +51,7 @@ type ModulationRoute = {
   target: number;
   strength: number;
 };
+type ChromadepthColorMode = "tension" | "discrete";
 
 const TAU = Math.PI * 2;
 const WORLD_RADIUS = 1.55;
@@ -107,7 +108,12 @@ const randomNormal = () => {
 };
 const cloneSpecies = () => SPECIES_DEFAULTS.map((species) => ({ ...species }));
 
-function chromadepthRgb(depth: number, tension: number) {
+function chromadepthRgb(depth: number, tension: number, mode: ChromadepthColorMode) {
+  if (mode === "discrete") {
+    if (depth < .25) return "rgb(255 0 0)";
+    if (depth < .75) return "rgb(0 255 0)";
+    return "rgb(0 0 255)";
+  }
   const segment = clamp(depth, 0, 1) * 2;
   const local = segment < 1 ? segment : segment - 1;
   const power = 1 + tension * 6;
@@ -182,6 +188,7 @@ export function ChromadepthLab() {
   const cameraDistanceRef = useRef(4.5);
   const particleScaleRef = useRef(1);
   const colorTensionRef = useRef(.78);
+  const colorModeRef = useRef<ChromadepthColorMode>("tension");
   const viewRef = useRef({ yaw: -.28, pitch: .16 });
   const pointerRef = useRef({ active: false, x: 0, y: 0 });
   const [species, setSpecies] = useState<SpeciesParameters[]>(cloneSpecies());
@@ -193,6 +200,7 @@ export function ChromadepthLab() {
   const [cameraDistance, setCameraDistance] = useState(4.5);
   const [particleScale, setParticleScale] = useState(1);
   const [colorTension, setColorTension] = useState(.78);
+  const [colorMode, setColorMode] = useState<ChromadepthColorMode>("tension");
   const [paused, setPaused] = useState(false);
   const [controlsHidden, setControlsHidden] = useState(false);
   const [routes, setRoutes] = useState<ModulationRoute[]>(DEFAULT_ROUTES);
@@ -209,6 +217,7 @@ export function ChromadepthLab() {
   useEffect(() => { cameraDistanceRef.current = cameraDistance; }, [cameraDistance]);
   useEffect(() => { particleScaleRef.current = particleScale; }, [particleScale]);
   useEffect(() => { colorTensionRef.current = colorTension; }, [colorTension]);
+  useEffect(() => { colorModeRef.current = colorMode; }, [colorMode]);
 
   const reset = useCallback(() => {
     particlesRef.current = seedParticles(particleCount, speciesCount, speciesRef.current);
@@ -426,7 +435,7 @@ export function ChromadepthLab() {
         const exponent = 2 + speedRatio * 18;
         const angle = Math.atan2(particle.vy, particle.vx) + time * .09 * (particle.species - 1);
         drawSuperellipse(context, item.x, item.y, radius, exponent, angle);
-        context.fillStyle = chromadepthRgb(depth, colorTensionRef.current);
+        context.fillStyle = chromadepthRgb(depth, colorTensionRef.current, colorModeRef.current);
         context.fill();
       }
       return meanSpeed / Math.max(1, projection.length);
@@ -493,6 +502,7 @@ export function ChromadepthLab() {
             <ControlSlider label="Perspective strength" value={perspective} min={.65} max={2.8} step={.01} onChange={setPerspective} />
             <ControlSlider label="Camera distance / zoom" value={cameraDistance} min={2.2} max={9} step={.02} onChange={setCameraDistance} />
             <ControlSlider label="Particle scale" value={particleScale} min={.35} max={3} step={.01} onChange={setParticleScale} />
+            <label className="chromadepth-select">Depth color map<select value={colorMode} onChange={(event) => setColorMode(event.target.value as ChromadepthColorMode)}><option value="tension">Tensioned continuous RGB</option><option value="discrete">Discrete R / G / B</option></select></label>
             <ControlSlider label="RGB anchor tension" value={colorTension} min={0} max={1.5} step={.01} onChange={setColorTension} />
             <ControlSlider label="Autonomous parameter drift" value={parameterDrift} min={0} max={1.5} step={.01} onChange={setParameterDrift} />
           </div>
@@ -513,7 +523,7 @@ export function ChromadepthLab() {
             <label><span>Strength</span><output>{route.strength.toFixed(2)}</output><input type="range" min="-3" max="3" step=".05" value={route.strength} onChange={(event) => setRoutes((current) => current.map((item) => item.id === route.id ? { ...item, strength: Number(event.target.value) } : item))} /></label>
           </div>)}</div>
         </details>
-        <p className="chromadepth-footnote">Near → far is pure red → green → blue. RGB tension compresses the mixed-color transitions while every emitted color keeps maximum display saturation and value. Projected size follows inverse camera distance.</p>
+        <p className="chromadepth-footnote">Near → far is pure red → green → blue. RGB tension compresses the mixed-color transitions while every emitted color keeps maximum display saturation and value; discrete mode uses only the three unmixed display primaries. Projected size follows inverse camera distance.</p>
       </aside>
     </main>
   );
