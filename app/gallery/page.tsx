@@ -159,6 +159,12 @@ export default function Gallery() {
           <strong>ChromaDepth</strong>
           <small>Put on the spectrum →</small>
         </Link>
+        <Link className="study phosphor-entry" href="/gallery/phosphor-scan">
+          <span className="eyebrow">Exhibit 26 / Raster Persistence</span>
+          <div className="phosphor-entry-figure" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Phosphor Scan</strong>
+          <small>Excite the raster →</small>
+        </Link>
       </section>
     </main>
   );

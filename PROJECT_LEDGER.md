@@ -218,6 +218,12 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **CHROMA-002 — Review — Generalized multi-species dynamics.** Run one to three independently tuned particle species through a shared force engine combining vortex circulation, central gravity, thermal buoyancy, viscosity, cohesion/surface tension, Boids alignment and separation, correlated stochastic motion, gated activity, cross-species attraction, panic, and fear memory. Support at least 1,400 particles through bounded stochastic neighbor sampling rather than an all-pairs solve.
 - **CHROMA-003 — Review — Mean-centered audio modulation matrix.** Reuse the shared six-band analysis vocabulary and let six routable log-RMS sources target selected particle parameters for all or one species. Subtract a slow per-band mean before applying bipolar route strength so audio fluctuates about each static base setting rather than replacing it.
 
+### Phosphor Scan
+
+- **PHOS-001 — Review — Portable serial-raster engine.** Draw a white, image, or realtime video source as an explicitly ordered raster of individually excited phosphor strips over an exponentially decaying field. Slow draw rates expose the traversal dot by dot, while fast rates batch only consecutive raster samples into streaks and cap suspended-tab backlog so the scan resumes honestly rather than racing through stale work.
+- **PHOS-002 — Review — Waveform and evolving-noise deflection.** Let uploaded modulation audio displace each scanline directly through its time-domain waveform or drive a shared one-dimensional fractal-noise field with independently controlled roughness, harmonic count, spatial scale, evolution rate, strength, scan density, strip width, blue underglow, and persistence.
+- **PHOS-003 — Review — Complete audio coupling matrix.** Reuse the shared six-band analyzer and expose all 66 bipolar band-to-parameter routes. Lightly smoothed log-RMS is mean-centered per band before modulation, preserving every static control as the operating point and keeping the renderer independent from the Gallery laboratory so Sold As Is can consume the same engine later without a fork.
+
 ### YOU ARE HERE and homepage behavior
 
 - **HOME-001 — Testing — Museum identity line.** Replace the longer “evolving cabinet” introduction with the concise homepage statement “An interactive museum of emergent phenomenon in physics and art.”
