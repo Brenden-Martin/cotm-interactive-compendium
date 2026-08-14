@@ -7,6 +7,12 @@ export type GooAudioBands = {
   overall: number;
 };
 
+export type GooBandKey = keyof GooAudioBands;
+export type GooEqualizer = Record<GooBandKey, number>;
+export type GooDriveMode = "rms" | "waveform";
+export type GooWaveformBank = Record<GooBandKey, AnalyserNode>;
+export type GooWaveformBuffers = Record<GooBandKey, Float32Array>;
+
 export type GooFrame = {
   shape: number;
   wobble: number;
@@ -25,6 +31,24 @@ export const EMPTY_GOO_BANDS: GooAudioBands = {
   transitionHigh: 0,
   high: 0,
   overall: 0,
+};
+
+export const DEFAULT_GOO_EQUALIZER: GooEqualizer = {
+  low: .8,
+  mid: .8,
+  transitionLow: .75,
+  transitionHigh: .75,
+  high: .8,
+  overall: .85,
+};
+
+export const GOO_BAND_LABELS: Record<GooBandKey, string> = {
+  low: "Low · 30–180 Hz",
+  mid: "Mid · 180–1000 Hz",
+  transitionLow: "Transition A · 1–1.9 kHz",
+  transitionHigh: "Transition B · 1.9–3.4 kHz",
+  high: "High · 3.4–12 kHz",
+  overall: "Overall waveform",
 };
 
 type Complex = { re: number; im: number };
@@ -198,4 +222,45 @@ export function smoothGooBands(previous: GooAudioBands, next: GooAudioBands, amo
     high: previous.high + (next.high - previous.high) * amount,
     overall: previous.overall + (next.overall - previous.overall) * amount,
   };
+}
+
+export function createGooWaveformBank(context: AudioContext, source: AudioNode, overallAnalyser: AnalyserNode): GooWaveformBank {
+  const silent = context.createGain();
+  silent.gain.value = 0;
+  silent.connect(context.destination);
+  const makeBand = (type: BiquadFilterType, frequency: number, q: number) => {
+    const filter = context.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.value = frequency;
+    filter.Q.value = q;
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0;
+    source.connect(filter);
+    filter.connect(analyser);
+    analyser.connect(silent);
+    return analyser;
+  };
+  return {
+    low: makeBand("lowpass", 180, .72),
+    mid: makeBand("bandpass", 425, .52),
+    transitionLow: makeBand("bandpass", 1380, 1.5),
+    transitionHigh: makeBand("bandpass", 2540, 1.7),
+    high: makeBand("highpass", 3400, .72),
+    overall: overallAnalyser,
+  };
+}
+
+export function createGooWaveformBuffers(bank: GooWaveformBank): GooWaveformBuffers {
+  return Object.fromEntries((Object.keys(bank) as GooBandKey[]).map((key) => [key, new Float32Array(bank[key].fftSize)])) as GooWaveformBuffers;
+}
+
+export function sampleGooWaveforms(bank: GooWaveformBank, buffers: GooWaveformBuffers): GooAudioBands {
+  const result = { ...EMPTY_GOO_BANDS };
+  (Object.keys(bank) as GooBandKey[]).forEach((key) => {
+    const buffer = buffers[key];
+    bank[key].getFloatTimeDomainData(buffer);
+    result[key] = Math.max(-1, Math.min(1, buffer[buffer.length - 1]));
+  });
+  return result;
 }

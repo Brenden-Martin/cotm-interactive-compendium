@@ -3,10 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import {
   analyseGooAudio,
+  createGooWaveformBank,
+  createGooWaveformBuffers,
+  DEFAULT_GOO_EQUALIZER,
   EMPTY_GOO_BANDS,
+  GOO_BAND_LABELS,
   renderPolymorphicGoo,
+  sampleGooWaveforms,
   smoothGooBands,
   type GooAudioBands,
+  type GooBandKey,
+  type GooDriveMode,
+  type GooEqualizer,
+  type GooWaveformBank,
+  type GooWaveformBuffers,
 } from "../../shared/polymorphic-goo";
 
 type SourceMode = "slider" | "random" | "audio";
@@ -45,15 +55,21 @@ export function PolymorphicGooLab() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const waveformBankRef = useRef<GooWaveformBank | null>(null);
+  const waveformBuffersRef = useRef<GooWaveformBuffers | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const sourceRef = useRef<SourceMap>(INITIAL_SOURCES);
   const valueRef = useRef<ValueMap>(INITIAL_VALUES);
   const hueModeRef = useRef<HueMode>("audio");
   const hueRef = useRef(25);
+  const driveModeRef = useRef<GooDriveMode>("rms");
+  const equalizerRef = useRef<GooEqualizer>({ ...DEFAULT_GOO_EQUALIZER });
   const [sources, setSources] = useState<SourceMap>(INITIAL_SOURCES);
   const [values, setValues] = useState<ValueMap>(INITIAL_VALUES);
   const [hueMode, setHueMode] = useState<HueMode>("audio");
   const [hue, setHue] = useState(25);
+  const [driveMode, setDriveMode] = useState<GooDriveMode>("rms");
+  const [equalizer, setEqualizer] = useState<GooEqualizer>({ ...DEFAULT_GOO_EQUALIZER });
   const [audioName, setAudioName] = useState("No audio file loaded");
   const [bands, setBands] = useState<GooAudioBands>(EMPTY_GOO_BANDS);
 
@@ -61,6 +77,8 @@ export function PolymorphicGooLab() {
   useEffect(() => { valueRef.current = values; }, [values]);
   useEffect(() => { hueModeRef.current = hueMode; }, [hueMode]);
   useEffect(() => { hueRef.current = hue; }, [hue]);
+  useEffect(() => { driveModeRef.current = driveMode; }, [driveMode]);
+  useEffect(() => { equalizerRef.current = equalizer; }, [equalizer]);
 
   const connectAudio = async () => {
     const audio = audioRef.current;
@@ -72,8 +90,12 @@ export function PolymorphicGooLab() {
       const analyser = context.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = .35;
-      context.createMediaElementSource(audio).connect(analyser);
+      const source = context.createMediaElementSource(audio);
+      source.connect(analyser);
       analyser.connect(context.destination);
+      const waveformBank = createGooWaveformBank(context, source, analyser);
+      waveformBankRef.current = waveformBank;
+      waveformBuffersRef.current = createGooWaveformBuffers(waveformBank);
       audioContextRef.current = context;
       analyserRef.current = analyser;
     }
@@ -102,6 +124,7 @@ export function PolymorphicGooLab() {
     let last = performance.now();
     let lastMeter = 0;
     let smoothedBands = { ...EMPTY_GOO_BANDS };
+    let waveforms = { ...EMPTY_GOO_BANDS };
     let rotation = 0;
     let wobblePhase = 0;
     let movingHue = 25;
@@ -135,18 +158,30 @@ export function PolymorphicGooLab() {
       });
 
       const analyser = analyserRef.current;
-      if (analyser) smoothedBands = smoothGooBands(smoothedBands, analyseGooAudio(analyser, frequency, waveform), .2);
-      else smoothedBands = smoothGooBands(smoothedBands, EMPTY_GOO_BANDS, .035);
-
-      const shape = resolve("shape", smoothedBands.mid * 2.9);
-      const wobble = resolve("wobble", smoothedBands.high * 3.5);
-      const rotationSpeed = resolve("rotation", smoothedBands.low * 2.5);
-      const shadowDepth = resolve("shadowDepth", smoothedBands.transitionLow * 3.2);
-      const roundness = resolve("roundness", smoothedBands.transitionHigh * 3.4);
-      rotation += delta * (.08 + rotationSpeed * 1.55);
+      const waveformBank = waveformBankRef.current;
+      const waveformBuffers = waveformBuffersRef.current;
+      if (analyser) {
+        smoothedBands = smoothGooBands(smoothedBands, analyseGooAudio(analyser, frequency, waveform), .2);
+        if (waveformBank && waveformBuffers) waveforms = sampleGooWaveforms(waveformBank, waveformBuffers);
+      } else {
+        smoothedBands = smoothGooBands(smoothedBands, EMPTY_GOO_BANDS, .035);
+        waveforms = { ...EMPTY_GOO_BANDS };
+      }
+      const eq = equalizerRef.current;
+      const normalizedDrive = (key: GooBandKey) => driveModeRef.current === "waveform"
+        ? clamp01(.5 + waveforms[key] * eq[key] * .5)
+        : clamp01(smoothedBands[key] * eq[key]);
+      const shape = resolve("shape", normalizedDrive("mid"));
+      const wobble = resolve("wobble", normalizedDrive("high"));
+      const rotationAudio = driveModeRef.current === "waveform" ? waveforms.low * eq.low : normalizedDrive("low");
+      const rotationSpeed = sourceRef.current.rotation === "audio" ? rotationAudio : resolve("rotation", normalizedDrive("low"));
+      const shadowDepth = resolve("shadowDepth", normalizedDrive("transitionLow"));
+      const roundness = resolve("roundness", normalizedDrive("transitionHigh"));
+      rotation += delta * (sourceRef.current.rotation === "audio" && driveModeRef.current === "waveform" ? rotationSpeed * 2.2 : .08 + rotationSpeed * 1.55);
       wobblePhase += delta * (.7 + wobble * 4.5);
       if (hueModeRef.current === "slider") movingHue = hueRef.current;
-      else movingHue = (movingHue + delta * (hueModeRef.current === "audio" ? 7 + smoothedBands.overall * 260 : 24)) % 360;
+      else if (hueModeRef.current === "audio" && driveModeRef.current === "waveform") movingHue = (movingHue + delta * waveforms.overall * eq.overall * 180 + 360) % 360;
+      else movingHue = (movingHue + delta * (hueModeRef.current === "audio" ? 5 + smoothedBands.overall * eq.overall * 170 : 24)) % 360;
 
       const box = canvas.getBoundingClientRect();
       renderPolymorphicGoo(context, box.width, box.height, {
@@ -185,6 +220,7 @@ export function PolymorphicGooLab() {
           <label><input type="file" accept="audio/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) chooseAudio(file); }} /><b>Choose audio file</b></label>
           <small>{audioName}</small>
           <audio ref={audioRef} controls onPlay={() => void connectAudio()}>Your browser does not support audio playback.</audio>
+          <label className="polymorph-drive-mode">Audio coupling<select value={driveMode} onChange={(event) => setDriveMode(event.target.value as GooDriveMode)}><option value="rms">Band RMS envelopes</option><option value="waveform">Filtered waveforms</option></select></label>
         </div>
         <div className="polymorph-parameter-list">
           {(Object.keys(LABELS) as ParameterKey[]).map((key) => (
@@ -201,10 +237,11 @@ export function PolymorphicGooLab() {
           <label>Hue traversal<select value={hueMode} onChange={(event) => setHueMode(event.target.value as HueMode)}><option value="slider">Fixed hue</option><option value="drift">Slow drift</option><option value="audio">Overall RMS speed</option></select></label>
           <input aria-label="Fixed hue" type="range" min="0" max="360" step="1" value={hue} disabled={hueMode !== "slider"} onChange={(event) => setHue(Number(event.target.value))} />
         </div>
+        <fieldset className="polymorph-eq"><legend>Coupling equalizer</legend>{(Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => <label key={key}><span>{GOO_BAND_LABELS[key]}</span><output>{equalizer[key].toFixed(2)}×</output><input type="range" min="0" max="3" step=".05" value={equalizer[key]} onChange={(event) => setEqualizer((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}</fieldset>
         <div className="polymorph-meters" aria-label="Current audio band RMS levels">
           {(["low", "mid", "transitionLow", "transitionHigh", "high", "overall"] as const).map((key) => <span key={key}><i style={{ transform: `scaleX(${clamp01(bands[key] * 2.8)})` }} /><b>{key.replace("transition", "T")}</b></span>)}
         </div>
-        <p>The original triangle → square → pentagon → hexagon Fourier loop is intact. Audio mode maps instantaneous band RMS to rotation, shape, wobble, and the two toon-rim controls; overall RMS controls hue-traversal speed.</p>
+        <p>The original triangle → square → pentagon → hexagon Fourier loop is intact. RMS mode follows band energy envelopes; Waveform mode feeds five genuinely band-filtered time-domain channels directly into the parameters. The equalizer trims coupling without changing playback volume.</p>
       </aside>
     </section>
   );
