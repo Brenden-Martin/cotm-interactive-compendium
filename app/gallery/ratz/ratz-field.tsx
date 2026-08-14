@@ -21,6 +21,8 @@ type Parameters = {
   panic: number;
   socialAttraction: number;
   socialRadius: number;
+  separation: number;
+  separationRadius: number;
   cheeseAttraction: number;
   catPursuit: number;
   catRepulsion: number;
@@ -44,6 +46,7 @@ type Rat = {
   vy: number;
   angle: number;
   wanderAngle: number;
+  wanderTarget: number;
   turnClock: number;
   wigglePhase: number;
   fear: number;
@@ -60,6 +63,7 @@ type Cat = {
   vy: number;
   angle: number;
   wanderAngle: number;
+  wanderTarget: number;
   turnClock: number;
   pursuitGate: TelegraphGate;
   targetId: number | null;
@@ -77,12 +81,14 @@ type Simulation = {
 };
 
 const DEFAULTS: Parameters = {
-  ratCorrelation: .9,
-  catCorrelation: 3.8,
+  ratCorrelation: 1.8,
+  catCorrelation: 4.8,
   wandering: 1.25,
   panic: 3.6,
   socialAttraction: .72,
   socialRadius: 112,
+  separation: 2.8,
+  separationRadius: 30,
   cheeseAttraction: 1.45,
   catPursuit: 2.25,
   catRepulsion: 3.2,
@@ -92,8 +98,8 @@ const DEFAULTS: Parameters = {
   fearMemory: 4.8,
   burstGain: 1.35,
   burstCurve: 1.9,
-  ratMaximum: 138,
-  catMaximum: 205,
+  ratMaximum: 170,
+  catMaximum: 260,
   catEnabled: true,
   fieldView: "hidden",
 };
@@ -132,6 +138,7 @@ function createRat(id: number, width: number, height: number): Rat {
     vy: Math.sin(angle) * 12,
     angle,
     wanderAngle: angle,
+    wanderTarget: angle,
     turnClock: exponentialInterval(.8),
     wigglePhase: Math.random() * Math.PI * 2,
     fear: 0,
@@ -153,6 +160,7 @@ function createSimulation(count: number, width: number, height: number): Simulat
       vy: 0,
       angle: Math.PI,
       wanderAngle: Math.PI,
+      wanderTarget: Math.PI,
       turnClock: 1,
       pursuitGate: makeGate(false, 2.8),
       targetId: null,
@@ -313,6 +321,7 @@ export function RatzField() {
   const pausedRef = useRef(false);
   const [ratCount, setRatCount] = useState(84);
   const [paused, setPaused] = useState(false);
+  const [controlsHidden, setControlsHidden] = useState(false);
   const [stats, setStats] = useState({ alive: 84, meanFear: 0, catPursuing: false });
   const [parameters, setParameters] = useState<Parameters>(DEFAULTS);
 
@@ -403,17 +412,34 @@ export function RatzField() {
         }
 
         const nearest: Array<{ dx: number; dy: number; distance: number }> = [];
+        let separationX = 0;
+        let separationY = 0;
         for (const other of simulation.rats) {
           if (other.id === rat.id) continue;
           const dx = other.x - rat.x;
           const dy = other.y - rat.y;
           const distance = Math.hypot(dx, dy);
+          if (distance < parameters.separationRadius) {
+            if (distance < .001) {
+              const escapeAngle = Math.random() * Math.PI * 2;
+              separationX += Math.cos(escapeAngle) * parameters.separation * 3;
+              separationY += Math.sin(escapeAngle) * parameters.separation * 3;
+            } else {
+              const overlap = 1 - distance / parameters.separationRadius;
+              const closeBoost = distance < 13 ? (13 - distance) / 13 * 2.5 : 0;
+              const push = parameters.separation * (overlap * overlap + closeBoost);
+              separationX -= dx / distance * push;
+              separationY -= dy / distance * push;
+            }
+          }
           if (distance >= parameters.socialRadius) continue;
           const candidate = { dx, dy, distance };
           const position = nearest.findIndex((item) => distance < item.distance);
           if (position < 0) nearest.push(candidate); else nearest.splice(position, 0, candidate);
           if (nearest.length > 3) nearest.pop();
         }
+        fx += separationX;
+        fy += separationY;
         if (nearest.length && tickGate(rat.socialGate, delta, parameters.ratCorrelation * .82, parameters.ratCorrelation * .72)) {
           for (const neighbor of nearest) {
             const pull = parameters.socialAttraction * (1 - neighbor.distance / parameters.socialRadius) / nearest.length;
@@ -426,9 +452,11 @@ export function RatzField() {
         rat.turnClock -= delta * (1 + crowd * 2.2 + rat.fear * 4.2);
         if (rat.turnClock <= 0) {
           const variance = parameters.wandering * (.34 + crowd * 1.5 + rat.fear * parameters.panic);
-          rat.wanderAngle += normalSample() * variance;
+          rat.wanderTarget += normalSample() * variance;
           rat.turnClock = exponentialInterval(parameters.ratCorrelation / (1 + crowd + rat.fear * 2.5));
         }
+        const wanderDelta = Math.atan2(Math.sin(rat.wanderTarget - rat.wanderAngle), Math.cos(rat.wanderTarget - rat.wanderAngle));
+        rat.wanderAngle += wanderDelta * (1 - Math.exp(-delta / Math.max(.08, parameters.ratCorrelation * .34)));
         rat.wigglePhase += delta * (2.2 + crowd * 4 + rat.fear * 8);
         const continuousWiggle = Math.sin(rat.wigglePhase) * parameters.wandering * (.24 + rat.fear * .55);
         fx += Math.cos(rat.wanderAngle + continuousWiggle) * parameters.wandering * .46;
@@ -461,9 +489,11 @@ export function RatzField() {
       if (parameters.catEnabled) {
         cat.turnClock -= delta;
         if (cat.turnClock <= 0) {
-          cat.wanderAngle += normalSample() * .78;
+          cat.wanderTarget += normalSample() * .78;
           cat.turnClock = exponentialInterval(parameters.catCorrelation * .52);
         }
+        const catWanderDelta = Math.atan2(Math.sin(cat.wanderTarget - cat.wanderAngle), Math.cos(cat.wanderTarget - cat.wanderAngle));
+        cat.wanderAngle += catWanderDelta * (1 - Math.exp(-delta / Math.max(.12, parameters.catCorrelation * .28)));
         const target = catActive ? simulation.rats.find((rat) => rat.id === cat.targetId) : undefined;
         let catFx = Math.cos(cat.wanderAngle) * .32;
         let catFy = Math.sin(cat.wanderAngle) * .32;
@@ -545,7 +575,11 @@ export function RatzField() {
       lastTime = now;
       const simulation = simulationRef.current;
       const { width, height } = boundsRef.current;
-      if (simulation && !pausedRef.current) update(delta);
+      if (simulation && !pausedRef.current) {
+        const maximumSpeed = Math.max(parametersRef.current.ratMaximum, parametersRef.current.catMaximum);
+        const substeps = clamp(Math.ceil(delta * maximumSpeed / 12), 1, 8);
+        for (let step = 0; step < substeps; step++) update(delta / substeps);
+      }
       context.fillStyle = "#d8cfad";
       context.fillRect(0, 0, width, height);
       context.strokeStyle = "rgba(72,63,45,.08)";
@@ -573,13 +607,14 @@ export function RatzField() {
   return (
     <main className="ratz-page">
       <canvas ref={canvasRef} className="ratz-canvas" aria-label="A live stochastic colony of rats seeking cheese, clustering in small groups, fleeing a cat, and remembering its fading scent trail." />
-      <header className="ratz-chrome">
+      <header className="ratz-chrome" hidden={controlsHidden}>
         <Link href="/gallery">← Gallery</Link>
         <span className="eyebrow">Interactive Exhibit 23</span>
         <h1>Ratz</h1>
         <p>Bursting motion, intermittent intent, scent gradients, pursuit, and fear memory: a spoof of collective-motion models that is still suspiciously legitimate.</p>
       </header>
-      <aside className="ratz-controls" aria-label="Ratz behavior controls">
+      <aside className="ratz-controls" aria-label="Ratz behavior controls" hidden={controlsHidden}>
+        <button type="button" className="ratz-minimize" onClick={() => setControlsHidden(true)}>Hide all UI</button>
         <div className="ratz-control-head">
           <strong>Behavior laboratory</strong>
           <span>{stats.alive} ratz alive<br />fear {Math.round(stats.meanFear * 100)}% · cat {parameters.catEnabled ? (stats.catPursuing ? "hunting" : "resting") : "away"}</span>
@@ -595,6 +630,8 @@ export function RatzField() {
           <summary>Attraction &amp; pursuit</summary>
           <RangeControl label="Clique attraction" value={parameters.socialAttraction} min={0} max={4} step={.05} onChange={(value) => setParameter("socialAttraction", value)} />
           <RangeControl label="Clique radius" value={parameters.socialRadius} min={30} max={240} step={1} unit="px" onChange={(value) => setParameter("socialRadius", value)} />
+          <RangeControl label="Separation" value={parameters.separation} min={0} max={10} step={.1} onChange={(value) => setParameter("separation", value)} />
+          <RangeControl label="Separation radius" value={parameters.separationRadius} min={12} max={80} step={1} unit="px" onChange={(value) => setParameter("separationRadius", value)} />
           <RangeControl label="Cheese scent" value={parameters.cheeseAttraction} min={0} max={5} step={.05} onChange={(value) => setParameter("cheeseAttraction", value)} />
           <RangeControl label="Cat pursuit" value={parameters.catPursuit} min={0} max={6} step={.05} onChange={(value) => setParameter("catPursuit", value)} />
         </details>
@@ -610,8 +647,8 @@ export function RatzField() {
           <summary>Burst shaping</summary>
           <RangeControl label="Burst gain" value={parameters.burstGain} min={.1} max={4} step={.05} onChange={(value) => setParameter("burstGain", value)} />
           <RangeControl label="Burst curve" value={parameters.burstCurve} min={.5} max={4} step={.05} onChange={(value) => setParameter("burstCurve", value)} />
-          <RangeControl label="Rat maximum" value={parameters.ratMaximum} min={45} max={180} step={1} unit="px/s" onChange={(value) => setParameter("ratMaximum", value)} />
-          <RangeControl label="Cat maximum" value={parameters.catMaximum} min={120} max={280} step={1} unit="px/s" onChange={(value) => setParameter("catMaximum", value)} />
+          <RangeControl label="Rat maximum" value={parameters.ratMaximum} min={45} max={800} step={5} unit="px/s" onChange={(value) => setParameter("ratMaximum", value)} />
+          <RangeControl label="Cat maximum" value={parameters.catMaximum} min={120} max={1200} step={5} unit="px/s" onChange={(value) => setParameter("catMaximum", value)} />
         </details>
         <label className="ratz-field-select">
           <span>Cat scent field</span>
@@ -634,6 +671,7 @@ export function RatzField() {
         </div>
         <p>Each rat plans from the same frozen frame, follows no more than three neighbors, and carries its own fading memory of danger.</p>
       </aside>
+      {controlsHidden && <button type="button" className="ratz-restore" onClick={() => setControlsHidden(false)}>Show Ratz UI</button>}
     </main>
   );
 }
