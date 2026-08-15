@@ -75,6 +75,18 @@ export function PolymorphicGooLab() {
   const [audioName, setAudioName] = useState("No audio file loaded");
   const [bands, setBands] = useState<GooAudioBands>(EMPTY_GOO_BANDS);
 
+  const randomizeSliders = () => {
+    const nextValues = Object.fromEntries((Object.keys(PARAMETER_MAX) as ParameterKey[]).map((key) => [key, Math.random() * PARAMETER_MAX[key]])) as ValueMap;
+    const nextEqualizer = Object.fromEntries((Object.keys(GOO_BAND_LABELS) as GooBandKey[]).map((key) => [key, Math.random() * 8])) as GooEqualizer;
+    valueRef.current = nextValues;
+    equalizerRef.current = nextEqualizer;
+    const nextHue = Math.round(Math.random() * 360);
+    hueRef.current = nextHue;
+    setValues(nextValues);
+    setEqualizer(nextEqualizer);
+    setHue(nextHue);
+  };
+
   useEffect(() => { sourceRef.current = sources; }, [sources]);
   useEffect(() => { valueRef.current = values; }, [values]);
   useEffect(() => { hueModeRef.current = hueMode; }, [hueMode]);
@@ -214,6 +226,7 @@ export function PolymorphicGooLab() {
     <section className="polymorph-lab">
       <div className="polymorph-stage"><canvas ref={canvasRef} aria-label="A Fourier polygon smoothly morphing, wobbling, rotating, changing hue, and wearing a layered cartoon shadow" /></div>
       <aside className="polymorph-controls">
+        <button className="polymorph-randomize" onClick={randomizeSliders}>Randomize slider banks</button>
         <div className="polymorph-audio">
           <span className="eyebrow">Five-band modulation source</span>
           <label><input type="file" accept="audio/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) chooseAudio(file); }} /><b>Choose audio file</b></label>

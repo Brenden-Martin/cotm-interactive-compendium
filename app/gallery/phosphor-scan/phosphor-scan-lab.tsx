@@ -105,6 +105,22 @@ export function PhosphorScanLab() {
 
   const updateParameter = (key: PhosphorParameterKey, value: number) => setParameters((current) => ({ ...current, [key]: value }));
 
+  const randomizeSliders = () => {
+    const nextParameters = Object.fromEntries(PHOSPHOR_PARAMETER_CONTROLS.map((control) => {
+      const unit = Math.random();
+      let value = control.key === "drawRate"
+        ? control.min * Math.pow(control.max / control.min, unit)
+        : control.min + (control.max - control.min) * unit;
+      if (control.key === "scanlines" || control.key === "pixelsPerRow" || control.key === "noiseHarmonics") value = Math.round(value);
+      return [control.key, value];
+    })) as PhosphorParameters;
+    const nextMatrix = Object.fromEntries(Object.keys(matrixRef.current).map((key) => [key, Math.random() * 6 - 3])) as CouplingMatrix;
+    parametersRef.current = nextParameters;
+    matrixRef.current = nextMatrix;
+    setParameters(nextParameters);
+    setMatrix(nextMatrix);
+  };
+
   const chooseSource = (file: File) => {
     if (sourceObjectUrlRef.current) URL.revokeObjectURL(sourceObjectUrlRef.current);
     sourceObjectUrlRef.current = URL.createObjectURL(file);
@@ -252,7 +268,7 @@ export function PhosphorScanLab() {
     <header className="phosphor-head"><Link href="/gallery">← Gallery</Link><span className="eyebrow">Interactive Exhibit 26 · Raster Persistence</span><h1>Phosphor<br />Scan</h1><p>One excited dot, an unreasonable amount of haste, and the long luminous memory of where it has been.</p></header>
     <button className="phosphor-ui-toggle" onClick={() => setControlsHidden((value) => !value)}>{controlsHidden ? "UI" : "Hide laboratory"}</button>
     <aside className="phosphor-controls" aria-label="Phosphor scan laboratory">
-      <div className="phosphor-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={() => engineRef.current.clear(canvasRef.current!.getContext("2d")!, canvasRef.current!.width, canvasRef.current!.height)}>Clear field</button><button onClick={() => engineRef.current.reseed()}>New noise</button><span>{Math.round(stats.dots).toLocaleString()} dots/s · {stats.fps} fps</span></div>
+      <div className="phosphor-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={() => engineRef.current.clear(canvasRef.current!.getContext("2d")!, canvasRef.current!.width, canvasRef.current!.height)}>Clear field</button><button onClick={() => engineRef.current.reseed()}>New noise</button><button onClick={randomizeSliders}>Randomize sliders</button><span>{Math.round(stats.dots).toLocaleString()} dots/s · {stats.fps} fps</span></div>
       <details open><summary>Raster source</summary>
         <div className="phosphor-source-grid">
           <label>Trace source<select value={sourceMode} onChange={(event) => { const mode = event.target.value as PhosphorSourceMode; setSourceMode(mode); setSourceName(mode === "white" ? "Solid white phosphor" : `Choose a ${mode}`); }}><option value="white">Solid white · real time</option><option value="image">Uploaded image</option><option value="video">Uploaded video · real time</option></select></label>

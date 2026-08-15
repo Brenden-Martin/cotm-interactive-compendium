@@ -223,6 +223,28 @@ export function ChromadepthLab() {
     particlesRef.current = seedParticles(particleCount, speciesCount, speciesRef.current);
   }, [particleCount, speciesCount]);
 
+  const randomizeSliders = () => {
+    const randomRange = (minimum: number, maximum: number) => minimum + Math.random() * (maximum - minimum);
+    const nextParticleCount = Math.round(randomRange(120, 1400) / 20) * 20;
+    const nextSpecies = species.map((entry) => {
+      const next = { ...entry };
+      for (const control of PARAMETER_CONTROLS) next[control.key] = randomRange(control.min, control.max);
+      return next;
+    });
+    const nextRoutes = routes.map((route) => ({ ...route, strength: randomRange(-3, 3) }));
+    speciesRef.current = nextSpecies;
+    routesRef.current = nextRoutes;
+    setSpecies(nextSpecies);
+    setRoutes(nextRoutes);
+    setParticleCount(nextParticleCount);
+    setParameterDrift(randomRange(0, 1.5));
+    setPerspective(randomRange(.65, 2.8));
+    setCameraDistance(randomRange(2.2, 9));
+    setParticleScale(randomRange(.35, 3));
+    setColorTension(randomRange(0, 1.5));
+    particlesRef.current = seedParticles(nextParticleCount, speciesCountRef.current, nextSpecies);
+  };
+
   useEffect(() => { reset(); }, [reset]);
 
   const updateSpecies = (key: SpeciesKey, value: number) => {
@@ -494,7 +516,7 @@ export function ChromadepthLab() {
       <header className="chromadepth-head"><Link href="/gallery">← Gallery</Link><span className="eyebrow">Interactive Exhibit 25 · Depth Encoding</span><h1>Chroma<br />Depth</h1><p>A 3D kinetic sculpture living very insistently on a 2D plane. Drag the field to orbit the camera.</p></header>
       <button className="chromadepth-ui-toggle" onClick={() => setControlsHidden((value) => !value)}>{controlsHidden ? "UI" : "Hide laboratory"}</button>
       <aside className="chromadepth-controls" aria-label="Chromadepth particle laboratory">
-        <div className="chromadepth-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={reset}>Reseed</button><span>{particleCount} particles · {stats.fps} fps · v̄ {stats.meanSpeed.toFixed(2)}</span></div>
+        <div className="chromadepth-transport"><button onClick={() => setPaused((value) => !value)}>{paused ? "Resume" : "Pause"}</button><button onClick={reset}>Reseed</button><button onClick={randomizeSliders}>Randomize sliders</button><span>{particleCount} particles · {stats.fps} fps · v̄ {stats.meanSpeed.toFixed(2)}</span></div>
         <details open><summary>Field and camera</summary>
           <div className="chromadepth-grid">
             <label className="chromadepth-select">Independent species<select value={speciesCount} onChange={(event) => { const value = Number(event.target.value); setSpeciesCount(value); setSelectedSpecies((current) => Math.min(current, value - 1)); }}><option value="1">One</option><option value="2">Two</option><option value="3">Three</option></select></label>

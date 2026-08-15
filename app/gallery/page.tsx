@@ -165,6 +165,12 @@ export default function Gallery() {
           <strong>Phosphor Scan</strong>
           <small>Excite the raster →</small>
         </Link>
+        <Link className="study current-entry" href="/gallery/current">
+          <span className="eyebrow">Exhibit 27 / Conductive Media</span>
+          <div className="current-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Current</strong>
+          <small>Doodle a path →</small>
+        </Link>
       </section>
     </main>
   );
