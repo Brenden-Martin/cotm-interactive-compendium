@@ -51,8 +51,6 @@ const stellarPalette = {
   shell: "#ded7c4",
 };
 
-const reviewMediaBase = "https://raw.githubusercontent.com/Brenden-Martin/cotm-interactive-compendium/645f340a437108c2949edb333405f9eb1caeb1e2/public/music/sold-as-is";
-
 export const moogTrack: SoldAsIsTrack = {
   slug: "moog-preset-alternate-4",
   catalogNumber: "SAI / 001",
@@ -91,7 +89,7 @@ export const manMadeMachineAlbum: SoldAsIsAlbum = {
       catalogNumber: "SAI / 002",
       title: "Tube Groove",
       subtitle: "Plucky wah rhythm guitar and a wandering lead, suspended somewhere between an island bar and an old television cabinet.",
-      audioSrc: `${reviewMediaBase}/man-made-machine-machine-made-man/08-tube-groove.m4a`,
+      audioSrc: "/music/sold-as-is/man-made-machine-machine-made-man/08-tube-groove.wav",
       artifactSrc: "/music/sold-as-is/man-made-machine-machine-made-man/child-of-the-machine-poster.jpg",
       artifactAlt: "The original Child of the Machine computer poster",
       boundarySrc: "/music/sold-as-is/man-made-machine-machine-made-man/child-of-the-machine-poster.jpg",
@@ -107,13 +105,13 @@ export const manMadeMachineAlbum: SoldAsIsAlbum = {
 };
 
 const stellarTrackData = [
-  ["peaceful-space-title-sequence", "Peaceful Space {Title Sequence}", "01-peaceful-space-title-sequence.m4a", "stellar-a", 0x51ace001],
-  ["rest-shore-leave", "Rest {Shore Leave}", "02-rest-shore-leave.m4a", "stellar-b", 0x51ace002],
-  ["not-so-neutral-zone-the-battle-scene", "Not So Neutral Zone {The Battle Scene}", "03-not-so-neutral-zone-the-battle-scene.m4a", "stellar-c", 0x51ace003],
-  ["drifting-cryosleep-through-the-super-nova", "Drifting {Cryosleep Through The Super Nova}", "04-drifting-cryosleep-through-the-super-nova.m4a", "stellar-a", 0x51ace004],
-  ["a-concert-for-no-one-recreation-time", "A Concert For No One {Recreation Time}", "05-a-concert-for-no-one-recreation-time.m4a", "stellar-b", 0x51ace005],
-  ["starlight-one-small-step", "Starlight {One Small Step}", "06-starlight-one-small-step.m4a", "stellar-c", 0x51ace006],
-  ["counting-electric-sheep-goodnight-pluto", "Counting Electric Sheep {Goodnight Pluto}", "07-counting-electric-sheep-goodnight-pluto.m4a", "stellar-a", 0x51ace007],
+  ["peaceful-space-title-sequence", "Peaceful Space {Title Sequence}", "01-peaceful-space-title-sequence.mp3", "stellar-a", 0x51ace001],
+  ["rest-shore-leave", "Rest {Shore Leave}", "02-rest-shore-leave.mp3", "stellar-b", 0x51ace002],
+  ["not-so-neutral-zone-the-battle-scene", "Not So Neutral Zone {The Battle Scene}", "03-not-so-neutral-zone-the-battle-scene.mp3", "stellar-c", 0x51ace003],
+  ["drifting-cryosleep-through-the-super-nova", "Drifting {Cryosleep Through The Super Nova}", "04-drifting-cryosleep-through-the-super-nova.mp3", "stellar-a", 0x51ace004],
+  ["a-concert-for-no-one-recreation-time", "A Concert For No One {Recreation Time}", "05-a-concert-for-no-one-recreation-time.mp3", "stellar-b", 0x51ace005],
+  ["starlight-one-small-step", "Starlight {One Small Step}", "06-starlight-one-small-step.mp3", "stellar-c", 0x51ace006],
+  ["counting-electric-sheep-goodnight-pluto", "Counting Electric Sheep {Goodnight Pluto}", "07-counting-electric-sheep-goodnight-pluto.mp3", "stellar-a", 0x51ace007],
 ] as const;
 
 export const einKleineSternmusicAlbum: SoldAsIsAlbum = {
@@ -129,7 +127,7 @@ export const einKleineSternmusicAlbum: SoldAsIsAlbum = {
     catalogNumber: `SAI / ${String(index + 3).padStart(3, "0")}`,
     title,
     subtitle: "A recovered movement from Ein Kleine Sternmusic, routed through the shared listening computer.",
-    audioSrc: `${reviewMediaBase}/ein-kleine-sternmusic/${file}`,
+    audioSrc: `/music/sold-as-is/ein-kleine-sternmusic/${file}`,
     artifactSrc: "/music/sold-as-is/ein-kleine-sternmusic/cotm.jpg",
     artifactAlt: "The purple and white Child of the Machine wordmark with yellow hazard stripes",
     boundarySrc: "/music/sold-as-is/ein-kleine-sternmusic/album-art.jpg",

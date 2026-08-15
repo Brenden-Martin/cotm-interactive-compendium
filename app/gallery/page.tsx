@@ -141,6 +141,30 @@ export default function Gallery() {
           <strong>Gibberish Generator</strong>
           <small>Give a color its voice →</small>
         </Link>
+        <Link className="study ratz-entry" href="/gallery/ratz">
+          <span className="eyebrow">Exhibit 23 / Stochastic Behavior</span>
+          <div className="ratz-entry-den" aria-hidden="true"><i /><i /><i /><i /><b /><span /></div>
+          <strong>Ratz</strong>
+          <small>Follow the scent →</small>
+        </Link>
+        <Link className="study polymorph-entry" href="/gallery/polymorphic-goo">
+          <span className="eyebrow">Exhibit 24 / Fourier Geometry</span>
+          <div className="polymorph-entry-figure" aria-hidden="true"><i /><b /><span /></div>
+          <strong>Polymorphic Goo</strong>
+          <small>Modulate the blob →</small>
+        </Link>
+        <Link className="study chromadepth-entry" href="/gallery/chromadepth">
+          <span className="eyebrow">Exhibit 25 / Depth Encoding</span>
+          <div className="chromadepth-entry-figure" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+          <strong>ChromaDepth</strong>
+          <small>Put on the spectrum →</small>
+        </Link>
+        <Link className="study phosphor-entry" href="/gallery/phosphor-scan">
+          <span className="eyebrow">Exhibit 26 / Raster Persistence</span>
+          <div className="phosphor-entry-figure" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Phosphor Scan</strong>
+          <small>Excite the raster →</small>
+        </Link>
       </section>
     </main>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+/* eslint-disable @next/next/no-img-element -- original user-supplied poster line art */
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const mainKeys = [
   "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "DEL",
@@ -11,18 +12,43 @@ const padKeys = ["7", "8", "9", "÷", "4", "5", "6", "×", "1", "2", "3", "−",
 
 export function ChildMachineTerminal() {
   const audioContextRef = useRef<AudioContext | null>(null);
+  const chaosTimerRef = useRef<number | null>(null);
   const [power, setPower] = useState(true);
   const [activeKey, setActiveKey] = useState("");
   const [glitch, setGlitch] = useState(0);
   const [tone, setTone] = useState(46);
   const [noise, setNoise] = useState(34);
+  const [falling, setFalling] = useState(false);
+  const [fallCycle, setFallCycle] = useState(0);
+  const [chaos, setChaos] = useState({ effect: 0, spin: 0, scale: 1, x: 0, y: 0, skew: 0, codeX: 0, codeY: 0, codeTilt: 0, duration: 700 });
 
-  const playKey = (key: string, index: number) => {
+  const playKey = useCallback((key: string, index: number) => {
     setActiveKey(`${key}-${index}`);
     window.setTimeout(() => setActiveKey(""), 130);
     if (!power) return;
-    setGlitch((index % 6) + 1);
-    window.setTimeout(() => setGlitch(0), 440 + (index % 4) * 120);
+    if (key === "SPACE") {
+      setFalling((value) => !value);
+      setFallCycle((value) => value + 1);
+    }
+    const duration = 520 + Math.floor(Math.random() * 980);
+    setGlitch(1 + Math.floor(Math.random() * 6));
+    setChaos({
+      effect: 1 + Math.floor(Math.random() * 8),
+      spin: -540 + Math.random() * 1080,
+      scale: .25 + Math.random() * 1.75,
+      x: -42 + Math.random() * 84,
+      y: -30 + Math.random() * 60,
+      skew: -28 + Math.random() * 56,
+      codeX: -18 + Math.random() * 36,
+      codeY: -14 + Math.random() * 28,
+      codeTilt: -5 + Math.random() * 10,
+      duration,
+    });
+    if (chaosTimerRef.current) window.clearTimeout(chaosTimerRef.current);
+    chaosTimerRef.current = window.setTimeout(() => {
+      setGlitch(0);
+      setChaos((value) => ({ ...value, effect: 0 }));
+    }, duration);
 
     const AudioContextClass = window.AudioContext ||
       (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -60,20 +86,59 @@ export function ChildMachineTerminal() {
       source.connect(noiseGain).connect(context.destination);
       source.start(now);
     }
-  };
+  }, [noise, power, tone]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, select, textarea, button")) return;
+      if (event.code === "Space") {
+        event.preventDefault();
+        playKey("SPACE", mainKeys.indexOf("SPACE"));
+        return;
+      }
+      const label = event.key.toUpperCase();
+      const normalized = label === "ENTER" ? "RETURN" : label === "BACKSPACE" ? "DEL" : label;
+      const mainIndex = mainKeys.indexOf(normalized);
+      if (mainIndex >= 0) playKey(mainKeys[mainIndex], mainIndex);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (chaosTimerRef.current) window.clearTimeout(chaosTimerRef.current);
+    };
+  }, [playKey]);
 
   const codeBlocks = Array.from({ length: 54 }, (_, index) => (
-    <i key={index} style={{ width: `${10 + ((index * 29) % 70)}px`, opacity: .18 + ((index * 17) % 65) / 100 }} />
+    <i key={index} style={{
+      width: `${10 + ((index * 29) % 70)}px`,
+      opacity: .18 + ((index * 17) % 65) / 100,
+      "--wave-x": `${3 + ((index * 13) % 15)}px`,
+      "--wave-speed": `${1.7 + ((index * 19) % 31) / 10}s`,
+      "--wave-delay": `${-((index * 23) % 47) / 10}s`,
+    } as React.CSSProperties} />
   ));
 
+  const chaosStyle = {
+    "--faller-spin": `${chaos.spin}deg`,
+    "--faller-scale": chaos.scale,
+    "--faller-x": `${chaos.x}%`,
+    "--faller-y": `${chaos.y}%`,
+    "--faller-skew": `${chaos.skew}deg`,
+    "--code-chaos-x": `${chaos.codeX}%`,
+    "--code-chaos-y": `${chaos.codeY}%`,
+    "--code-chaos-tilt": `${chaos.codeTilt}deg`,
+    "--chaos-duration": `${chaos.duration}ms`,
+  } as React.CSSProperties;
+
   return (
-    <section className={`poster-computer glitch-${glitch}${power ? " is-powered" : " is-off"}`} aria-label="Interactive Child of the Machine computer">
+    <section style={chaosStyle} className={`poster-computer glitch-${glitch} chaos-${chaos.effect}${chaos.effect ? " has-chaos" : ""}${power ? " is-powered" : " is-off"}`} aria-label="Interactive Child of the Machine computer">
       <div className="poster-monitor">
         <div className="poster-screen" aria-live="polite">
           <div className="terminal-code" aria-hidden="true">{codeBlocks}</div>
-          <div className="terminal-faller" aria-hidden="true">
-            <i className="head" /><i className="torso" /><i className="arm arm-a" /><i className="arm arm-b" />
-            <i className="leg leg-a" /><i className="leg leg-b" /><i className="motion motion-a" /><i className="motion motion-b" />
+          <div className={`terminal-faller${falling ? " is-falling" : ""}`} key={fallCycle} aria-hidden="true">
+            <img src="/music/child-of-the-machine-terminal/falling-man-original-cutout.png" alt="" />
           </div>
           <span className="sr-only">{power ? glitch ? "The display glitches and the falling figure shifts." : "The display is running." : "The display is powered off."}</span>
         </div>
@@ -96,7 +161,7 @@ export function ChildMachineTerminal() {
           </div>
         </div>
       </div>
-      <p className="terminal-instruction">POWER · SLIDERS · KEYS / sound begins only when you touch the machine</p>
+      <p className="terminal-instruction">POWER · SLIDERS · KEYS / SPACE toggles the fall / sound begins only when you touch the machine</p>
     </section>
   );
 }
