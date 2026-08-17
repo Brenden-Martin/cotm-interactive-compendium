@@ -242,6 +242,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **YAH-005 — Working — Museum Pneumatic Tube.** Vacuum the YOU ARE HERE control into a theatrical museum tube, then return it stamped `CURRENT LOCATION: RECEIVED`; preserve the real control, reduced-motion fallback, captions, and optional audio.
 - **YAH-006 — Working — Elevator to This Floor.** Close brass elevator doors over YOU ARE HERE, race through impossible floor labels, and reopen on HERE; preserve the real control, reduced-motion fallback, captions, and optional audio.
 - **YAH-007 — Review — Chromatic Custodian.** A squeegee crosses the homepage, corrals its color into a temporary sRGB triangle, then lets the spectrum leak back into the page. The real YOU ARE HERE control remains authoritative, the caption carries the joke, and reduced-motion receives a static color-space card without sweeping or dripping motion. Idea Hatch item 92.
+- **YAH-008 — Review — Bureau of Relative Position.** A surveyor crosshair measures YOU ARE HERE against itself, reports `0.0 m FROM ITSELF`, and applies a rubber-stamped `JURISDICTION CONFIRMED`. The accessible caption carries the complete joke, the real control remains authoritative, and reduced-motion receives the finished survey card without approach, rotation, or stamping animation.
 
 ### Daily archive-mining routine
 

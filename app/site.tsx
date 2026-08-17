@@ -110,6 +110,7 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "pneumatic", weight: 1.5, sound: "spring", label: "CURRENT LOCATION: RECEIVED" },
       { id: "elevator", weight: 1.35, sound: "sparkle", label: "THIS FLOOR: HERE" },
       { id: "custodian", weight: 1.35, sound: "sparkle", label: "COLOR SPACE: TEMPORARILY COMPLIANT" },
+      { id: "bureau", weight: 1.25, sound: "bonk", label: "0.0 METERS FROM ITSELF · JURISDICTION CONFIRMED" },
       { id: "closing-time", weight: 4.5, sound: "bonk", label: "YOU DON'T HAVE TO GO HOME, BUT YOU CAN'T STAY HERE!" },
       { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
     ];
@@ -136,7 +137,7 @@ export function ColorIndex({ active }: { active: Room }) {
       const target = destinations[Math.floor(random * destinations.length)];
       timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
     } else {
-      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : choice.id === "custodian" ? 2800 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon","pneumatic","elevator"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : choice.id === "custodian" ? 2800 : choice.id === "bureau" ? 2500 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon","pneumatic","elevator"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
       timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); setRandomColor(""); }, duration);
     }
   }, [synth]);
@@ -261,6 +262,7 @@ export function ColorIndex({ active }: { active: Room }) {
       {gag === "balloon" && <div className="gag-confetti" aria-hidden="true">{Array.from({length:42},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
       {gag === "pneumatic" && <div className="gag-pneumatic" aria-hidden="true"><i/><b>CURRENT LOCATION: RECEIVED</b></div>}
       {gag === "elevator" && <div className="gag-elevator" aria-hidden="true"><i>BASEMENT π<br/>MEZZANINE −0<br/>HERE</i></div>}
+      {gag === "bureau" && <div className="gag-bureau" aria-hidden="true"><i/><i/><b>0.0 m<br/>FROM ITSELF</b><strong>JURISDICTION<br/>CONFIRMED</strong></div>}
       {gag === "custodian" && (
         <div className="gag-custodian" aria-hidden="true">
           <i className="gag-custodian-triangle" />
