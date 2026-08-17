@@ -373,6 +373,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **EGG-007 — Planned — Layered progression.** Let one hidden room lead to additional rooms and cross-page clues so accidental discovery can become a sustained puzzle trail.
 - **EGG-008 — Safeguard — Accessibility and escape.** Surreal interactions still need a reliable way out, reduced-motion behavior, keyboard reachability where practical, and no unavoidable audio.
 - **EGG-009 — Working — Interactive computer-poster entrance.** Preserve the old COTM computer poster as the visual base, make its keyboard interactive, and let key presses glitch the falling figure. A traced/vector-derived presentation may accompany but must not overwrite the source poster; the resulting Easter egg may title and enter its corresponding Outernet page.
+- **EGG-010 — Review — HELLO WORLD terminal breach.** The poster keyboard and physical keyboard share a hidden command buffer. Typing `HELLO WORLD` makes the reconstructed controls, keys, console, and monitor scatter outward at increasing scale while a duplicate CRT expands from its measured on-page bounds to engulf the viewport. The original falling-man cutout remains behind, undergoes stepped horizontal displacement glitches, collapses to nothing, and then routes to `/the-outernet`; reduced-motion visitors receive the same destination through a shortened transition.
 
 ### Tales from the Ruliad
 
