@@ -6,6 +6,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 type Mode = "magnet" | "steel" | "eutectic" | "water";
 type WaterPhase = "vapor" | "liquid" | "supercritical" | "ice Ih" | "ice III" | "ice V" | "ice VI" | "ice VII";
 type Envelope = { attack: number; decay: number; sustain: number; release: number; peak: number; soak: number; finish: number };
+type PhaseCenters = {
+  magnet: { x: number; y: number };
+  steel: { x: number; y: number };
+  water: { x: number; y: number };
+};
 type WaterParticle = { x: number; y: number; vx: number; vy: number; tx: number; ty: number; seed: number };
 type SimState = {
   spins: Float32Array;
@@ -13,6 +18,8 @@ type SimState = {
   defects: Uint8Array;
   alloy: Float32Array;
   alloyNext: Float32Array;
+  alloyMu: Float32Array;
+  alloyMassTarget: number;
   water: WaterParticle[];
   lastTemperature: number;
   coolingRate: number;
@@ -31,6 +38,12 @@ const TABS: Array<{ id: Mode; label: string; kicker: string }> = [
   { id: "eutectic", label: "Au–Si eutectic", kicker: "phase separation" },
   { id: "water", label: "Water / ice", kicker: "pressure + temperature" },
 ];
+const ENVELOPE_DEFAULTS: Record<Mode, Envelope> = {
+  magnet: { attack: 4, decay: 2, sustain: 6, release: 8, peak: 1.55, soak: 1.15, finish: .28 },
+  steel: { attack: 4, decay: 2, sustain: 6, release: 8, peak: 1180, soak: 840, finish: 80 },
+  eutectic: { attack: 4, decay: 2, sustain: 6, release: 8, peak: 540, soak: 420, finish: 80 },
+  water: { attack: 4, decay: 2, sustain: 6, release: 8, peak: 690, soak: 520, finish: 180 },
+};
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -57,6 +70,7 @@ function makeSimulation(siFraction = .5, carbon = .4): SimState {
 
   const alloy = new Float32Array(ALLOY_W * ALLOY_H);
   const alloyNext = new Float32Array(alloy.length);
+  const alloyMu = new Float32Array(alloy.length);
   const divide = Math.round(ALLOY_H * siFraction);
   for (let y = 0; y < ALLOY_H; y += 1) for (let x = 0; x < ALLOY_W; x += 1) {
     alloy[y * ALLOY_W + x] = y < divide ? .98 : .02;
@@ -66,7 +80,7 @@ function makeSimulation(siFraction = .5, carbon = .4): SimState {
     x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .01, vy: (Math.random() - .5) * .01,
     tx: 0, ty: 0, seed: i * 1.618,
   }));
-  return { spins, grains, defects, alloy, alloyNext, water, lastTemperature: 20, coolingRate: 0 };
+  return { spins, grains, defects, alloy, alloyNext, alloyMu, alloyMassTarget: siFraction, water, lastTemperature: 20, coolingRate: 0 };
 }
 
 function waterPhase(temperature: number, pressure: number): WaterPhase {
@@ -170,6 +184,11 @@ function drawSteel(ctx: CanvasRenderingContext2D, sim: SimState, temperature: nu
   sim.coolingRate = sim.coolingRate * .94 + Math.max(0, sim.lastTemperature - temperature) / dt * .06;
   sim.lastTemperature = temperature;
   const mobility = clamp((temperature - 450) / 650, 0, 1) * clamp((1500 - temperature) / 180, .15, 1);
+  const targetDefectChance = clamp(carbon / 2.1, 0, 1) * .24;
+  for (let k = 0; k < 18; k += 1) {
+    const i = Math.floor(Math.random() * sim.defects.length);
+    sim.defects[i] = Math.random() < targetDefectChance ? 1 : 0;
+  }
   const attempts = Math.floor(250 + mobility * 2500);
   for (let k = 0; k < attempts; k += 1) {
     const x = Math.floor(Math.random() * STEEL_W);
@@ -205,33 +224,49 @@ function drawSteel(ctx: CanvasRenderingContext2D, sim: SimState, temperature: nu
 function drawEutectic(ctx: CanvasRenderingContext2D, sim: SimState, temperature: number, si: number, mobilityControl: number) {
   const liquidus = alloyLiquidus(si);
   const separation = clamp((liquidus - temperature) / 260, -1.1, 1.25);
-  const mobility = (.008 + mobilityControl * .035) * (temperature > liquidus ? 1.3 : .72);
+  const mobility = (.003 + mobilityControl * .012) * (temperature > liquidus ? 1.25 : .72);
   for (let y = 0; y < ALLOY_H; y += 1) for (let x = 0; x < ALLOY_W; x += 1) {
     const i = y * ALLOY_W + x;
-    const p = sim.alloy[i] * 2 - 1;
+    const p = clamp(sim.alloy[i], -.15, 1.15) * 2 - 1;
     const lap = sim.alloy[index(x + 1, y, ALLOY_W, ALLOY_H)] + sim.alloy[index(x - 1, y, ALLOY_W, ALLOY_H)] + sim.alloy[index(x, y + 1, ALLOY_W, ALLOY_H)] + sim.alloy[index(x, y - 1, ALLOY_W, ALLOY_H)] - 4 * sim.alloy[i];
     const mu = p * p * p - separation * p - 1.1 * lap;
-    sim.alloyNext[i] = mu;
+    sim.alloyMu[i] = mu;
   }
+  let mean = 0;
   for (let y = 0; y < ALLOY_H; y += 1) for (let x = 0; x < ALLOY_W; x += 1) {
     const i = y * ALLOY_W + x;
-    const lapMu = sim.alloyNext[index(x + 1, y, ALLOY_W, ALLOY_H)] + sim.alloyNext[index(x - 1, y, ALLOY_W, ALLOY_H)] + sim.alloyNext[index(x, y + 1, ALLOY_W, ALLOY_H)] + sim.alloyNext[index(x, y - 1, ALLOY_W, ALLOY_H)] - 4 * sim.alloyNext[i];
-    sim.alloyNext[i] = clamp(sim.alloy[i] + mobility * lapMu + (Math.random() - .5) * Math.max(0, temperature - liquidus) / 6000, 0, 1);
+    const lapMu = sim.alloyMu[index(x + 1, y, ALLOY_W, ALLOY_H)] + sim.alloyMu[index(x - 1, y, ALLOY_W, ALLOY_H)] + sim.alloyMu[index(x, y + 1, ALLOY_W, ALLOY_H)] + sim.alloyMu[index(x, y - 1, ALLOY_W, ALLOY_H)] - 4 * sim.alloyMu[i];
+    const next = clamp(sim.alloy[i] + mobility * lapMu + (Math.random() - .5) * Math.max(0, temperature - liquidus) / 6000, -.15, 1.15);
+    sim.alloyNext[i] = next;
+    mean += next;
+  }
+  mean /= sim.alloyNext.length;
+  for (let pass = 0; pass < 4; pass += 1) {
+    const correction = sim.alloyMassTarget - mean;
+    mean = 0;
+    for (let i = 0; i < sim.alloyNext.length; i += 1) {
+      sim.alloyNext[i] = clamp(sim.alloyNext[i] + correction, 0, 1);
+      mean += sim.alloyNext[i];
+    }
+    mean /= sim.alloyNext.length;
   }
   const swap = sim.alloy; sim.alloy = sim.alloyNext; sim.alloyNext = swap;
   const w = ctx.canvas.width, h = ctx.canvas.height, cw = w / ALLOY_W, ch = h / ALLOY_H;
   ctx.fillStyle = "#0a0907"; ctx.fillRect(0, 0, w, h);
+  let actualSi = 0;
   for (let y = 0; y < ALLOY_H; y += 1) for (let x = 0; x < ALLOY_W; x += 1) {
-    const c = sim.alloy[y * ALLOY_W + x];
+    const c = clamp(sim.alloy[y * ALLOY_W + x], 0, 1);
+    actualSi += c;
     const gold = [242, 174, 36], silicon = [45, 215, 224];
     const r = Math.round(mix(gold[0], silicon[0], c));
     const g = Math.round(mix(gold[1], silicon[1], c));
     const b = Math.round(mix(gold[2], silicon[2], c));
     ctx.fillStyle = `rgb(${r} ${g} ${b})`; ctx.fillRect(x * cw, y * ch, cw + .5, ch + .5);
   }
+  actualSi = actualSi / sim.alloy.length * 100;
   const label = temperature >= liquidus ? "LIQUID / MIXING" : "SOLID / DEMIXING";
-  ctx.fillStyle = "rgba(0,0,0,.72)"; ctx.fillRect(12, 12, 250, 34);
-  ctx.fillStyle = "#fff4b0"; ctx.font = "700 14px ui-monospace,monospace"; ctx.fillText(label, 22, 34);
+  ctx.fillStyle = "rgba(0,0,0,.72)"; ctx.fillRect(12, 12, 390, 34);
+  ctx.fillStyle = "#fff4b0"; ctx.font = "700 14px ui-monospace,monospace"; ctx.fillText(`${label} · Au ${(100 - actualSi).toFixed(1)}% / Si ${actualSi.toFixed(1)}%`, 22, 34);
 }
 
 function drawWater(ctx: CanvasRenderingContext2D, sim: SimState, temperature: number, pressure: number) {
@@ -288,7 +323,17 @@ function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, label: 
   ctx.fillStyle = "#ff3d2e"; ctx.font = "800 11px ui-monospace,monospace"; ctx.fillText(label, clamp(x + 12, 54, ctx.canvas.width - 180), clamp(y - 9, 18, ctx.canvas.height - 55));
 }
 
-function drawDiagram(ctx: CanvasRenderingContext2D, mode: Mode, values: { magT: number; field: number; steelT: number; carbon: number; eutecticT: number; si: number; waterT: number; pressure: number }) {
+function drawOrbit(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
+  ctx.strokeStyle = "rgba(255,61,46,.72)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath(); ctx.arc(x, y, radius, 0, TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#ff3d2e";
+  ctx.beginPath(); ctx.arc(x, y, 3.5, 0, TAU); ctx.fill();
+}
+
+function drawDiagram(ctx: CanvasRenderingContext2D, mode: Mode, values: { magT: number; field: number; steelT: number; carbon: number; eutecticT: number; si: number; waterT: number; pressure: number }, orbit: { enabled: Record<"magnet" | "steel" | "water", boolean>; radius: number; centers: PhaseCenters }) {
   const w = ctx.canvas.width, h = ctx.canvas.height, left = 48, top = 20, right = w - 24, bottom = h - 50;
   if (mode === "magnet") {
     drawAxes(ctx, "EXTERNAL FIELD H / J", "TEMPERATURE T / Tc");
@@ -297,7 +342,9 @@ function drawDiagram(ctx: CanvasRenderingContext2D, mode: Mode, values: { magT: 
     ctx.fillStyle = "rgba(49,189,255,.12)"; ctx.fillRect(left, top, right - left, tcY - top);
     ctx.setLineDash([8, 7]); ctx.strokeStyle = "#db392d"; ctx.beginPath(); ctx.moveTo(left, tcY); ctx.lineTo(right, tcY); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = "#21120e"; ctx.font = "800 13px ui-monospace,monospace"; ctx.fillText("DOMAIN ORDER", 64, bottom - 18); ctx.fillText("THERMAL DISORDER", 64, top + 22); ctx.fillText("FINITE-GRID Tc", right - 142, tcY - 8);
-    drawCursor(ctx, mix(left, right, (values.field + 1.2) / 2.4), mix(bottom, top, values.magT / 1.8), `T/Tc ${values.magT.toFixed(2)} · H ${values.field.toFixed(2)}`);
+    const cursorX = mix(left, right, (values.field + 1.2) / 2.4), cursorY = mix(bottom, top, values.magT / 1.8);
+    if (orbit.enabled.magnet) drawOrbit(ctx, mix(left, right, orbit.centers.magnet.x), mix(bottom, top, orbit.centers.magnet.y), orbit.radius * (right - left));
+    drawCursor(ctx, cursorX, cursorY, `T/Tc ${values.magT.toFixed(2)} · H ${values.field.toFixed(2)}`);
   } else if (mode === "steel") {
     drawAxes(ctx, "CARBON (wt%)", "TEMPERATURE (°C)");
     const px = (c: number) => mix(left, right, c / 2.1), py = (t: number) => mix(bottom, top, (t - 20) / 1580);
@@ -305,6 +352,7 @@ function drawDiagram(ctx: CanvasRenderingContext2D, mode: Mode, values: { magT: 
     ctx.strokeStyle = "#a52820"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px(0), py(912)); ctx.lineTo(px(.76), py(727)); ctx.lineTo(px(2.1), py(1147)); ctx.stroke();
     ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(left, py(727)); ctx.lineTo(right, py(727)); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = "#21120e"; ctx.font = "800 12px ui-monospace,monospace"; ctx.fillText("AUSTENITE", px(.55), py(1050)); ctx.fillText("FERRITE + PEARLITE", px(.12), py(430)); ctx.fillText("EUTECTOID", px(.78), py(727) - 8);
+    if (orbit.enabled.steel) drawOrbit(ctx, mix(left, right, orbit.centers.steel.x), mix(bottom, top, orbit.centers.steel.y), orbit.radius * (right - left));
     drawCursor(ctx, px(values.carbon), py(values.steelT), `${values.steelT.toFixed(0)}°C · ${values.carbon.toFixed(2)} wt% C`);
   } else if (mode === "eutectic") {
     drawAxes(ctx, "SILICON (atomic %)", "TEMPERATURE (°C)");
@@ -322,6 +370,7 @@ function drawDiagram(ctx: CanvasRenderingContext2D, mode: Mode, values: { magT: 
     ctx.strokeStyle = "#a52820"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(px(150), py(.0001)); ctx.quadraticCurveTo(px(235), py(.0002), px(273.16), py(.000611657)); ctx.quadraticCurveTo(px(430), py(.6), px(647.096), py(22.064)); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(px(273.16), py(.000611657)); ctx.lineTo(px(251.165), py(210)); ctx.lineTo(px(273), py(350)); ctx.lineTo(px(355), py(2200)); ctx.stroke();
     ctx.fillStyle = "#21120e"; ctx.font = "800 10px ui-monospace,monospace"; ctx.fillText("TRIPLE", px(273.16) + 6, py(.000611657) - 7); ctx.fillText("CRITICAL", px(647.096) - 62, py(22.064) - 8);
+    if (orbit.enabled.water) drawOrbit(ctx, mix(left, right, orbit.centers.water.x), mix(bottom, top, orbit.centers.water.y), orbit.radius * (right - left));
     drawCursor(ctx, px(values.waterT), py(values.pressure), `${values.waterT.toFixed(1)} K · ${values.pressure.toPrecision(3)} MPa`);
   }
 }
@@ -348,9 +397,18 @@ export function MaterialPhasesLab() {
   const [pressure, setPressure] = useState(.101325);
   const [controlsOpen, setControlsOpen] = useState(true);
   const [resetToken, setResetToken] = useState(0);
-  const [envelope, setEnvelope] = useState<Envelope>({ attack: 4, decay: 2, sustain: 6, release: 8, peak: 1180, soak: 840, finish: 80 });
+  const [envelopes, setEnvelopes] = useState<Record<Mode, Envelope>>(ENVELOPE_DEFAULTS);
   const [envelopeStage, setEnvelopeStage] = useState("idle");
   const envelopeRun = useRef<{ started: number; initial: number; mode: Mode } | null>(null);
+  const [orbitEnabled, setOrbitEnabled] = useState<Record<"magnet" | "steel" | "water", boolean>>({ magnet: false, steel: false, water: false });
+  const [orbitRadius, setOrbitRadius] = useState(.08);
+  const [orbitPeriod, setOrbitPeriod] = useState(12);
+  const [phaseCenters, setPhaseCenters] = useState<PhaseCenters>({
+    magnet: { x: (field + 1.2) / 2.4, y: magT / 1.8 },
+    steel: { x: carbon / 2.1, y: (steelT - 20) / 1580 },
+    water: { x: (waterT - 150) / 600, y: (Math.log10(pressure) + 4) / 8 },
+  });
+  const envelope = envelopes[mode];
 
   useEffect(() => { valuesRef.current = { magT, field, exchange, steelT, carbon, eutecticT, si, mobility, waterT, pressure }; }, [magT, field, exchange, steelT, carbon, eutecticT, si, mobility, waterT, pressure]);
 
@@ -382,33 +440,65 @@ export function MaterialPhasesLab() {
 
   useEffect(() => {
     const ctx = diagramCanvas.current?.getContext("2d");
-    if (ctx) drawDiagram(ctx, mode, { magT, field, steelT, carbon, eutecticT, si, waterT, pressure });
-  }, [mode, magT, field, steelT, carbon, eutecticT, si, waterT, pressure]);
+    if (ctx) drawDiagram(ctx, mode, { magT, field, steelT, carbon, eutecticT, si, waterT, pressure }, { enabled: orbitEnabled, radius: orbitRadius, centers: phaseCenters });
+  }, [mode, magT, field, steelT, carbon, eutecticT, si, waterT, pressure, orbitEnabled, orbitRadius, phaseCenters]);
 
   useEffect(() => {
     let frame = 0;
     const tick = (now: number) => {
       const run = envelopeRun.current;
       if (run) {
+        const activeEnvelope = envelopes[run.mode];
         const elapsed = (now - run.started) / 1000;
-        const a = envelope.attack, d = envelope.decay, s = envelope.sustain, r = envelope.release;
+        const a = activeEnvelope.attack, d = activeEnvelope.decay, s = activeEnvelope.sustain, r = activeEnvelope.release;
         let value = run.initial;
         let stage = "heat ramp {attack}";
-        if (elapsed < a) value = mix(run.initial, envelope.peak, elapsed / Math.max(a, .01));
-        else if (elapsed < a + d) { stage = "equalize {decay}"; value = mix(envelope.peak, envelope.soak, (elapsed - a) / Math.max(d, .01)); }
-        else if (elapsed < a + d + s) { stage = "soak {sustain}"; value = envelope.soak; }
-        else if (elapsed < a + d + s + r) { stage = "cooldown {release}"; value = mix(envelope.soak, envelope.finish, (elapsed - a - d - s) / Math.max(r, .01)); }
-        else { envelopeRun.current = null; stage = "complete"; value = envelope.finish; }
-        if (run.mode === "steel") setSteelT(value); else setEutecticT(value);
+        if (elapsed < a) value = mix(run.initial, activeEnvelope.peak, elapsed / Math.max(a, .01));
+        else if (elapsed < a + d) { stage = "equalize {decay}"; value = mix(activeEnvelope.peak, activeEnvelope.soak, (elapsed - a) / Math.max(d, .01)); }
+        else if (elapsed < a + d + s) { stage = "soak {sustain}"; value = activeEnvelope.soak; }
+        else if (elapsed < a + d + s + r) { stage = "cooldown {release}"; value = mix(activeEnvelope.soak, activeEnvelope.finish, (elapsed - a - d - s) / Math.max(r, .01)); }
+        else { envelopeRun.current = null; stage = "complete"; value = activeEnvelope.finish; }
+        if (run.mode === "magnet") setMagT(value);
+        else if (run.mode === "steel") setSteelT(value);
+        else if (run.mode === "eutectic") setEutecticT(value);
+        else setWaterT(value);
         setEnvelopeStage(stage);
       }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [envelope]);
+  }, [envelopes]);
 
-  const selectDiagram = (event: React.PointerEvent<HTMLCanvasElement>) => {
+  useEffect(() => {
+    let frame = 0;
+    let lastUpdate = 0;
+    const tick = (now: number) => {
+      if (now - lastUpdate > 33) {
+        lastUpdate = now;
+        const angle = now / 1000 / Math.max(orbitPeriod, 1) * TAU;
+        const dx = Math.cos(angle) * orbitRadius;
+        const dy = Math.sin(angle) * orbitRadius;
+        if (orbitEnabled.magnet) {
+          setField((clamp(phaseCenters.magnet.x + dx, 0, 1) * 2.4) - 1.2);
+          setMagT(clamp(phaseCenters.magnet.y + dy, 0, 1) * 1.8);
+        }
+        if (orbitEnabled.steel) {
+          setCarbon(clamp(phaseCenters.steel.x + dx, 0, 1) * 2.1);
+          setSteelT(20 + clamp(phaseCenters.steel.y + dy, 0, 1) * 1580);
+        }
+        if (orbitEnabled.water) {
+          setWaterT(150 + clamp(phaseCenters.water.x + dx, 0, 1) * 600);
+          setPressure(10 ** (-4 + clamp(phaseCenters.water.y + dy, 0, 1) * 8));
+        }
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [orbitEnabled, orbitPeriod, orbitRadius, phaseCenters]);
+
+  const selectDiagram = (event: React.PointerEvent<HTMLCanvasElement>, updateComposition = true) => {
     const canvas = diagramCanvas.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -416,19 +506,29 @@ export function MaterialPhasesLab() {
     const y = clamp((event.clientY - rect.top) / rect.height, 20 / 340, 290 / 340);
     const nx = (x - 48 / 700) / ((676 - 48) / 700);
     const ny = 1 - (y - 20 / 340) / ((290 - 20) / 340);
-    if (mode === "magnet") { setField(nx * 2.4 - 1.2); setMagT(ny * 1.8); }
-    else if (mode === "steel") { const nextCarbon = nx * 2.1; setCarbon(nextCarbon); setSteelT(20 + ny * 1580); reset("steel", { carbon: nextCarbon }); }
-    else if (mode === "eutectic") { const nextSi = nx * 100; setSi(nextSi); setEutecticT(20 + ny * 1450); reset("eutectic", { si: nextSi }); }
-    else { setWaterT(150 + nx * 600); setPressure(10 ** (-4 + ny * 8)); }
+    if (mode === "magnet") { setPhaseCenters((centers) => ({ ...centers, magnet: { x: nx, y: ny } })); setField(nx * 2.4 - 1.2); setMagT(ny * 1.8); }
+    else if (mode === "steel") { const nextCarbon = nx * 2.1; setPhaseCenters((centers) => ({ ...centers, steel: { x: nx, y: ny } })); setCarbon(nextCarbon); setSteelT(20 + ny * 1580); }
+    else if (mode === "eutectic") {
+      setEutecticT(20 + ny * 1450);
+      if (updateComposition) { const nextSi = nx * 100; setSi(nextSi); reset("eutectic", { si: nextSi }); }
+    }
+    else { setPhaseCenters((centers) => ({ ...centers, water: { x: nx, y: ny } })); setWaterT(150 + nx * 600); setPressure(10 ** (-4 + ny * 8)); }
   };
 
   const runThermalEnvelope = () => {
-    const initial = mode === "steel" ? steelT : eutecticT;
+    const initial = mode === "magnet" ? magT : mode === "steel" ? steelT : mode === "eutectic" ? eutecticT : waterT;
+    if (mode !== "eutectic") setOrbitEnabled((enabled) => ({ ...enabled, [mode]: false }));
     envelopeRun.current = { started: performance.now(), initial, mode };
     setEnvelopeStage("heat ramp {attack}");
   };
 
   const active = TABS.find((tab) => tab.id === mode)!;
+  const orbitMode = mode === "eutectic" ? null : mode;
+  const envelopeRange = mode === "magnet"
+    ? { min: 0, max: 1.8, step: .01, unit: "T/Tc" }
+    : mode === "water"
+      ? { min: 150, max: 750, step: 2, unit: "K" }
+      : { min: 20, max: mode === "steel" ? 1600 : 1470, step: 5, unit: "°C" };
   return (
     <main className="material-page">
       <header className="material-head">
@@ -454,7 +554,7 @@ export function MaterialPhasesLab() {
         <div className="material-hinge"><i /><i /><span>THERMODYNAMIC HINGE</span><i /><i /></div>
         <div className="material-screen material-diagram-screen">
           <header><span>PHASE DIAGRAM / TOUCH SURFACE</span><b>tap or drag to set conditions</b></header>
-          <canvas ref={diagramCanvas} width="700" height="340" onPointerDown={selectDiagram} onPointerMove={(event) => { if (event.buttons) selectDiagram(event); }} aria-label={`Interactive ${active.label} phase diagram`} />
+          <canvas ref={diagramCanvas} width="700" height="340" onPointerDown={(event) => selectDiagram(event)} onPointerMove={(event) => { if (event.buttons) selectDiagram(event, mode !== "eutectic"); }} aria-label={`Interactive ${active.label} phase diagram`} />
         </div>
       </section>
 
@@ -468,7 +568,7 @@ export function MaterialPhasesLab() {
           </>}
           {mode === "steel" && <>
             <Numeric label="Temperature" value={steelT} unit="°C" min={20} max={1600} step={1} onChange={setSteelT} />
-            <Numeric label="Carbon defects" value={carbon} unit="wt% C" min={0} max={2.1} step={.01} onChange={(value) => { setCarbon(value); reset("steel", { carbon: value }); }} />
+            <Numeric label="Carbon defects" value={carbon} unit="wt% C" min={0} max={2.1} step={.01} onChange={setCarbon} />
           </>}
           {mode === "eutectic" && <>
             <Numeric label="Temperature" value={eutecticT} unit="°C" min={20} max={1470} step={1} onChange={setEutecticT} />
@@ -481,13 +581,24 @@ export function MaterialPhasesLab() {
           </>}
         </div>
 
-        {(mode === "steel" || mode === "eutectic") && <div className="material-envelope">
+        {mode === "eutectic" && <label className="material-temperature-slider"><span>Non-destructive temperature sweep</span><input type="range" min="20" max="1470" step="1" value={eutecticT} onChange={(event) => setEutecticT(Number(event.target.value))} /><b>{eutecticT.toFixed(0)} °C</b></label>}
+
+        {orbitMode && <div className="material-orbit">
+          <header><div><span>PHASE-SPACE LOCUS</span><b>{orbitEnabled[orbitMode] ? "traversing around selected center" : "parked at selected center"}</b></div><button type="button" onClick={() => { envelopeRun.current = null; setEnvelopeStage("idle"); setOrbitEnabled((enabled) => ({ ...enabled, [orbitMode]: !enabled[orbitMode] })); }}>{orbitEnabled[orbitMode] ? "Stop orbit" : "Traverse circle"}</button></header>
+          <div>
+            <label><span>Locus radius</span><input type="range" min=".015" max=".22" step=".005" value={orbitRadius} onChange={(event) => setOrbitRadius(Number(event.target.value))} /><b>{(orbitRadius * 100).toFixed(1)}%</b></label>
+            <label><span>Traversal period</span><input type="range" min="2" max="40" step=".5" value={orbitPeriod} onChange={(event) => setOrbitPeriod(Number(event.target.value))} /><b>{orbitPeriod.toFixed(1)} s</b></label>
+          </div>
+          <p>Tap or drag on the phase diagram to move the center of the dashed locus.</p>
+        </div>}
+
+        <div className="material-envelope">
           <header><div><span>THERMAL PROCESS ENVELOPE</span><b>{envelopeStage}</b></div><button type="button" onClick={runThermalEnvelope}>Run cycle</button></header>
           <div className="material-envelope-grid">
-            {(["attack", "decay", "sustain", "release"] as const).map((key) => <label key={key}><span>{key === "attack" ? "Heat ramp {attack}" : key === "decay" ? "Equalize {decay}" : key === "sustain" ? "Soak {sustain}" : "Cooldown {release}"}</span><input type="range" min=".5" max="20" step=".5" value={envelope[key]} onChange={(event) => setEnvelope({ ...envelope, [key]: Number(event.target.value) })} /><b>{envelope[key].toFixed(1)} s</b></label>)}
-            {(["peak", "soak", "finish"] as const).map((key) => <label key={key}><span>{key === "peak" ? "Peak / melt" : key === "soak" ? "Hold temperature" : "Final temperature"}</span><input type="range" min="20" max={mode === "steel" ? 1600 : 1470} step="5" value={envelope[key]} onChange={(event) => setEnvelope({ ...envelope, [key]: Number(event.target.value) })} /><b>{envelope[key].toFixed(0)} °C</b></label>)}
+            {(["attack", "decay", "sustain", "release"] as const).map((key) => <label key={key}><span>{key === "attack" ? "Heat ramp {attack}" : key === "decay" ? "Equalize {decay}" : key === "sustain" ? "Soak {sustain}" : "Cooldown {release}"}</span><input type="range" min=".5" max="20" step=".5" value={envelope[key]} onChange={(event) => setEnvelopes((all) => ({ ...all, [mode]: { ...all[mode], [key]: Number(event.target.value) } }))} /><b>{envelope[key].toFixed(1)} s</b></label>)}
+            {(["peak", "soak", "finish"] as const).map((key) => <label key={key}><span>{key === "peak" ? "Peak temperature" : key === "soak" ? "Hold temperature" : "Final temperature"}</span><input type="range" min={envelopeRange.min} max={envelopeRange.max} step={envelopeRange.step} value={envelope[key]} onChange={(event) => setEnvelopes((all) => ({ ...all, [mode]: { ...all[mode], [key]: Number(event.target.value) } }))} /><b>{mode === "magnet" ? envelope[key].toFixed(2) : envelope[key].toFixed(0)} {envelopeRange.unit}</b></label>)}
           </div>
-        </div>}
+        </div>
       </section>}
 
       <section className="material-model-notes">
