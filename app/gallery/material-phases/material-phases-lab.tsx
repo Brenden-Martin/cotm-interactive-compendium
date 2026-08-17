@@ -33,6 +33,8 @@ const STEEL_W = 82;
 const STEEL_H = 46;
 const ALLOY_W = 96;
 const ALLOY_H = 54;
+const MAG_T_MIN = -1.8;
+const MAG_T_MAX = 3.6;
 const TABS: Array<{ id: Mode; label: string; kicker: string }> = [
   { id: "magnet", label: "Magnetic domains", kicker: "symmetry breaking" },
   { id: "steel", label: "Crystal tempering", kicker: "grain kinetics" },
@@ -144,9 +146,9 @@ function drawMagnet(ctx: CanvasRenderingContext2D, sim: SimState, temperature: n
     }
     const old = spins[index(x, y, MAG_W, MAG_H)];
     const anisotropy = .32 * Math.cos(old * 2);
-    const target = Math.atan2(vy, vx + anisotropy);
+    const target = Math.atan2(vy, vx + anisotropy) + (temperature < 0 ? Math.PI : 0);
     const delta = Math.atan2(Math.sin(target - old), Math.cos(target - old));
-    spins[index(x, y, MAG_W, MAG_H)] = old + delta * .18 + (Math.random() - .5) * temperature * .42;
+    spins[index(x, y, MAG_W, MAG_H)] = old + delta * .18 + (Math.random() - .5) * Math.abs(temperature) * .42;
   }
   const w = ctx.canvas.width;
   const h = ctx.canvas.height;
@@ -359,12 +361,15 @@ function drawDiagram(ctx: CanvasRenderingContext2D, mode: Mode, values: { magT: 
   const plotAspect = (right - left) / (bottom - top);
   if (mode === "magnet") {
     drawAxes(ctx, "EXTERNAL FIELD H / J", "TEMPERATURE T / Tc");
-    const tcY = mix(bottom, top, 1 / 1.8);
+    const tempNorm = (temperature: number) => (temperature - MAG_T_MIN) / (MAG_T_MAX - MAG_T_MIN);
+    const tcY = mix(bottom, top, tempNorm(1));
+    const zeroY = mix(bottom, top, tempNorm(0));
     ctx.fillStyle = "rgba(255,70,48,.16)"; ctx.fillRect(left, tcY, right - left, bottom - tcY);
     ctx.fillStyle = "rgba(49,189,255,.12)"; ctx.fillRect(left, top, right - left, tcY - top);
     ctx.setLineDash([8, 7]); ctx.strokeStyle = "#db392d"; ctx.beginPath(); ctx.moveTo(left, tcY); ctx.lineTo(right, tcY); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = "#21120e"; ctx.font = "800 13px ui-monospace,monospace"; ctx.fillText("DOMAIN ORDER", 64, bottom - 18); ctx.fillText("THERMAL DISORDER", 64, top + 22); ctx.fillText("FINITE-GRID Tc", right - 142, tcY - 8);
-    const cursorX = mix(left, right, (values.field + 1.2) / 2.4), cursorY = mix(bottom, top, values.magT / 1.8);
+    ctx.setLineDash([4, 5]); ctx.strokeStyle = "rgba(33,18,14,.6)"; ctx.beginPath(); ctx.moveTo(left, zeroY); ctx.lineTo(right, zeroY); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#21120e"; ctx.font = "800 13px ui-monospace,monospace"; ctx.fillText("INVERTED ORDER", 64, bottom - 18); ctx.fillText("THERMAL DISORDER", 64, top + 22); ctx.fillText("FINITE-GRID Tc", right - 142, tcY - 8);
+    const cursorX = mix(left, right, (values.field + 1.2) / 2.4), cursorY = mix(bottom, top, tempNorm(values.magT));
     if (orbit.enabled.magnet) drawOrbit(ctx, mix(left, right, orbit.centers.magnet.x), mix(bottom, top, orbit.centers.magnet.y), boundedOrbitRadius(orbit.centers.magnet, orbit.radius, plotAspect) * (right - left));
     drawCursor(ctx, cursorX, cursorY, `T/Tc ${values.magT.toFixed(2)} · H ${values.field.toFixed(2)}`);
   } else if (mode === "steel") {
@@ -428,7 +433,7 @@ export function MaterialPhasesLab() {
   const [orbitRadius, setOrbitRadius] = useState(.08);
   const [orbitPeriod, setOrbitPeriod] = useState(12);
   const [phaseCenters, setPhaseCenters] = useState<PhaseCenters>({
-    magnet: { x: (field + 1.2) / 2.4, y: magT / 1.8 },
+    magnet: { x: (field + 1.2) / 2.4, y: (magT - MAG_T_MIN) / (MAG_T_MAX - MAG_T_MIN) },
     steel: { x: carbon / 2.1, y: (steelT - 20) / 1580 },
     water: { x: (waterT - 150) / 600, y: (Math.log10(pressure) + 4) / 8 },
   });
@@ -506,7 +511,7 @@ export function MaterialPhasesLab() {
           const dx = Math.cos(angle) * radius;
           const dy = Math.sin(angle) * radius * (628 / 270);
           setField((clamp(phaseCenters.magnet.x + dx, 0, 1) * 2.4) - 1.2);
-          setMagT(clamp(phaseCenters.magnet.y + dy, 0, 1) * 1.8);
+          setMagT(MAG_T_MIN + clamp(phaseCenters.magnet.y + dy, 0, 1) * (MAG_T_MAX - MAG_T_MIN));
         }
         if (orbitEnabled.steel) {
           const radius = boundedOrbitRadius(phaseCenters.steel, orbitRadius, 628 / 270);
@@ -537,7 +542,7 @@ export function MaterialPhasesLab() {
     const y = clamp((event.clientY - rect.top) / rect.height, 20 / 340, 290 / 340);
     const nx = (x - 48 / 700) / ((676 - 48) / 700);
     const ny = 1 - (y - 20 / 340) / ((290 - 20) / 340);
-    if (mode === "magnet") { setPhaseCenters((centers) => ({ ...centers, magnet: { x: nx, y: ny } })); setField(nx * 2.4 - 1.2); setMagT(ny * 1.8); }
+    if (mode === "magnet") { setPhaseCenters((centers) => ({ ...centers, magnet: { x: nx, y: ny } })); setField(nx * 2.4 - 1.2); setMagT(MAG_T_MIN + ny * (MAG_T_MAX - MAG_T_MIN)); }
     else if (mode === "steel") { const nextCarbon = nx * 2.1; setPhaseCenters((centers) => ({ ...centers, steel: { x: nx, y: ny } })); setCarbon(nextCarbon); setSteelT(20 + ny * 1580); }
     else if (mode === "eutectic") {
       setEutecticT(20 + ny * 1450);
@@ -556,7 +561,7 @@ export function MaterialPhasesLab() {
   const active = TABS.find((tab) => tab.id === mode)!;
   const orbitMode = mode === "eutectic" ? null : mode;
   const envelopeRange = mode === "magnet"
-    ? { min: 0, max: 1.8, step: .01, unit: "T/Tc" }
+    ? { min: MAG_T_MIN, max: MAG_T_MAX, step: .01, unit: "T/Tc" }
     : mode === "water"
       ? { min: 150, max: 750, step: 2, unit: "K" }
       : { min: 20, max: mode === "steel" ? 1600 : 1470, step: 5, unit: "°C" };
@@ -593,7 +598,7 @@ export function MaterialPhasesLab() {
         <div className="material-console-head"><div><span>DIRECT ENTRY</span><b>{active.label}</b></div><button type="button" onClick={() => reset()}>Reset material</button></div>
         <div className="material-numeric-grid">
           {mode === "magnet" && <>
-            <Numeric label="Temperature" value={magT} unit="T/Tc" min={0} max={1.8} step={.01} onChange={setMagT} />
+            <Numeric label="Temperature" value={magT} unit="T/Tc" min={MAG_T_MIN} max={MAG_T_MAX} step={.01} onChange={setMagT} />
             <Numeric label="External field" value={field} unit="H/J" min={-1.2} max={1.2} step={.01} onChange={setField} />
             <Numeric label="Exchange coupling" value={exchange} unit="J" min={.1} max={2.5} step={.01} onChange={setExchange} />
           </>}
@@ -611,6 +616,8 @@ export function MaterialPhasesLab() {
             <Numeric label="Pressure" value={pressure} unit="MPa" min={.0001} max={10000} step={.0001} onChange={setPressure} />
           </>}
         </div>
+
+        {mode === "steel" && <label className="material-temperature-slider"><span>Non-destructive temperature sweep</span><input type="range" min="20" max="1600" step="1" value={steelT} onChange={(event) => setSteelT(Number(event.target.value))} /><b>{steelT.toFixed(0)} °C</b></label>}
 
         {mode === "eutectic" && <div className="material-eutectic-options">
           <label className="material-temperature-slider"><span>Non-destructive temperature sweep</span><input type="range" min="20" max="1470" step="1" value={eutecticT} onChange={(event) => setEutecticT(Number(event.target.value))} /><b>{eutecticT.toFixed(0)} °C</b></label>
@@ -641,7 +648,7 @@ export function MaterialPhasesLab() {
 
       <section className="material-model-notes">
         <h2>What the toy knows</h2>
-        <p><b>Magnet:</b> planar spins use nearest-neighbor exchange, weak easy-axis anisotropy, thermal noise, and an external field. The marked Tc is a finite-grid ordering crossover—not a calibration to a named magnet.</p>
+        <p><b>Magnet:</b> planar spins use nearest-neighbor exchange, weak easy-axis anisotropy, thermal noise, and an external field. Positive T/Tc crosses a finite-grid ordering crossover; the negative effective-temperature branch represents a bounded, population-inverted spin ensemble—not matter cooled below absolute zero.</p>
         <p><b>Steel:</b> a Potts-style grain-growth field shows curvature-driven coarsening, carbon pinning, melting disorder, and a cooling-rate martensite cue. It is an intuition machine, not a CALPHAD, TTT, or CCT predictor.</p>
         <p><b>Au–Si:</b> a conservative phase-field sketch begins as two thin-film layers, mixes above the liquidus, and demixes below it. The eutectic anchor is 18.6 atomic % Si at 363 ± 3 °C.</p>
         <p><b>Water:</b> particles settle into distinct visual lattices selected by an approximate phase map. The triple and critical anchors are exact reference points; the broad ice-region boundaries are deliberately schematic.</p>

@@ -38,6 +38,21 @@ export default async function ResearchProjectPage({ params }: { params: Promise<
         <div className="research-project-signal" aria-hidden="true"><i /><i /><i /><i /><span /></div>
       </section>
 
+      {project.slug === "mesopyramids" && <section className="research-gallery-previews" aria-labelledby="mesopyramid-instruments">
+        <header><span className="eyebrow">Interactive Record / Working Instruments</span><h2 id="mesopyramid-instruments">Related Gallery exhibits</h2><p>Open the live demonstrations that overlap the materials, transport, and optical methods surrounding the Mesopyramids work.</p></header>
+        <div>
+          <Link className="study research-gallery-link material-entry" href="/gallery/material-phases">
+            <span className="eyebrow">Condensed Matter</span><div className="material-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div><strong>Material Phases</strong><small>Cross the phase boundary →</small>
+          </Link>
+          <Link className="study research-gallery-link current-entry" href="/gallery/current">
+            <span className="eyebrow">Conductive Media</span><div className="current-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div><strong>Current</strong><small>Doodle a path →</small>
+          </Link>
+          <Link className="study research-gallery-link diffraction-entry" href="/gallery/square-aperture">
+            <span className="eyebrow">Wave Optics</span><div className="diffraction-entry-field" aria-hidden="true"><i /></div><strong>Square Aperture</strong><small>Enter the Fourier plane →</small>
+          </Link>
+        </div>
+      </section>}
+
       <section className="research-project-slots" aria-label="Reserved research materials">
         <article><span>01 / Narrative</span><strong>Reports &amp; Presentations</strong><p>Reserved for the project overview, major results, and selected presentation material.</p></article>
         <article><span>02 / Visual Record</span><strong>Figures &amp; Key Plots</strong><p>Reserved for the clearest diagrams, images, measurements, and publication-ready plots.</p></article>
