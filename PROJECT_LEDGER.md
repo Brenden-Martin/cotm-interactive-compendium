@@ -328,6 +328,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **COMP-002 — Testing — Logs preserve the original index.** The former Compendium page now lives intact under **Logs** as the destination for interactive-exhibit companion articles. Existing article URLs remain stable, and their back links return to Logs.
 - **COMP-003 — Testing / Waiting — Memo Dump.** Reserve three ordered eras—**Memo Dump I**, **Memo Dump II**, and **Memo Dump III**—for hundreds of photographed pocket notes. Later intake should preserve the original scan and add dates, transcription, and tags without overwriting source images.
 - **COMP-004 — Testing / Waiting — Class Notes.** Reserve a course-indexed handwritten-notes archive. Each class receives an independent scan sequence with room for annotations, while the original artistic diagrams remain visually primary.
+- **COMP-005 — Done — Portable site doorway.** The bottom of the Compendium index carries a high-contrast, error-corrected QR code for the canonical public COTM URL. The code itself is also a conventional accessible link.
 
 ### Music
 
@@ -504,3 +505,4 @@ This is a human-readable summary of the repository history, not a substitute for
 - **2026-08-06:** Pendulum Laboratory belongs in Gallery. Private Research is the home for Brenden's real research archives, beginning with Mesopyramids, Noncontact Respiration Monitoring, and Electro-Optic Fabry–Pérot; their current rooms remain intentionally skeletal until the named source directories are supplied.
 - **2026-08-06:** Ruliad illustrations layer into the existing rainbow story rooms; they do not replace the geometric fields or animated orbital language.
 - **2026-08-08:** The Luckfield keeps a square-pixel 16:9 simulation surface even inside stretched viewports so recursive feedback does not acquire display-induced directional asymmetry.
+- **2026-08-17:** This checkpoint is the first public structure-complete COTM build: the core Compendium, Gallery, Music, Private Research, Tales from the Ruliad, and Outernet entrance architecture has been assembled and approved through the owner-only workbench. Preserve it as the `v1.0.0-structure-complete` GitHub milestone.

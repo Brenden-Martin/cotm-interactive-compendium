@@ -1800,6 +1800,9 @@ button { font: inherit; }
 .compendium-collection small { position:relative;z-index:2;font-size:9px;font-weight:900;letter-spacing:.13em;text-transform:uppercase; }
 .comp-ruliad-card { grid-column:span 2;min-height:440px;background:#1b101d;color:#f2d56d; }
 .comp-ruliad-card:hover,.comp-ruliad-card:focus-visible { background:#29142b;box-shadow:10px 10px 0 #f2d56d; }
+.compendium-site-qr { grid-column:1/-1;justify-self:center;width:min(100%,460px);margin:52px auto 8px;padding:20px;background:#fff;border:2px solid #23100c;box-shadow:12px 12px 0 #23100c;line-height:0;transition:transform .25s ease,box-shadow .25s ease; }
+.compendium-site-qr:hover,.compendium-site-qr:focus-visible { transform:translate(-4px,-4px);box-shadow:16px 16px 0 #23100c;outline:4px solid #f2d56d;outline-offset:5px; }
+.compendium-site-qr img { display:block;width:100%;height:auto;image-rendering:pixelated; }
 .comp-logs-figure,.comp-memo-figure,.comp-notes-figure,.comp-ruliad-figure { position:relative;min-height:140px;margin:18px 0; }
 .comp-logs-figure i { display:block;height:2px;background:currentColor;margin:22px 0;transform-origin:left;animation:comp-log-wave 4s ease-in-out infinite; }
 .comp-logs-figure i:nth-child(2){width:82%;animation-delay:-1s}.comp-logs-figure i:nth-child(3){width:62%;animation-delay:-2s}.comp-logs-figure i:nth-child(4){width:91%;animation-delay:-3s}
