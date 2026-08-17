@@ -171,6 +171,12 @@ export default function Gallery() {
           <strong>Current</strong>
           <small>Doodle a path →</small>
         </Link>
+        <Link className="study material-entry" href="/gallery/material-phases">
+          <span className="eyebrow">Exhibit 28 / Condensed Matter</span>
+          <div className="material-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Material Phases</strong>
+          <small>Cross the phase boundary →</small>
+        </Link>
       </section>
     </main>
   );

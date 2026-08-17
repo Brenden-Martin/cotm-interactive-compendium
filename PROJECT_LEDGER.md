@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The next Site version contains twenty-three gallery exhibits:
+The next Site version contains twenty-eight gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -62,6 +62,11 @@ The next Site version contains twenty-three gallery exhibits:
 21. The Luckfield
 22. Gibberish Generator
 23. Ratz
+24. Polymorphic Goo
+25. ChromaDepth
+26. Phosphor Scan
+27. Current
+28. Material Phases
 
 The Compendium currently contains five linked theory entries:
 
@@ -231,6 +236,13 @@ The estimates below are relative work sessions, not calendar promises. A session
 
 - **CURRENT-001 — Review — Doodle-driven conservative Laplace solver.** Recover the historic Current idea as Gallery exhibit 27 with pointer/touch drawing, grayscale mask import, Funnel, Maze, Lattice, Islands, and Empty material presets. Solve `∇·(σ∇V)=0` live with simultaneous Jacobi updates, harmonic face conductances, insulating un-driven walls, selectable horizontal/vertical/diagonal electrodes, and adjustable relaxation, batch size, resolution, and six decades of conductivity contrast.
 - **CURRENT-002 — Review — Side-by-side convergence instrument.** Continuously render a psychedelic orange/purple/cyan/lime/sunflower cyclic potential map beside a logarithmic current-magnitude heat map with magnitude-scaled quiver arrows. Expose color-band density, phase, arrow spacing/gain, pause, single-cycle stepping, reset, RMS residual, largest nudge, and source/sink flux mismatch so useful convergence and numerical failure remain visible rather than hidden behind a fixed iteration count.
+
+### Material Phases
+
+- **PHASE-001 — Review — Dual-screen phase laboratory.** Gallery exhibit 28 uses a Nintendo-DS-like instrument: an upper particle/domain simulation and a lower pointer/touch phase diagram. Every diagram supports direct numerical entry as well as cursor control, and changing thermodynamic coordinates immediately retunes the live material.
+- **PHASE-002 — Review — Magnetic ordering.** A finite periodic lattice of freely rotating planar spins combines nearest-neighbor exchange, weak easy-axis anisotropy, thermal noise, and a horizontal external field. The normalized temperature-field diagram exposes a finite-grid Curie-like ordering crossover while explicitly avoiding calibration to a named magnetic material.
+- **PHASE-003 — Review — Steel grains and thermal processing.** A Potts-style grain field uses curvature-driven boundary motion, temperature-dependent mobility, carbon-defect pinning, melt disorder, and a rapid-cooling martensite cue. Its approximate Fe-C diagram and direct controls share a four-stage heat ramp {attack}, equalize {decay}, soak {sustain}, and cooldown {release} envelope without claiming CALPHAD, TTT, or CCT accuracy.
+- **PHASE-004 — Review — Au-Si eutectic and water.** A conservative phase-field sketch begins with stacked Au/Si films, mixes above a composition-dependent liquidus, and demixes during cooling around the 18.6 atomic % Si / 363 °C eutectic anchor recovered from Brenden's mesopyramid process history. A separate schematic IAPWS-anchored water map spans vapor, liquid, supercritical water, and ice Ih/III/V/VI/VII, with particles settling into visually distinct lattices after each phase-space selection.
 
 ### YOU ARE HERE and homepage behavior
 
