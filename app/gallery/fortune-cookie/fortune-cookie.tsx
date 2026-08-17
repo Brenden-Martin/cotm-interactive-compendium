@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { CSSProperties, FormEvent, useEffect, useRef, useState } from "react";
+import { ARCHIVED_FORTUNES } from "./fortune-bank";
 
 const STARTER_FORTUNES = [
   "The shortest path will develop an unexpected scenic route.",
@@ -29,6 +31,25 @@ const STARTER_FORTUNES = [
   "Congratulations: the bug has become an exhibit.",
 ];
 
+const LOCAL_FORTUNES = [...STARTER_FORTUNES, ...ARCHIVED_FORTUNES];
+
+const DISSOLVE_BLOCKS = Array.from({ length: 64 }, (_, index) => {
+  const scramble = (seed: number) => ((seed * 9301 + 49297) % 233280) / 233280;
+  const direction = index % 2 ? 1 : -1;
+  return {
+    "--block-x": `${Math.floor(scramble(index * 11 + 3) * 96)}%`,
+    "--block-y": `${Math.floor(scramble(index * 17 + 7) * 96)}%`,
+    "--block-w": `${5 + Math.floor(scramble(index * 23 + 5) * 20)}vw`,
+    "--block-h": `${3 + Math.floor(scramble(index * 29 + 9) * 16)}vh`,
+    "--block-dx": `${direction * (12 + Math.floor(scramble(index * 31 + 4) * 58))}vw`,
+    "--block-dy": `${18 + Math.floor(scramble(index * 37 + 2) * 90)}vh`,
+    "--block-rot": `${direction * (20 + Math.floor(scramble(index * 41 + 8) * 220))}deg`,
+    "--block-delay": `${(index % 13) * .055}s`,
+    "--block-duration": `${1.45 + scramble(index * 43 + 6) * 1.8}s`,
+    "--block-hue": `${Math.floor(scramble(index * 47 + 1) * 330)}deg`,
+  } as CSSProperties;
+});
+
 function nextFortune(previous: number, bankSize: number) {
   if (bankSize < 2) return 0;
   let next = Math.floor(Math.random() * bankSize);
@@ -38,8 +59,11 @@ function nextFortune(previous: number, bankSize: number) {
 
 export function FortuneCookie() {
   const [fortuneIndex, setFortuneIndex] = useState(0);
-  const [fortunes, setFortunes] = useState<string[]>(STARTER_FORTUNES);
+  const [fortunes, setFortunes] = useState<string[]>(LOCAL_FORTUNES);
   const [open, setOpen] = useState(false);
+  const [golden, setGolden] = useState(false);
+  const [password, setPassword] = useState("");
+  const [secretMessage, setSecretMessage] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [trap, setTrap] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -51,12 +75,18 @@ export function FortuneCookie() {
   }, []);
 
   useEffect(() => {
+    const active = golden && open;
+    document.body.classList.toggle("fortune-golden-dissolve", active);
+    return () => document.body.classList.remove("fortune-golden-dissolve");
+  }, [golden, open]);
+
+  useEffect(() => {
     let active = true;
     fetch("/api/fortune-suggestions", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((result: { fortunes?: unknown }) => {
         if (!active || !Array.isArray(result.fortunes)) return;
-        const unique = new Set(STARTER_FORTUNES);
+        const unique = new Set(LOCAL_FORTUNES);
         const approved = result.fortunes.filter((fortune): fortune is string =>
           typeof fortune === "string" && fortune.length >= 3 && fortune.length <= 240
         );
@@ -70,13 +100,34 @@ export function FortuneCookie() {
   const crackCookie = () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     if (!open) {
-      setFortuneIndex((current) => nextFortune(current, fortunes.length));
+      const foundGoldenTicket = Math.random() < 1 / 250;
+      setGolden(foundGoldenTicket);
+      if (!foundGoldenTicket) setFortuneIndex((current) => nextFortune(current, fortunes.length));
       setOpen(true);
       return;
     }
     setOpen(false);
     timerRef.current = window.setTimeout(() => {
-      setFortuneIndex((current) => nextFortune(current, fortunes.length));
+      const foundGoldenTicket = Math.random() < 1 / 250;
+      setGolden(foundGoldenTicket);
+      if (!foundGoldenTicket) setFortuneIndex((current) => nextFortune(current, fortunes.length));
+      setOpen(true);
+      timerRef.current = null;
+    }, 420);
+  };
+
+  const tryPassword = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (password.trim().toUpperCase() !== "STAY GOLDEN") {
+      setSecretMessage("Nothing happens. Probably.");
+      return;
+    }
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    setPassword("");
+    setSecretMessage("A concealed mechanism accepts your answer.");
+    setOpen(false);
+    timerRef.current = window.setTimeout(() => {
+      setGolden(true);
       setOpen(true);
       timerRef.current = null;
     }, 420);
@@ -112,20 +163,39 @@ export function FortuneCookie() {
 
   return (
     <section className="fortune-lab">
+      {golden && open ? (
+        <div className="golden-dissolve-field" aria-hidden="true">
+          {DISSOLVE_BLOCKS.map((style, index) => <i key={index} style={style} />)}
+        </div>
+      ) : null}
       <div className="fortune-stage">
         <div className="fortune-rays" aria-hidden="true" />
-        <button
-          className={`fortune-machine ${open ? "open" : ""}`}
-          type="button"
-          onClick={crackCookie}
-          aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"}
+        <div
+          className={`fortune-machine ${open ? "open" : ""} ${golden ? "golden" : ""}`}
         >
-          <span className="fortune-paper"><b>{fortunes[fortuneIndex] ?? STARTER_FORTUNES[0]}</b><i>Child of the Machine</i></span>
+          <button className="fortune-cookie-trigger" type="button" onClick={crackCookie} aria-label={open ? "Crack another fortune cookie" : "Crack the fortune cookie"} />
+          {golden ? (
+            <Link className="fortune-paper golden-ticket-link" href="/the-outernet" aria-label="Use the Golden Ticket to enter The Outernet">
+              <b>ADMIT ONE<br />THE OUTERNET</b>
+              <i>Golden Ticket · Child of the Machine</i>
+              <em>Touch ticket to depart</em>
+            </Link>
+          ) : (
+            <span className="fortune-paper">
+              <b>{fortunes[fortuneIndex] ?? LOCAL_FORTUNES[0]}</b>
+              <i>Child of the Machine</i>
+            </span>
+          )}
           <span className="cookie-half cookie-left"><i /></span>
           <span className="cookie-half cookie-right"><i /></span>
-        </button>
+        </div>
         <button className="fortune-crack" type="button" onClick={crackCookie}>{open ? "Crack another" : "Crack the cookie"}</button>
         <p className="fortune-instruction">Tap the cookie. Accept no liability for subsequent synchronicities.</p>
+        <form className="fortune-secret" onSubmit={tryPassword}>
+          <input aria-label="Mysterious password" autoComplete="off" placeholder="Password" value={password} onChange={(event) => { setPassword(event.target.value); setSecretMessage(""); }} />
+          <button type="submit" aria-label="Try the mysterious password">???</button>
+        </form>
+        <p className="fortune-secret-message" role="status" aria-live="polite">{secretMessage}</p>
       </div>
       <aside className="fortune-suggestion">
         <span className="eyebrow">Feed the oracle</span>

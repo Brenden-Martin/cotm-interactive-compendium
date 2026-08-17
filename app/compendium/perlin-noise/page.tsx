@@ -1,6 +1,6 @@
 import Link from "next/link";
 export const metadata={title:"Perlin Noise & Coherent Randomness"};
-export default function PerlinArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium">Compendium</Link><span className="folio">Entry 004 / Procedural Fields</span></header><article>
+export default function PerlinArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium/logs">Logs</Link><span className="folio">Entry 004 / Procedural Fields</span></header><article>
   <p className="eyebrow">Field Note 004</p><h1>Coherent<br/>Randomness</h1><p className="comp-lede">White noise forgets its neighbors. Gradient noise gives nearby points a shared local story, producing hills, folds, clouds, and terrain without prescribing any of them.</p>
   <Link className="comp-exhibit-link" href="/gallery/perlin-noise">Enter the field generator →</Link>
   <section><h2>A lattice of directions</h2><p>Perlin noise begins by assigning a pseudorandom gradient vector to each lattice corner. A sample point measures its displacement against those nearby directions, creating four local dot products rather than four unrelated random values.</p></section>

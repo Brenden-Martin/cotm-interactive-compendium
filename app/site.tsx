@@ -107,6 +107,10 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "vanish-lines", weight: 1.45, sound: "laser", label: "DIMENSIONAL COLLAPSE" },
       { id: "bite", weight: 1.2, sound: "bonk", label: "WE'RE GONNA NEED A BIGGER BUTTON" },
       { id: "balloon", weight: 1.05, sound: "spring", label: "CAPACITY EXCEEDED" },
+      { id: "pneumatic", weight: 1.5, sound: "spring", label: "CURRENT LOCATION: RECEIVED" },
+      { id: "elevator", weight: 1.35, sound: "sparkle", label: "THIS FLOOR: HERE" },
+      { id: "custodian", weight: 1.35, sound: "sparkle", label: "COLOR SPACE: TEMPORARILY COMPLIANT" },
+      { id: "bureau", weight: 1.25, sound: "bonk", label: "0.0 METERS FROM ITSELF · JURISDICTION CONFIRMED" },
       { id: "closing-time", weight: 4.5, sound: "bonk", label: "YOU DON'T HAVE TO GO HOME, BUT YOU CAN'T STAY HERE!" },
       { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
     ];
@@ -133,7 +137,7 @@ export function ColorIndex({ active }: { active: Room }) {
       const target = destinations[Math.floor(random * destinations.length)];
       timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
     } else {
-      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : choice.id === "custodian" ? 2800 : choice.id === "bureau" ? 2500 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon","pneumatic","elevator"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
       timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); setRandomColor(""); }, duration);
     }
   }, [synth]);
@@ -219,9 +223,7 @@ export function ColorIndex({ active }: { active: Room }) {
           <h1 className="brand">COTM</h1>
         </div>
         <p className="intro">
-          Child of the Machine is an evolving cabinet of interactive exhibits:
-          sound, visual systems, private experiments, and whatever refuses to
-          fit neatly elsewhere.
+          An interactive museum of emergent phenomenon in physics and art.
         </p>
       </section>
       <nav className={`index-nav menu-dance menu-dance-${gag ? "idle" : (dance || "idle")}`} aria-label="Main collection">
@@ -258,6 +260,18 @@ export function ColorIndex({ active }: { active: Room }) {
       {gag === "powerpoint" && <div className="gag-powerpoint" aria-hidden="true">{Array.from({length:12},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
       {gag === "stairs" && <div className="gag-stair-dot" aria-hidden="true"/>}
       {gag === "balloon" && <div className="gag-confetti" aria-hidden="true">{Array.from({length:42},(_,i)=><i key={i} style={{"--i":i} as React.CSSProperties}/>)}</div>}
+      {gag === "pneumatic" && <div className="gag-pneumatic" aria-hidden="true"><i/><b>CURRENT LOCATION: RECEIVED</b></div>}
+      {gag === "elevator" && <div className="gag-elevator" aria-hidden="true"><i>BASEMENT π<br/>MEZZANINE −0<br/>HERE</i></div>}
+      {gag === "bureau" && <div className="gag-bureau" aria-hidden="true"><i/><i/><b>0.0 m<br/>FROM ITSELF</b><strong>JURISDICTION<br/>CONFIRMED</strong></div>}
+      {gag === "custodian" && (
+        <div className="gag-custodian" aria-hidden="true">
+          <i className="gag-custodian-triangle" />
+          <i className="gag-custodian-squeegee" />
+          {Array.from({ length: 18 }, (_, index) => (
+            <i key={index} className="gag-custodian-leak" style={{ "--i": index } as React.CSSProperties} />
+          ))}
+        </div>
+      )}
     </main>
   );
 }

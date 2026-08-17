@@ -105,6 +105,72 @@ export default function Gallery() {
           <strong>Fortune Cookie</strong>
           <small>Consult the oracle →</small>
         </Link>
+        <Link className="study spectrum-entry" href="/gallery/spectrum-to-rgb">
+          <span className="eyebrow">Exhibit 17 / Colorimetry</span>
+          <div className="spectrum-entry-field" aria-hidden="true"><i /><i /><i /><span /></div>
+          <strong>Spectrum to RGB</strong>
+          <small>Shape the light →</small>
+        </Link>
+        <Link className="study deq-atlas-entry" href="/gallery/deq-atlas">
+          <span className="eyebrow">Exhibit 18 / Learned Systems</span>
+          <div className="deq-atlas-entry-route" aria-hidden="true"><span /><i /><i /><i /><i /><b /></div>
+          <strong>DEQ Atlas</strong>
+          <small>Navigate the learned field →</small>
+        </Link>
+        <Link className="study manifold-entry" href="/gallery/manifold-golf">
+          <span className="eyebrow">Exhibit 19 / Differential Geometry</span>
+          <div className="manifold-entry-course" aria-hidden="true"><span /><i /><i /><b /></div>
+          <strong>Manifold Golf</strong>
+          <small>Putt through curved space →</small>
+        </Link>
+        <Link className="study pendulum-entry" href="/gallery/pendulum-lab">
+          <span className="eyebrow">Exhibit 20 / Nonlinear Dynamics</span>
+          <div className="pendulum-entry-figure" aria-hidden="true"><i /><b /><span /></div>
+          <strong>Pendulum Laboratory</strong>
+          <small>Set the system in motion →</small>
+        </Link>
+        <Link className="study luckfield-entry" href="/gallery/the-luckfield">
+          <span className="eyebrow">Exhibit 21 / Recursive Fields</span>
+          <div className="luckfield-entry-field" aria-hidden="true"><i /><i /><i /><span /><b /></div>
+          <strong>The Luckfield</strong>
+          <small>Let the field choose itself →</small>
+        </Link>
+        <Link className="study gibberish-entry" href="/gallery/gibberish-generator">
+          <span className="eyebrow">Exhibit 22 / Character Systems</span>
+          <div className="gibberish-entry-bubble" aria-hidden="true"><i /><span>LUCK STRENGTH INTELLIGENCE</span></div>
+          <strong>Gibberish Generator</strong>
+          <small>Give a color its voice →</small>
+        </Link>
+        <Link className="study ratz-entry" href="/gallery/ratz">
+          <span className="eyebrow">Exhibit 23 / Stochastic Behavior</span>
+          <div className="ratz-entry-den" aria-hidden="true"><i /><i /><i /><i /><b /><span /></div>
+          <strong>Ratz</strong>
+          <small>Follow the scent →</small>
+        </Link>
+        <Link className="study polymorph-entry" href="/gallery/polymorphic-goo">
+          <span className="eyebrow">Exhibit 24 / Fourier Geometry</span>
+          <div className="polymorph-entry-figure" aria-hidden="true"><i /><b /><span /></div>
+          <strong>Polymorphic Goo</strong>
+          <small>Modulate the blob →</small>
+        </Link>
+        <Link className="study chromadepth-entry" href="/gallery/chromadepth">
+          <span className="eyebrow">Exhibit 25 / Depth Encoding</span>
+          <div className="chromadepth-entry-figure" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+          <strong>ChromaDepth</strong>
+          <small>Put on the spectrum →</small>
+        </Link>
+        <Link className="study phosphor-entry" href="/gallery/phosphor-scan">
+          <span className="eyebrow">Exhibit 26 / Raster Persistence</span>
+          <div className="phosphor-entry-figure" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Phosphor Scan</strong>
+          <small>Excite the raster →</small>
+        </Link>
+        <Link className="study current-entry" href="/gallery/current">
+          <span className="eyebrow">Exhibit 27 / Conductive Media</span>
+          <div className="current-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Current</strong>
+          <small>Doodle a path →</small>
+        </Link>
       </section>
     </main>
   );

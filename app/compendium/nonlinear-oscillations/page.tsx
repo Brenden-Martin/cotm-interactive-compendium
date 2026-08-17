@@ -4,7 +4,7 @@ export const metadata = { title: "Harmonic & Nonlinear Oscillations" };
 
 export default function NonlinearOscillationsArticle() {
   return <main className="comp-entry">
-    <header><Link className="back" href="/compendium">Compendium</Link><span className="folio">Entry 001 / Dynamics</span></header>
+    <header><Link className="back" href="/compendium/logs">Logs</Link><span className="folio">Entry 001 / Dynamics</span></header>
     <article>
       <p className="eyebrow">Field Note 001</p>
       <h1>Harmonic &amp;<br/>Nonlinear Oscillations</h1>

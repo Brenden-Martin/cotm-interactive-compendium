@@ -1,6 +1,6 @@
 import Link from "next/link";
 export const metadata={title:"Steering Light with a Mirror"};
-export default function MirrorArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium">Compendium</Link><span className="folio">Entry 005 / Geometric Optics</span></header><article>
+export default function MirrorArticle(){return <main className="comp-entry"><header><Link className="back" href="/compendium/logs">Logs</Link><span className="folio">Entry 005 / Geometric Optics</span></header><article>
   <p className="eyebrow">Field Note 005</p><h1>Steering<br/>Light</h1><p className="comp-lede">To send one ray into another direction, a plane mirror must face halfway between them. In three dimensions, that simple sentence becomes a surprisingly elegant piece of vector geometry.</p>
   <Link className="comp-exhibit-link" href="/gallery/mirror-steering">Open the steering table →</Link>
   <section><h2>The bisector normal</h2><p>For unit incident and outgoing directions u and v, the required mirror normal lies along their normalized sum: n = (u + v)/|u + v|. It makes equal angles with both rays, satisfying the law of reflection.</p></section>

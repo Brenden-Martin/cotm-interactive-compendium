@@ -1,0 +1,3 @@
+cluster,members,medoid,median_dt,median_effective_k_rms,median_active_coefficients,median_exponent,median_decay,median_noise
+1,263,shared:221,0.843718452233,0.270452028218,45,0.987022791572,0.173522772866,0.00118947175259
+2,20,shared:116,1.37814181763,1.33831877655,45,1,0.671699050726,0.00102200645204

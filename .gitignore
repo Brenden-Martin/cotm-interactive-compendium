@@ -21,6 +21,9 @@
 # misc
 .DS_Store
 *.pem
+__pycache__/
+*.py[cod]
+.venv/
 
 # debug
 npm-debug.log*
@@ -36,6 +39,7 @@ yarn-error.log*
 
 # typescript
 next-env.d.ts
+*.tsbuildinfo
 /dist/
 /.wrangler/
 /outputs/
