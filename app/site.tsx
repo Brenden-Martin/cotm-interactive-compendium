@@ -111,6 +111,7 @@ export function ColorIndex({ active }: { active: Room }) {
       { id: "elevator", weight: 1.35, sound: "sparkle", label: "THIS FLOOR: HERE" },
       { id: "custodian", weight: 1.35, sound: "sparkle", label: "COLOR SPACE: TEMPORARILY COMPLIANT" },
       { id: "bureau", weight: 1.25, sound: "bonk", label: "0.0 METERS FROM ITSELF · JURISDICTION CONFIRMED" },
+      { id: "hotel-directory", weight: 1.05, sound: "sparkle", label: "ROOM ∞ · KEY ISSUED" },
       { id: "closing-time", weight: 4.5, sound: "bonk", label: "YOU DON'T HAVE TO GO HOME, BUT YOU CAN'T STAY HERE!" },
       { id: "random", weight: .8, sound: "sparkle", label: "WRONG TURN" },
     ];
@@ -137,7 +138,7 @@ export function ColorIndex({ active }: { active: Room }) {
       const target = destinations[Math.floor(random * destinations.length)];
       timer.current = window.setTimeout(() => { window.location.assign(target); }, 850);
     } else {
-      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : choice.id === "custodian" ? 2800 : choice.id === "bureau" ? 2500 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon","pneumatic","elevator"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
+      const duration = choice.id === "upside" ? 2600 : choice.id === "fall" ? 2200 : choice.id === "custodian" ? 2800 : choice.id === "hotel-directory" ? 3100 : choice.id === "bureau" ? 2500 : ["matrix","spaghettify","crumple","shuffle","stairs","handwave","vanish-lines","bite","balloon","pneumatic","elevator"].includes(choice.id) ? 2400 : choice.id === "oblivion" ? 1800 : 1150;
       timer.current = window.setTimeout(() => { setGag(""); setGagLabel(""); setRandomColor(""); }, duration);
     }
   }, [synth]);
@@ -263,6 +264,7 @@ export function ColorIndex({ active }: { active: Room }) {
       {gag === "pneumatic" && <div className="gag-pneumatic" aria-hidden="true"><i/><b>CURRENT LOCATION: RECEIVED</b></div>}
       {gag === "elevator" && <div className="gag-elevator" aria-hidden="true"><i>BASEMENT π<br/>MEZZANINE −0<br/>HERE</i></div>}
       {gag === "bureau" && <div className="gag-bureau" aria-hidden="true"><i/><i/><b>0.0 m<br/>FROM ITSELF</b><strong>JURISDICTION<br/>CONFIRMED</strong></div>}
+      {gag === "hotel-directory" && <div className="gag-hotel" aria-hidden="true"><div className="gag-hotel-board"><small>CHILD OF THE MACHINE HOTEL</small><h2>GUEST DIRECTORY</h2><ol><li><b>03</b> The Compendium</li><li><b>07</b> Music</li><li><b>11</b> Gallery</li><li><b>∞</b> You Are Here</li></ol><span>ROOM ∞</span></div><i className="gag-hotel-key">∞</i></div>}
       {gag === "custodian" && (
         <div className="gag-custodian" aria-hidden="true">
           <i className="gag-custodian-triangle" />
