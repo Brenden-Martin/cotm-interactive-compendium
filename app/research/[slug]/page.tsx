@@ -53,6 +53,16 @@ export default async function ResearchProjectPage({ params }: { params: Promise<
         </div>
       </section>}
 
+      {project.slug === "noncontact-respiration-monitoring" && <section className="research-gallery-previews" aria-labelledby="respiration-instruments">
+        <header><span className="eyebrow">Interactive Record / Working Instrument</span><h2 id="respiration-instruments">Related Gallery exhibit</h2><p>Move the light-wave sensor around a breathing torso and watch geometry, motion, noise, and acquisition reshape its return.</p></header>
+        <div><Link className="study research-gallery-link respiration-entry" href="/gallery/respiration-monitor"><span className="eyebrow">Biomedical Optics</span><div className="respiration-entry-field" aria-hidden="true"><i /><i /><i /><span /></div><strong>Respiration Monitor</strong><small>Measure the moving light →</small></Link></div>
+      </section>}
+
+      {project.slug === "mesopyramids" && <section className="research-gallery-previews research-gallery-previews-kinetics" aria-labelledby="kinetics-instrument">
+        <header><span className="eyebrow">Interactive Record / Kinetics Instrument</span><h2 id="kinetics-instrument">Live hysteresis laboratory</h2><p>Compare the heuristic paper model with reduced SRH, TAAM, and general recombination channels on a persistent virtual scope.</p></header>
+        <div><Link className="study research-gallery-link kinetics-entry" href="/gallery/hysteretic-kinetics"><span className="eyebrow">Nonequilibrium Kinetics</span><div className="kinetics-entry-scope" aria-hidden="true"><i /><span /></div><strong>Hysteretic Kinetics</strong><small>Draw the living loop →</small></Link></div>
+      </section>}
+
       <section className="research-project-slots" aria-label="Reserved research materials">
         <article><span>01 / Narrative</span><strong>Reports &amp; Presentations</strong><p>Reserved for the project overview, major results, and selected presentation material.</p></article>
         <article><span>02 / Visual Record</span><strong>Figures &amp; Key Plots</strong><p>Reserved for the clearest diagrams, images, measurements, and publication-ready plots.</p></article>

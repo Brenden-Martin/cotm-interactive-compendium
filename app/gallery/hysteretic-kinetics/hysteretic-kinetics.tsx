@@ -1,0 +1,42 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+type Model="reservoir"|"srh-taam"|"general"|"amphoteric"; type View="loop"|"sweep";
+type Params={drive:number;rate:number;persistence:number;gain:number;srh:number;taam:number;radiative:number;auger:number;asymmetry:number;trapDensity:number};
+const initial:Params={drive:1.7,rate:42,persistence:.12,gain:1.1,srh:.7,taam:1.6,radiative:.25,auger:.18,asymmetry:.32,trapDensity:1.2};
+const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
+
+function Slider({label,value,min,max,step,onChange}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void}){return <label className="kin-slider"><span>{label}<output>{value.toFixed(step<.1?2:1)}</output></span><input type="range" min={min} max={max} step={step} value={value} onChange={e=>onChange(+e.target.value)}/></label>}
+
+function stepModel(model:Model,state:number[],voltage:number,dt:number,p:Params){
+  if(model==="reservoir"){const target=Math.tanh(voltage*p.drive);const a=1-Math.exp(-dt*(.25+p.rate*.008));const b=1-Math.exp(-dt*(.06+p.rate*.002));state[0]+=a*(target-state[0]);state[1]+=b*(-target-state[1]);return state;}
+  let [n,h,f,g]=state; const injection=Math.max(0,Math.exp(clamp(voltage*p.drive,-5,5))-1); const hole=Math.max(0,Math.exp(clamp(-voltage*p.drive,-5,5))-1); const empty=1-f;
+  const electronCapture=p.srh*n+p.taam*(n*n+.45*n*h); const holeCapture=p.srh*h+p.taam*(h*h+.45*n*h); const recomb=p.radiative*n*h+p.auger*n*h*(n+h);
+  const scale=dt*(.14+p.rate*.003); n=(n+scale*(.03+injection+p.trapDensity*f*.05))/(1+scale*(.08+empty*electronCapture+recomb)); h=(h+scale*(.03+hole+p.trapDensity*empty*.05))/(1+scale*(.08+f*holeCapture+recomb));
+  const A=electronCapture+.04,B=holeCapture+.04,total=A+B; const feq=A/Math.max(total,1e-6); f=feq+(f-feq)*Math.exp(-scale*total);
+  if(model==="amphoteric"){const target=clamp((f+.5*Math.tanh(voltage-p.asymmetry)),0,1);g+= (target-g)*(1-Math.exp(-scale*(.08+p.srh)));}
+  return [clamp(n,0,8),clamp(h,0,8),clamp(f,0,1),clamp(g,0,1)];
+}
+function signal(model:Model,s:number[],v:number,p:Params){if(model==="reservoir")return p.gain*(s[0]-s[1])+.08*v;const trap=model==="amphoteric"?(s[2]-.5)+(s[3]-.5)*.65:s[2]-.5;return p.gain*(s[0]-s[1]+p.trapDensity*trap)+.07*v;}
+
+export function HystereticKinetics(){
+ const canvasRef=useRef<HTMLCanvasElement>(null),paramsRef=useRef(initial),modelRef=useRef<Model>("reservoir"),viewRef=useRef<View>("loop");
+ const [params,setParams]=useState(initial),[model,setModel]=useState<Model>("reservoir"),[view,setView]=useState<View>("loop"),[paused,setPaused]=useState(false),[status,setStatus]=useState({v:0,y:0,hz:0});
+ useEffect(()=>{paramsRef.current=params},[params]);useEffect(()=>{modelRef.current=model},[model]);useEffect(()=>{viewRef.current=view},[view]);
+ useEffect(()=>{const canvas=canvasRef.current;if(!canvas)return;const ctx=canvas.getContext("2d");if(!ctx)return;let raf=0,last=performance.now(),time=0,state=[.1,.1,.5,.5],sweepRate=5,points:{x:number,y:number}[]=[];
+  const resize=()=>{const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);ctx.setTransform(d,0,0,d,0,0)};resize();addEventListener("resize",resize);
+  const grid=(w:number,h:number)=>{ctx.strokeStyle="rgba(122,255,189,.12)";ctx.lineWidth=1;for(let i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(i*w/10,0);ctx.lineTo(i*w/10,h);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*h/10);ctx.lineTo(w,i*h/10);ctx.stroke()}ctx.strokeStyle="rgba(122,255,189,.38)";ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.moveTo(w/2,0);ctx.lineTo(w/2,h);ctx.stroke()};
+  const draw=(now:number)=>{const dt=Math.min(.04,(now-last)/1000);last=now;const p=paramsRef.current,m=modelRef.current,vw=viewRef.current,w=canvas.clientWidth,h=canvas.clientHeight;if(!paused){time+=dt;const rate=vw==="loop"?p.rate:sweepRate;const phase=time*rate*.035;const v=Math.sin(phase)*p.drive;for(let i=0;i<4;i++)state=stepModel(m,state,v,dt/4,p);const y=signal(m,state,v,p);points.push({x:v/p.drive,y:clamp(y/4,-1,1)});if(points.length>1200)points.shift();if(vw==="sweep"&&phase>Math.PI*2){time=0;sweepRate*=1.32;if(sweepRate>500)sweepRate=5;points=[]}if(Math.floor(now/120)%3===0)setStatus({v,y,hz:rate});}
+   ctx.fillStyle=`rgba(3,11,8,${clamp(p.persistence,.025,.45)})`;ctx.fillRect(0,0,w,h);grid(w,h);ctx.strokeStyle="#7affbd";ctx.shadowColor="#7affbd";ctx.shadowBlur=9;ctx.lineWidth=1.8;ctx.beginPath();points.forEach((q,i)=>{const x=w*(.5+.42*q.x),y=h*(.5-.38*q.y);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y)});ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle="#d9ffe9";ctx.font="800 10px ui-monospace";ctx.fillText(vw==="loop"?"LIVE LOOP / SHARED PARAMETER BANK":`RATE SWEEP / ${sweepRate.toFixed(1)} HZ`,14,20);raf=requestAnimationFrame(draw)};raf=requestAnimationFrame(draw);return()=>{cancelAnimationFrame(raf);removeEventListener("resize",resize)}},[paused]);
+ const set=(k:keyof Params,v:number)=>setParams(p=>({...p,[k]:v}));const randomize=()=>setParams({drive:.7+Math.random()*2.7,rate:5+Math.random()*180,persistence:.04+Math.random()*.28,gain:.4+Math.random()*2.6,srh:Math.random()*3,taam:Math.random()*4,radiative:Math.random()*1.5,auger:Math.random()*1.5,asymmetry:-1+Math.random()*2,trapDensity:.1+Math.random()*2.9});
+ return <main className="kin-page"><header className="kin-head"><Link href="/gallery">Gallery</Link><div><span className="eyebrow">Exhibit 30 / Nonequilibrium Kinetics</span><h1>Hysteretic Kinetics</h1></div><Link href="/research/mesopyramids">Research archive ↗</Link></header>
+  <section className="kin-console"><div className="kin-scope"><div className="kin-bezel"><canvas ref={canvasRef}/><div className="kin-readout"><span>Bias <b>{status.v.toFixed(2)}</b></span><span>Response <b>{status.y.toFixed(2)}</b></span><span>Rate <b>{status.hz.toFixed(1)} Hz</b></span></div></div><div className="kin-scope-label"><b>COTM TRANSIENT ANALYZER</b><span>Live browser reduction / research solver linked at right</span></div></div>
+   <aside className="kin-controls"><nav className="kin-models">{([['reservoir','Diode + reservoirs'],['srh-taam','SRH + TAAM'],['general','General mixer'],['amphoteric','Amphoteric frontier']] as [Model,string][]).map(([id,label])=><button key={id} className={model===id?'active':''} onClick={()=>setModel(id)}>{label}</button>)}</nav>
+    <div className="kin-view"><button className={view==='loop'?'active':''} onClick={()=>setView('loop')}>Live loop drawer</button><button className={view==='sweep'?'active':''} onClick={()=>setView('sweep')}>Rate sweep theater</button></div><div className="kin-actions"><button onClick={()=>setPaused(x=>!x)}>{paused?'Resume':'Pause'}</button><button onClick={randomize}>Randomize</button></div>
+    <details open><summary>Drive &amp; instrument</summary><Slider label="Drive amplitude" value={params.drive} min={.2} max={4} step={.05} onChange={v=>set('drive',v)}/><Slider label="Drive rate" value={params.rate} min={2} max={500} step={1} onChange={v=>set('rate',v)}/><Slider label="Phosphor persistence" value={params.persistence} min={.02} max={.45} step={.01} onChange={v=>set('persistence',v)}/><Slider label="Response gain" value={params.gain} min={.1} max={4} step={.05} onChange={v=>set('gain',v)}/></details>
+    <details open><summary>Shared kinetics bank</summary><Slider label="SRH capture" value={params.srh} min={0} max={4} step={.05} onChange={v=>set('srh',v)}/><Slider label="TAAM T1–T4" value={params.taam} min={0} max={5} step={.05} onChange={v=>set('taam',v)}/><Slider label="Radiative Bnp" value={params.radiative} min={0} max={2} step={.02} onChange={v=>set('radiative',v)}/><Slider label="Ordinary Auger" value={params.auger} min={0} max={2} step={.02} onChange={v=>set('auger',v)}/><Slider label="Trap density" value={params.trapDensity} min={0} max={3} step={.03} onChange={v=>set('trapDensity',v)}/><Slider label="Charge asymmetry" value={params.asymmetry} min={-1} max={1} step={.02} onChange={v=>set('asymmetry',v)}/></details>
+    <p className="kin-note">The browser instrument uses positivity-preserving population updates so stiff capture channels remain bounded while controls move. The SRH/TAAM channel structure follows the current Mesopyramids model; coefficients are normalized for interactive exploration. “Amphoteric frontier” is deliberately marked experimental rather than a validated fit.</p>
+   </aside></section></main>;
+}

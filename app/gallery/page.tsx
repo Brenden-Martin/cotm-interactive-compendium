@@ -174,6 +174,18 @@ export default function Gallery() {
           <strong>Material Phases</strong>
           <small>Cross the phase boundary →</small>
         </Link>
+        <Link className="study respiration-entry" data-topics="electromagnetics optics" href="/gallery/respiration-monitor">
+          <span className="eyebrow">Exhibit 29 / Biomedical Optics</span>
+          <div className="respiration-entry-field" aria-hidden="true"><i /><i /><i /><span /></div>
+          <strong>Respiration Monitor</strong>
+          <small>Measure the moving light →</small>
+        </Link>
+        <Link className="study kinetics-entry" data-topics="materials-science oscillators" href="/gallery/hysteretic-kinetics">
+          <span className="eyebrow">Exhibit 30 / Nonequilibrium Kinetics</span>
+          <div className="kinetics-entry-scope" aria-hidden="true"><i /><span /></div>
+          <strong>Hysteretic Kinetics</strong>
+          <small>Draw the living loop →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }
