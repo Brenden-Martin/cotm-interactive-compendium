@@ -9,7 +9,7 @@ type Waveform = "triangle" | "sine";
 type Values = Record<string, number>;
 type SliderSpec = { key: string; label: string; min: number; max: number; step: number; log?: boolean; unit?: string };
 type Point = { x: number; y: number };
-type SimState = { y: number[]; phase: number; sample: number; sweepIndex: number; settling: number; previous?: Point };
+type SimState = { y: number[]; sweepIndex: number };
 
 const Q = 1.602176634e-19;
 const TAU = Math.PI * 2;
@@ -20,7 +20,7 @@ const wave = (phase: number, waveform: Waveform) => waveform === "sine" ? Math.s
 const safeExp = (x: number) => Math.exp(clamp(x, -60, 60));
 
 const INITIAL: Values = {
-  traceSpeed: 10, persistence: .18, responseGain: 1, frequency: 1.82e4, driveAmplitude: 5e-5, driveOffset: 0,
+  batchCycles: 4, samplesPerCycle: 160, portraitRate: 7, persistence: .12, responseGain: 1, frequency: 1.82e4, driveAmplitude: 5e-5, driveOffset: 0,
   reservoirA1: 4.5e3, reservoirB1: 7.2e3, reservoirA2: 8e2, reservoirB2: 1.5e3, thermalVoltage: .085, reservoirVoltage: .35, reservoirScale: 1,
   Nt: 1e17, cn: 1e-12, cp: 1e-9, T1: 2e-29, T2: 9e-31, T3: 1e-31, T4: 3e-32,
   en: 1e-2, ep: 1e-2, Gth: 1e10, thickness: 1e-6, etaN: 1e-3, etaP: 1e-3,
@@ -32,7 +32,9 @@ const INITIAL: Values = {
 };
 
 const INSTRUMENT: SliderSpec[] = [
-  { key: "traceSpeed", label: "Trace draw speed", min: 1, max: 24, step: 1, unit: " samples/frame" },
+  { key: "batchCycles", label: "Cycles per portrait", min: 2, max: 8, step: 1, unit: " cycles" },
+  { key: "samplesPerCycle", label: "Samples per cycle", min: 60, max: 360, step: 20 },
+  { key: "portraitRate", label: "Portrait update rate", min: 1, max: 12, step: 1, unit: " Hz" },
   { key: "persistence", label: "Phosphor persistence", min: 0, max: .96, step: .01 },
   { key: "responseGain", label: "Response gain", min: .1, max: 8, step: .05 },
   { key: "frequency", label: "Drive frequency", min: -5, max: 6, step: .01, log: true, unit: " Hz" },
@@ -196,10 +198,6 @@ function response(model: Model, y: number[], p: Values) {
   return (y[3] - y[5]) * p.ampWeight;
 }
 
-function normalizedResponse(model: Model, y: number[], p: Values) {
-  return Math.tanh(response(model, y, p) * p.responseGain);
-}
-
 function randomizeValues(current: Values, specs: SliderSpec[]) {
   const next = { ...current };
   for (const spec of specs) {
@@ -212,35 +210,50 @@ function randomizeValues(current: Values, specs: SliderSpec[]) {
 export function HystereticKinetics() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pausedRef = useRef(false);
+  const autoScaleRef = useRef(true);
   const paramsRef = useRef(INITIAL); const modelRef = useRef<Model>("reservoir"); const viewRef = useRef<View>("loop"); const waveformRef = useRef<Waveform>("triangle");
   const [params, setParams] = useState(INITIAL); const [model, setModel] = useState<Model>("reservoir"); const [view, setView] = useState<View>("loop"); const [waveform, setWaveform] = useState<Waveform>("triangle");
-  const [paused, setPaused] = useState(false); const [reset, setReset] = useState(0); const [status, setStatus] = useState({ j: 0, y: 0, hz: INITIAL.frequency });
+  const [paused, setPaused] = useState(false); const [autoScale, setAutoScale] = useState(true); const [reset, setReset] = useState(0); const [status, setStatus] = useState({ j: 0, y: 0, hz: INITIAL.frequency });
   const specs = useMemo(() => model === "reservoir" ? RESERVOIR : model === "srh-taam" ? SRH_TAAM : model === "general" ? GENERAL : AMPHOTERIC, [model]);
-  useEffect(() => { paramsRef.current = params; }, [params]); useEffect(() => { modelRef.current = model; }, [model]); useEffect(() => { viewRef.current = view; }, [view]); useEffect(() => { waveformRef.current = waveform; }, [waveform]); useEffect(() => { pausedRef.current = paused; }, [paused]);
+  useEffect(() => { paramsRef.current = params; }, [params]); useEffect(() => { modelRef.current = model; }, [model]); useEffect(() => { viewRef.current = view; }, [view]); useEffect(() => { waveformRef.current = waveform; }, [waveform]); useEffect(() => { pausedRef.current = paused; }, [paused]); useEffect(() => { autoScaleRef.current = autoScale; }, [autoScale]);
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext("2d"); if (!ctx) return;
-    let raf = 0; let lastStatus = 0; const samplesPerCycle = 180; const sweepRates = [5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5];
-    const sim: SimState = { y: initialState(modelRef.current, paramsRef.current), phase: 0, sample: 0, sweepIndex: 0, settling: 2 };
+    let raf = 0; let lastBatch = -Infinity; const sweepRates = [5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5];
+    const sim: SimState = { y: initialState(modelRef.current, paramsRef.current), sweepIndex: 0 };
     const resize = () => { const r = canvas.getBoundingClientRect(), d = Math.min(devicePixelRatio, 2); canvas.width = Math.round(r.width * d); canvas.height = Math.round(r.height * d); ctx.setTransform(d, 0, 0, d, 0, 0); ctx.fillStyle = "#030b07"; ctx.fillRect(0, 0, r.width, r.height); };
     const grid = (w: number, h: number) => { ctx.save(); ctx.strokeStyle = "rgba(122,255,189,.13)"; ctx.lineWidth = 1; for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(i * w / 10, 0); ctx.lineTo(i * w / 10, h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * h / 10); ctx.lineTo(w, i * h / 10); ctx.stroke(); } ctx.restore(); };
     resize(); addEventListener("resize", resize);
     const draw = (now: number) => {
       const p = paramsRef.current, m = modelRef.current, vw = viewRef.current, w = canvas.clientWidth, h = canvas.clientHeight;
-      if (!pausedRef.current) {
-        const fadeAlpha = .015 + (1 - p.persistence) * .48; ctx.fillStyle = `rgba(3,11,7,${fadeAlpha})`; ctx.fillRect(0, 0, w, h); grid(w, h);
-        const nSamples = Math.round(p.traceSpeed); ctx.save(); ctx.strokeStyle = "#7affbd"; ctx.shadowColor = "#7affbd"; ctx.shadowBlur = 8; ctx.lineWidth = 1.8; ctx.beginPath();
-        for (let k = 0; k < nSamples; k++) {
-          const hz = vw === "loop" ? p.frequency : sweepRates[sim.sweepIndex]; const dt = 1 / (hz * samplesPerCycle); sim.phase += TAU / samplesPerCycle;
-          const current = driveAt(sim.phase, p, waveformRef.current); advance(m, sim.y, current, dt, p); sim.sample++;
-          if (sim.phase >= TAU) { sim.phase -= TAU; if (sim.settling > 0) sim.settling--; else if (vw === "sweep") { sim.sweepIndex = (sim.sweepIndex + 1) % sweepRates.length; sim.settling = 1; sim.y = initialState(m, p); } sim.previous = undefined; }
-          const point = { x: w * (.5 + .43 * clamp(current / Math.max(p.driveAmplitude + Math.abs(p.driveOffset), 1e-30), -1, 1)), y: h * (.5 - .39 * normalizedResponse(m, sim.y, p)) };
-          if (sim.settling === 0) { if (sim.previous) { ctx.moveTo(sim.previous.x, sim.previous.y); ctx.lineTo(point.x, point.y); } sim.previous = point; }
-          if (now - lastStatus > 90) { setStatus({ j: current, y: response(m, sim.y, p), hz }); lastStatus = now; }
+      if (!pausedRef.current && now - lastBatch >= 1000 / p.portraitRate) {
+        lastBatch = now; const hz = vw === "loop" ? p.frequency : sweepRates[sim.sweepIndex];
+        const samplesPerCycle = Math.round(p.samplesPerCycle), cycleCount = Math.round(p.batchCycles), dt = 1 / (hz * samplesPerCycle);
+        const cycles: Point[][] = [];
+        let lastCurrent = 0;
+        for (let cycle = 0; cycle < cycleCount; cycle++) {
+          const points: Point[] = [];
+          for (let sample = 0; sample <= samplesPerCycle; sample++) {
+            const phase = TAU * sample / samplesPerCycle; const current = driveAt(phase, p, waveformRef.current); lastCurrent = current;
+            if (sample > 0) advance(m, sim.y, current, dt, p);
+            points.push({ x: clamp(current / Math.max(p.driveAmplitude + Math.abs(p.driveOffset), 1e-30), -1, 1), y: response(m, sim.y, p) * p.responseGain });
+          }
+          cycles.push(points);
         }
-        ctx.stroke(); ctx.restore();
+        const fadeAlpha = .2 + (1 - p.persistence) * .72; ctx.fillStyle = `rgba(3,11,7,${fadeAlpha})`; ctx.fillRect(0, 0, w, h); grid(w, h);
+        const yValues = cycles.flatMap(points => points.map(point => point.y)); const yMin = Math.min(...yValues), yMax = Math.max(...yValues);
+        const yCenter = (yMin + yMax) / 2, yHalfSpan = Math.max((yMax - yMin) * .575, 1e-12);
+        cycles.forEach((points, cycle) => {
+          const age = cycleCount === 1 ? 1 : cycle / (cycleCount - 1); ctx.save();
+          ctx.strokeStyle = `rgba(${Math.round(66 + 56 * age)},${Math.round(150 + 105 * age)},${Math.round(112 + 77 * age)},${(.34 + .66 * age).toFixed(2)})`;
+          ctx.shadowColor = "#7affbd"; ctx.shadowBlur = 2 + 8 * age; ctx.lineWidth = 1 + 1.35 * age; ctx.beginPath();
+          points.forEach((point, index) => { const x = w * (.5 + .43 * point.x); const normalized = autoScaleRef.current ? clamp((point.y - yCenter) / yHalfSpan, -1, 1) : Math.tanh(point.y); const y = h * (.5 - .39 * normalized); index ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.restore();
+        });
+        setStatus({ j: lastCurrent, y: response(m, sim.y, p), hz });
+        if (vw === "sweep") { sim.sweepIndex = (sim.sweepIndex + 1) % sweepRates.length; sim.y = initialState(m, p); }
       }
-      ctx.fillStyle = "#d9ffe9"; ctx.font = "800 10px ui-monospace"; ctx.fillText(viewRef.current === "loop" ? "LIVE LOOP · PHYSICAL RATE / FAST TRACE" : `LOG RATE SWEEP · ${sweepRates[sim.sweepIndex].toExponential(1)} HZ`, 14, 20);
+      ctx.fillStyle = "#d9ffe9"; ctx.font = "800 10px ui-monospace"; ctx.fillText(viewRef.current === "loop" ? `MULTI-CYCLE PORTRAIT · ${Math.round(p.batchCycles)} CONSECUTIVE CYCLES` : `LOG RATE SWEEP · ${sweepRates[sim.sweepIndex].toExponential(1)} HZ NEXT`, 14, 20);
+      ctx.textAlign = "right"; ctx.fillText("OLDEST DIM → NEWEST BRIGHT", w - 14, 20); ctx.textAlign = "left";
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw); return () => { cancelAnimationFrame(raf); removeEventListener("resize", resize); };
@@ -249,13 +262,13 @@ export function HystereticKinetics() {
   const set = (key: string, value: number) => setParams(old => ({ ...old, [key]: value }));
   const chooseModel = (next: Model) => { setModel(next); setReset(x => x + 1); };
   const chooseView = (next: View) => { setView(next); setReset(x => x + 1); };
-  const scramble = () => { setParams(old => randomizeValues(old, [...INSTRUMENT.filter(x => !["traceSpeed", "persistence"].includes(x.key)), ...specs])); setReset(x => x + 1); };
+  const scramble = () => { setParams(old => randomizeValues(old, [...INSTRUMENT.filter(x => !["batchCycles", "samplesPerCycle", "portraitRate", "persistence"].includes(x.key)), ...specs])); setReset(x => x + 1); };
 
   return <main className="kin-page"><header className="kin-head"><Link href="/gallery">Gallery</Link><div><span className="eyebrow">Exhibit 30 / Nonequilibrium Kinetics</span><h1>Hysteretic Kinetics</h1></div><Link href="/research/mesopyramids">Research archive ↗</Link></header>
-    <section className="kin-console"><div className="kin-scope"><div className="kin-bezel"><canvas ref={canvasRef} /><div className="kin-readout"><span>Current <b>{status.j.toExponential(2)}</b></span><span>Response <b>{status.y.toExponential(2)}</b></span><span>Rate <b>{status.hz.toExponential(2)} Hz</b></span></div></div><div className="kin-scope-label"><b>COTM TRANSIENT ANALYZER</b><span>Physical model time is independent of display trace speed</span></div></div>
+    <section className="kin-console"><div className="kin-scope"><div className="kin-bezel"><canvas ref={canvasRef} /><div className="kin-readout"><span>Current <b>{status.j.toExponential(2)}</b></span><span>Response <b>{status.y.toExponential(2)}</b></span><span>Rate <b>{status.hz.toExponential(2)} Hz</b></span></div></div><div className="kin-scope-label"><b>COTM TRANSIENT ANALYZER</b><span>Complete consecutive cycles reveal the approach to the settled loop</span></div></div>
       <aside className="kin-controls"><nav className="kin-models">{([['reservoir', 'Diode + reservoirs'], ['srh-taam', 'SRH + TAAM'], ['general', 'General mixer'], ['amphoteric', 'Amphoteric sandbox']] as [Model, string][]).map(([id, label]) => <button key={id} className={model === id ? "active" : ""} onClick={() => chooseModel(id)}>{label}</button>)}</nav>
-        <div className="kin-view"><button className={view === "loop" ? "active" : ""} onClick={() => chooseView("loop")}>Live loop drawer</button><button className={view === "sweep" ? "active" : ""} onClick={() => chooseView("sweep")}>5–500 kHz sweep</button></div>
-        <div className="kin-actions"><button onClick={() => setPaused(x => !x)}>{paused ? "Resume" : "Pause"}</button><button onClick={scramble}>Randomize this model</button></div>
+        <div className="kin-view"><button className={view === "loop" ? "active" : ""} onClick={() => chooseView("loop")}>Multi-cycle portrait</button><button className={view === "sweep" ? "active" : ""} onClick={() => chooseView("sweep")}>5–500 kHz sweep</button></div>
+        <div className="kin-actions"><button onClick={() => setPaused(x => !x)}>{paused ? "Resume" : "Pause"}</button><button onClick={scramble}>Randomize this model</button><button className={autoScale ? "active" : ""} aria-pressed={autoScale} onClick={() => setAutoScale(x => !x)}>Auto scale {autoScale ? "on" : "off"}</button></div>
         <div className="kin-model-card"><b>{MODEL_COPY[model].title}</b><span>{MODEL_COPY[model].equation}</span><p>{MODEL_COPY[model].note}</p></div>
         <details open><summary>Drive &amp; CRT instrument</summary><label className="kin-select">Waveform<select value={waveform} onChange={e => { setWaveform(e.target.value as Waveform); setReset(x => x + 1); }}><option value="triangle">Triangle</option><option value="sine">Sine</option></select></label>{INSTRUMENT.map(spec => <Slider key={spec.key} spec={spec} value={params[spec.key]} onChange={v => set(spec.key, v)} />)}</details>
         <details open><summary>{MODEL_COPY[model].title}</summary>{specs.map(spec => <Slider key={spec.key} spec={spec} value={params[spec.key]} onChange={v => set(spec.key, v)} />)}</details>
