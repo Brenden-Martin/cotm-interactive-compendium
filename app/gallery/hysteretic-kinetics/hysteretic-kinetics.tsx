@@ -20,7 +20,7 @@ const wave = (phase: number, waveform: Waveform) => waveform === "sine" ? Math.s
 const safeExp = (x: number) => Math.exp(clamp(x, -60, 60));
 
 const INITIAL: Values = {
-  batchCycles: 4, samplesPerCycle: 160, portraitRate: 7, persistence: .12, responseGain: 1, frequency: 1.82e4, driveAmplitude: 5e-5, driveOffset: 0,
+  batchCycles: 4, samplesPerCycle: 160, portraitRate: 7, sweepDisplayRate: 12, persistence: .12, responseGain: 1, frequency: 1.82e4, driveAmplitude: 5e-5, driveOffset: 0,
   reservoirA1: 4.5e3, reservoirB1: 7.2e3, reservoirA2: 8e2, reservoirB2: 1.5e3, thermalVoltage: .085, reservoirVoltage: .35, reservoirScale: 1,
   Nt: 1e17, cn: 1e-12, cp: 1e-9, T1: 2e-29, T2: 9e-31, T3: 1e-31, T4: 3e-32,
   en: 1e-2, ep: 1e-2, Gth: 1e10, thickness: 1e-6, etaN: 1e-3, etaP: 1e-3,
@@ -35,6 +35,7 @@ const INSTRUMENT: SliderSpec[] = [
   { key: "batchCycles", label: "Cycles per portrait", min: 2, max: 8, step: 1, unit: " cycles" },
   { key: "samplesPerCycle", label: "Samples per cycle", min: 60, max: 360, step: 20 },
   { key: "portraitRate", label: "Portrait update rate", min: 1, max: 12, step: 1, unit: " Hz" },
+  { key: "sweepDisplayRate", label: "Display sweep rate", min: 1, max: 60, step: 1, unit: " sweeps/min" },
   { key: "persistence", label: "Phosphor persistence", min: 0, max: .96, step: .01 },
   { key: "responseGain", label: "Response gain", min: .1, max: 8, step: .05 },
   { key: "frequency", label: "Drive frequency", min: -5, max: 6, step: .01, log: true, unit: " Hz" },
@@ -219,15 +220,17 @@ export function HystereticKinetics() {
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext("2d"); if (!ctx) return;
-    let raf = 0; let lastBatch = -Infinity; const sweepRates = [5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5];
+    let raf = 0; let lastBatch = -Infinity; const sweepRates = Array.from({ length: 29 }, (_, index) => 10 ** (-5 + 11 * index / 28)); let lastRenderedHz = sweepRates[0];
     const sim: SimState = { y: initialState(modelRef.current, paramsRef.current), sweepIndex: 0 };
     const resize = () => { const r = canvas.getBoundingClientRect(), d = Math.min(devicePixelRatio, 2); canvas.width = Math.round(r.width * d); canvas.height = Math.round(r.height * d); ctx.setTransform(d, 0, 0, d, 0, 0); ctx.fillStyle = "#030b07"; ctx.fillRect(0, 0, r.width, r.height); };
     const grid = (w: number, h: number) => { ctx.save(); ctx.strokeStyle = "rgba(122,255,189,.13)"; ctx.lineWidth = 1; for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(i * w / 10, 0); ctx.lineTo(i * w / 10, h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * h / 10); ctx.lineTo(w, i * h / 10); ctx.stroke(); } ctx.restore(); };
     resize(); addEventListener("resize", resize);
     const draw = (now: number) => {
       const p = paramsRef.current, m = modelRef.current, vw = viewRef.current, w = canvas.clientWidth, h = canvas.clientHeight;
-      if (!pausedRef.current && now - lastBatch >= 1000 / p.portraitRate) {
+      const updateInterval = vw === "sweep" ? 60000 / (p.sweepDisplayRate * sweepRates.length) : 1000 / p.portraitRate;
+      if (!pausedRef.current && now - lastBatch >= updateInterval) {
         lastBatch = now; const hz = vw === "loop" ? p.frequency : sweepRates[sim.sweepIndex];
+        lastRenderedHz = hz;
         const samplesPerCycle = Math.round(p.samplesPerCycle), cycleCount = Math.round(p.batchCycles), dt = 1 / (hz * samplesPerCycle);
         const cycles: Point[][] = [];
         let lastCurrent = 0;
@@ -252,7 +255,7 @@ export function HystereticKinetics() {
         setStatus({ j: lastCurrent, y: response(m, sim.y, p), hz });
         if (vw === "sweep") { sim.sweepIndex = (sim.sweepIndex + 1) % sweepRates.length; sim.y = initialState(m, p); }
       }
-      ctx.fillStyle = "#d9ffe9"; ctx.font = "800 10px ui-monospace"; ctx.fillText(viewRef.current === "loop" ? `MULTI-CYCLE PORTRAIT · ${Math.round(p.batchCycles)} CONSECUTIVE CYCLES` : `LOG RATE SWEEP · ${sweepRates[sim.sweepIndex].toExponential(1)} HZ NEXT`, 14, 20);
+      ctx.fillStyle = "#d9ffe9"; ctx.font = "800 10px ui-monospace"; ctx.fillText(viewRef.current === "loop" ? `MULTI-CYCLE PORTRAIT · ${Math.round(p.batchCycles)} CONSECUTIVE CYCLES` : `11-DECADE LOG SWEEP · ${lastRenderedHz.toExponential(2)} HZ`, 14, 20);
       ctx.textAlign = "right"; ctx.fillText("OLDEST DIM → NEWEST BRIGHT", w - 14, 20); ctx.textAlign = "left";
       raf = requestAnimationFrame(draw);
     };
@@ -262,12 +265,12 @@ export function HystereticKinetics() {
   const set = (key: string, value: number) => setParams(old => ({ ...old, [key]: value }));
   const chooseModel = (next: Model) => { setModel(next); setReset(x => x + 1); };
   const chooseView = (next: View) => { setView(next); setReset(x => x + 1); };
-  const scramble = () => { setParams(old => randomizeValues(old, [...INSTRUMENT.filter(x => !["batchCycles", "samplesPerCycle", "portraitRate", "persistence"].includes(x.key)), ...specs])); setReset(x => x + 1); };
+  const scramble = () => { setParams(old => randomizeValues(old, [...INSTRUMENT.filter(x => !["batchCycles", "samplesPerCycle", "portraitRate", "sweepDisplayRate", "persistence"].includes(x.key)), ...specs])); setReset(x => x + 1); };
 
   return <main className="kin-page"><header className="kin-head"><Link href="/gallery">Gallery</Link><div><span className="eyebrow">Exhibit 30 / Nonequilibrium Kinetics</span><h1>Hysteretic Kinetics</h1></div><Link href="/research/mesopyramids">Research archive ↗</Link></header>
-    <section className="kin-console"><div className="kin-scope"><div className="kin-bezel"><canvas ref={canvasRef} /><div className="kin-readout"><span>Current <b>{status.j.toExponential(2)}</b></span><span>Response <b>{status.y.toExponential(2)}</b></span><span>Rate <b>{status.hz.toExponential(2)} Hz</b></span></div></div><div className="kin-scope-label"><b>COTM TRANSIENT ANALYZER</b><span>Complete consecutive cycles reveal the approach to the settled loop</span></div></div>
+    <section className="kin-console"><div className="kin-scope"><div className="kin-bezel"><canvas ref={canvasRef} /><div className="kin-readout"><span>Current <b>{status.j.toExponential(2)}</b></span><span>Response <b>{status.y.toExponential(2)}</b></span><span>Rate <b>{status.hz.toExponential(2)} Hz</b></span></div></div><div className="kin-scope-label"><b>COTM TRANSIENT ANALYZER</b><span>{view === "sweep" ? `Full logarithmic traversal: ${(60 / params.sweepDisplayRate).toFixed(1)} seconds` : "Complete consecutive cycles reveal the approach to the settled loop"}</span></div></div>
       <aside className="kin-controls"><nav className="kin-models">{([['reservoir', 'Diode + reservoirs'], ['srh-taam', 'SRH + TAAM'], ['general', 'General mixer'], ['amphoteric', 'Amphoteric sandbox']] as [Model, string][]).map(([id, label]) => <button key={id} className={model === id ? "active" : ""} onClick={() => chooseModel(id)}>{label}</button>)}</nav>
-        <div className="kin-view"><button className={view === "loop" ? "active" : ""} onClick={() => chooseView("loop")}>Multi-cycle portrait</button><button className={view === "sweep" ? "active" : ""} onClick={() => chooseView("sweep")}>5–500 kHz sweep</button></div>
+        <div className="kin-view"><button className={view === "loop" ? "active" : ""} onClick={() => chooseView("loop")}>Multi-cycle portrait</button><button className={view === "sweep" ? "active" : ""} onClick={() => chooseView("sweep")}>10 μHz–1 MHz sweep</button></div>
         <div className="kin-actions"><button onClick={() => setPaused(x => !x)}>{paused ? "Resume" : "Pause"}</button><button onClick={scramble}>Randomize this model</button><button className={autoScale ? "active" : ""} aria-pressed={autoScale} onClick={() => setAutoScale(x => !x)}>Auto scale {autoScale ? "on" : "off"}</button></div>
         <div className="kin-model-card"><b>{MODEL_COPY[model].title}</b><span>{MODEL_COPY[model].equation}</span><p>{MODEL_COPY[model].note}</p></div>
         <details open><summary>Drive &amp; CRT instrument</summary><label className="kin-select">Waveform<select value={waveform} onChange={e => { setWaveform(e.target.value as Waveform); setReset(x => x + 1); }}><option value="triangle">Triangle</option><option value="sine">Sine</option></select></label>{INSTRUMENT.map(spec => <Slider key={spec.key} spec={spec} value={params[spec.key]} onChange={v => set(spec.key, v)} />)}</details>
