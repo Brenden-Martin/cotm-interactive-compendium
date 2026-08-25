@@ -17,7 +17,7 @@ export default function LogsPage() {
         <li><span>003</span><Link href="/compendium/fraunhofer-diffraction"><strong>Square Apertures &amp; Fraunhofer Diffraction</strong></Link><small>Read the entry →</small></li>
         <li><span>004</span><Link href="/compendium/perlin-noise"><strong>Perlin Noise &amp; Coherent Randomness</strong></Link><small>Read the entry →</small></li>
         <li><span>005</span><Link href="/compendium/mirror-steering"><strong>Steering Light with a Mirror</strong></Link><small>Read the entry →</small></li>
-        <li><span>006</span><strong>Unsorted fragments</strong><small>Awaiting material</small></li>
+        <li><span>006</span><Link href="/compendium/cellular-automata-childhood"><strong>Before I Knew the Name</strong></Link><small>Read the entry →</small></li>
       </ul>
     </main>
   );

@@ -218,6 +218,12 @@ export default function Gallery() {
           <strong>Phase March</strong>
           <small>Paint the clock →</small>
         </Link>
+        <Link className="study cellular-entry" data-topics="games-of-life visualizers" href="/gallery/cellular-automata">
+          <span className="eyebrow">Exhibit 36 / Emergent Computation</span>
+          <div className="cellular-entry-field" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/><span/></div>
+          <strong>Cellular Automata</strong>
+          <small>Collide the seed crystal →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }
