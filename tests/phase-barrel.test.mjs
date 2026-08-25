@@ -26,3 +26,13 @@ test("Gaussian coincidence is strongest at alignment and decays smoothly", () =>
   assert.ok(phase.coincidenceSignal(hits, 10.1, .1) < 1.5);
   assert.ok(phase.coincidenceSignal(hits, 10.4, .1) < .001);
 });
+
+test("layered pendulums are a periodic view of the same continuous phase", () => {
+  const center = phase.pendulumPosition(0, 2, Math.PI / 3);
+  const right = phase.pendulumPosition(Math.PI / 2, 2, Math.PI / 3);
+  const repeated = phase.pendulumPosition(Math.PI * 2, 2, Math.PI / 3);
+  assert.ok(Math.abs(center.x) < 1e-12);
+  assert.ok(right.x > 0);
+  assert.ok(Math.abs(repeated.x - center.x) < 1e-12);
+  assert.ok(Math.abs(repeated.y - center.y) < 1e-12);
+});

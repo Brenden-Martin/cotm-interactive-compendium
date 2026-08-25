@@ -1,3 +1,3 @@
-import { PhaseBarrel } from "./phase-barrel";
+import { redirect } from "next/navigation";
 
-export default function Page() { return <PhaseBarrel />; }
+export default function Page() { redirect("/gallery/polyrhythm-playground"); }

@@ -21,3 +21,12 @@ export function coincidenceSignal(hits: Array<{ time: number; gain: number }>, n
 export function effectiveFrequency(base: number, subdivision: number, acceleration: number, elapsed: number) {
   return Math.max(.01, base * subdivision + acceleration * elapsed);
 }
+
+export function pendulumPosition(phase: number, length: number, maxAngle: number) {
+  const angle = Math.sin(phase) * maxAngle;
+  return {
+    angle,
+    x: Math.sin(angle) * length,
+    y: Math.cos(angle) * length,
+  };
+}

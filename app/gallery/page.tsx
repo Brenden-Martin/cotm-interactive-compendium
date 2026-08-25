@@ -192,11 +192,11 @@ export default function Gallery() {
           <strong>Harmonic Topography</strong>
           <small>Walk the harmony →</small>
         </Link>
-        <Link className="study phase-barrel-entry" data-topics="audio visualizers oscillators" href="/gallery/phase-barrel">
+        <Link className="study phase-barrel-entry" data-topics="audio visualizers oscillators" href="/gallery/polyrhythm-playground">
           <span className="eyebrow">Exhibit 32 / Audiovisual Rhythm</span>
           <div className="phase-barrel-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div>
-          <strong>Phase Barrel</strong>
-          <small>Watch the ratios collide →</small>
+          <strong>Polyrhythm Playground</strong>
+          <small>Orbit or swing the ratios →</small>
         </Link>
         <Link className="study rain-entry" data-topics="audio visualizers mechanics oscillators" href="/gallery/do-you-hear-the-rain">
           <span className="eyebrow">Exhibit 33 / Counterfeit Weather</span>
