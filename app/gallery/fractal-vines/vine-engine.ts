@@ -1,4 +1,6 @@
 export type RandomSource = () => number;
+export type GuidanceSource = { x: number; y: number; radius: number; polarity: 1 | -1 };
+export type TopologyNode = { id: number; parent: number; depth: number };
 
 export const clamp = (value: number, minimum: number, maximum: number) =>
   Math.max(minimum, Math.min(maximum, value));
@@ -92,4 +94,57 @@ export function windVector(
   const horizontal = fractalNoise(sampleX, sampleY, seed, 4);
   const vertical = fractalNoise(sampleX + 37.1, sampleY - 19.7, seed + 701, 3);
   return { x: horizontal, y: vertical * 0.42 };
+}
+
+export function guidanceVector(x: number, y: number, sources: GuidanceSource[], strength: number) {
+  let forceX = 0;
+  let forceY = 0;
+  for (const source of sources) {
+    const radius = Math.max(.002, source.radius);
+    const dx = source.x - x;
+    const dy = source.y - y;
+    const distanceSquared = dx * dx + dy * dy;
+    const weight = Math.exp(-distanceSquared / (2 * radius * radius));
+    forceX += source.polarity * dx / radius * weight;
+    forceY += source.polarity * dy / radius * weight;
+  }
+  return { x: forceX * strength, y: forceY * strength };
+}
+
+export function mergeLinearTopology<T extends TopologyNode>(
+  nodes: T[],
+  preservedIds: Iterable<number>,
+  activeTipIds: Iterable<number>,
+  stride: number,
+  tipTail: number,
+) {
+  const keep = new Set<number>(preservedIds);
+  const childCounts = new Uint16Array(nodes.length);
+  for (const node of nodes) if (node.parent >= 0 && node.parent < childCounts.length) childCounts[node.parent]++;
+  for (const node of nodes) {
+    if (node.parent < 0 || childCounts[node.id] > 1 || node.depth % Math.max(2, Math.round(stride)) === 0) keep.add(node.id);
+  }
+  for (const tipId of activeTipIds) {
+    let cursor = tipId;
+    for (let step = 0; step <= Math.max(1, Math.round(tipTail)) && cursor >= 0; step++) {
+      keep.add(cursor);
+      cursor = nodes[cursor]?.parent ?? -1;
+    }
+  }
+  const remap = new Map<number, number>();
+  const merged: T[] = [];
+  for (const node of nodes) {
+    if (!keep.has(node.id)) continue;
+    let parent = node.parent;
+    while (parent >= 0 && !keep.has(parent)) parent = nodes[parent]?.parent ?? -1;
+    const next = { ...node, id: merged.length, parent: parent < 0 ? -1 : (remap.get(parent) ?? -1) };
+    remap.set(node.id, next.id);
+    merged.push(next);
+  }
+  return { nodes: merged, remap, removed: nodes.length - merged.length };
+}
+
+export function bloomProgress(ageSeconds: number, durationSeconds: number) {
+  const progress = clamp(ageSeconds / Math.max(.001, durationSeconds), 0, 1);
+  return smoothstep(progress);
 }

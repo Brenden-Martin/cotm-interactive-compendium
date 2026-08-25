@@ -43,3 +43,36 @@ test("advected wind is continuous and actually moves horizontally", () => {
   assert.ok(Math.abs(first.x - near.x) < .01);
   assert.notEqual(first.x, later.x);
 });
+
+test("sunlight attracts while shade repels", () => {
+  const sunlight = vines.guidanceVector(.25, .5, [{ x: .75, y: .5, radius: .5, polarity: 1 }], 1);
+  const shade = vines.guidanceVector(.25, .5, [{ x: .75, y: .5, radius: .5, polarity: -1 }], 1);
+  assert.ok(sunlight.x > 0);
+  assert.ok(shade.x < 0);
+  assert.ok(Math.abs(sunlight.y) < 1e-12);
+});
+
+test("topology merging preserves roots, forks, ornament nodes, and the active lead tail", () => {
+  const nodes = [
+    { id: 0, parent: -1, depth: 0, label: "root" },
+    { id: 1, parent: 0, depth: 1, label: "linear-a" },
+    { id: 2, parent: 1, depth: 2, label: "fork" },
+    { id: 3, parent: 2, depth: 3, label: "ornament" },
+    { id: 4, parent: 3, depth: 4, label: "tip" },
+    { id: 5, parent: 2, depth: 3, label: "side" },
+  ];
+  const result = vines.mergeLinearTopology(nodes, new Set([0, 3]), [4], 8, 1);
+  const labels = new Set(result.nodes.map((node) => node.label));
+  assert.ok(labels.has("root"));
+  assert.ok(labels.has("fork"));
+  assert.ok(labels.has("ornament"));
+  assert.ok(labels.has("tip"));
+  assert.ok(result.removed > 0);
+  for (const node of result.nodes) assert.ok(node.parent < node.id || node.parent === -1);
+});
+
+test("leaf and flower growth eases monotonically from bud to maturity", () => {
+  assert.equal(vines.bloomProgress(0, 5), 0);
+  assert.equal(vines.bloomProgress(5, 5), 1);
+  assert.ok(vines.bloomProgress(1, 5) < vines.bloomProgress(3, 5));
+});
