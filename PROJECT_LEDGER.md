@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The current private-workbench Site contains thirty-one gallery exhibits:
+The current private-workbench Site contains thirty-two gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -70,6 +70,7 @@ The current private-workbench Site contains thirty-one gallery exhibits:
 29. Respiration Monitor
 30. Hysteretic Kinetics
 31. Harmonic Topography
+32. Phase Barrel
 
 The Compendium currently contains five linked theory entries:
 
@@ -100,6 +101,8 @@ Other established systems include:
 - **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with a full UV-to-IR spectrum, an iconic linear wavelength view for Thermal temperatures, logarithmic Stellar/Cosmic views, tiered controls reaching the Planck scale, source presets, and a Wien-peak readout.
 - **HOME-001 — Testing:** The homepage now introduces COTM as “An interactive museum of emergent phenomenon in physics and art.”
 - **HARMONY-001 — Testing:** Harmonic Topography reconstructs the v24 “Herbie colors, fixed tempo” generative instrument as an inspectable Web Audio machine. Its four exact section cycles complete before routing, every harmonic event remains four transport beats, seed 1513 deterministically reproduces the symbolic walk, a six-slot motif FIFO creates visible phrase recurrence, and the compact chord voicer, modal lead, two lower harmony voices, bass vamp, shaker, 32nd hat, pulse, snare, swing, editable routing/palettes/tensions, portable JSON state, probability inspector, and draggable Gaussian tension terrain all remain separate live layers.
+- **HARMONY-002 — Testing:** Harmonic Topography can replace the entire four-section architecture with theory-tamed, variable two-to-ten-chord cycles that permit repeated bars, randomized exit routing, and modal-palette mutations. It also includes public-domain score-derived progression presets for Chopin's *Prelude in E minor*, *To a Wild Rose*, *Rhapsody in Blue*, and *The Entertainer*, plus original era-vocabulary presets for Nat King Cole and Louis Armstrong that are explicitly not transcriptions.
+- **RHYTHM-001 — Testing:** Phase Barrel is a ten-ring audiovisual polyrhythm sculpture with continuously integrated phase, integer-locked or freeform subdivision, optional uniform frequency acceleration, RMS-like trigger heights, phosphor trajectories, radial chirp percussion, Gaussian temporal coincidence, and switchable response mappings for spacing, rotation, barrel breathing, background flare, and axial motion.
 - **GOLF-001 through GOLF-005 — Testing:** Manifold Golf ports the recovered Pygame/OpenGL lineage into a browser laboratory with torus, sphere, Möbius-strip, and Klein-bottle courses; Golf and Pool modes; seam-aware trails and UV maps; equal-mass ball collisions; Gaussian torus/sphere terrain; world-down gravity; and a local normal-field experiment that makes the orientability obstruction visible.
 
 ## Prioritization principles
@@ -518,6 +521,7 @@ This is a human-readable summary of the repository history, not a substitute for
 ### 2026-08-25
 
 - **HARMONY-001 — Harmonic Topography V24.** Added the modular seeded composition engine, fixed four-beat Web Audio scheduler with 25 ms wakeups and 140 ms look-ahead, complete v24 section graph and modal palettes, motif-memory lead and breakout gestures, compact chord voice leading, two modal harmony voices, reference rhythm section, editable transition and palette weights, chord/tension controls, mixer mute/solo/gain strips, serialized machine import/export, live candidate-weight diagnostics, and a draggable continuous tension terrain with an AudioContext-phased traveler. Added focused regression tests for exact cycles, deterministic replay, cycle-completion routing, motif recurrence, route weights, and modal palettes. This checkpoint is private-workbench-only pending hands-on review.
+- **HARMONY-002 / RHYTHM-001 — Mutable harmony and Phase Barrel.** Expanded Harmonic Topography with complete theory-tamed graph mutation, section lengths from two through ten bars, legal repeated chords, live relayout, six progression vocabularies, and the expanded chord/scale data required by them while keeping V24 as a clean reference reset. Added Phase Barrel as a separate Tempest-like vector sculpture whose ring phases are integrated rather than recomputed, so live frequency changes remain continuous; Gaussian hit memory drives five selectable visual couplings while radius-scaled Web Audio chirps, amplitude heights, acceleration, trails, presets, per-ring controls, and full randomization make the sculpture playable. Both remain private-workbench-only pending hands-on review.
 
 ## Decision log
 

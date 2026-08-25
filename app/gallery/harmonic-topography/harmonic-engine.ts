@@ -1,6 +1,6 @@
 export type SectionId = "INTRO" | "VERSE" | "CHORUS" | "BRIDGE";
-export type ChordQuality = "maj" | "min" | "sus4" | "maj7" | "7" | "9" | "13" | "7b9" | "7#9" | "m7" | "m9";
-export type ScaleId = "F Dorian" | "F minor pentatonic" | "Bb Mixolydian" | "Eb Lydian" | "C altered" | "Db Lydian dominant";
+export type ChordQuality = "maj" | "min" | "dim" | "dim7" | "sus4" | "6" | "69" | "maj7" | "7" | "9" | "11" | "13" | "7b9" | "7#9" | "m7" | "m9";
+export type ScaleId = "F Dorian" | "F minor pentatonic" | "Bb Mixolydian" | "Eb Lydian" | "C altered" | "Db Lydian dominant" | "E natural minor" | "E major" | "E major pentatonic" | "G major" | "C major" | "F major" | "Bb major" | "Eb major" | "Bb blues" | "C blues" | "Eb Mixolydian";
 
 export type HarmonicNode = {
   id: string;
@@ -41,10 +41,12 @@ export const SECTION_CENTERS: Record<SectionId, [number, number]> = {
 const SECTION_ORDER: SectionId[] = ["INTRO", "VERSE", "CHORUS", "BRIDGE"];
 const ROOTS: Record<string, number> = { C: 0, Db: 1, Eb: 3, F: 5, Gb: 6, G: 7, Ab: 8, Bb: 10 };
 export const INTERVALS: Record<ChordQuality, number[]> = {
-  maj: [0, 4, 7], min: [0, 3, 7], sus4: [0, 5, 7], maj7: [0, 4, 7, 11],
+  maj: [0, 4, 7], min: [0, 3, 7], dim: [0, 3, 6], dim7: [0, 3, 6, 9], sus4: [0, 5, 7], "6": [0, 4, 7, 9], "69": [0, 2, 4, 7, 9], maj7: [0, 4, 7, 11],
   "7": [0, 4, 7, 10], "9": [0, 2, 4, 7, 10], "13": [0, 2, 4, 7, 9, 10],
-  "7b9": [0, 1, 4, 7, 10], "7#9": [0, 3, 4, 7, 10], m7: [0, 3, 7, 10], m9: [0, 2, 3, 7, 10],
+  "11": [0, 2, 5, 7, 10], "7b9": [0, 1, 4, 7, 10], "7#9": [0, 3, 4, 7, 10], m7: [0, 3, 7, 10], m9: [0, 2, 3, 7, 10],
 };
+
+export const QUALITY_TENSION: Record<ChordQuality | "alt", number> = { maj: .3, min: .38, dim: 1.12, dim7: 1.34, sus4: .72, "6": .36, "69": .48, maj7: .55, "7": .88, "9": 1, "11": 1.03, "13": 1.08, "7b9": 1.58, "7#9": 1.6, m7: .56, m9: .7, alt: 1.6 };
 
 export const SCALES: Record<ScaleId, { root: number; intervals: number[] }> = {
   "F Dorian": { root: 5, intervals: [0, 2, 3, 5, 7, 9, 10] },
@@ -53,6 +55,17 @@ export const SCALES: Record<ScaleId, { root: number; intervals: number[] }> = {
   "Eb Lydian": { root: 3, intervals: [0, 2, 4, 6, 7, 9, 11] },
   "C altered": { root: 0, intervals: [0, 1, 3, 4, 6, 8, 10] },
   "Db Lydian dominant": { root: 1, intervals: [0, 2, 4, 6, 7, 9, 10] },
+  "E natural minor": { root: 4, intervals: [0, 2, 3, 5, 7, 8, 10] },
+  "E major": { root: 4, intervals: [0, 2, 4, 5, 7, 9, 11] },
+  "E major pentatonic": { root: 4, intervals: [0, 2, 4, 7, 9] },
+  "G major": { root: 7, intervals: [0, 2, 4, 5, 7, 9, 11] },
+  "C major": { root: 0, intervals: [0, 2, 4, 5, 7, 9, 11] },
+  "F major": { root: 5, intervals: [0, 2, 4, 5, 7, 9, 11] },
+  "Bb major": { root: 10, intervals: [0, 2, 4, 5, 7, 9, 11] },
+  "Eb major": { root: 3, intervals: [0, 2, 4, 5, 7, 9, 11] },
+  "Bb blues": { root: 10, intervals: [0, 3, 5, 6, 7, 10] },
+  "C blues": { root: 0, intervals: [0, 3, 5, 6, 7, 10] },
+  "Eb Mixolydian": { root: 3, intervals: [0, 2, 4, 5, 7, 9, 10] },
 };
 
 export const DEFAULT_PALETTES: Record<SectionId, Array<{ scale: ScaleId; weight: number }>> = {
@@ -77,13 +90,17 @@ const NODE_SPECS: Record<SectionId, Array<[string, string, ChordQuality | "alt",
 };
 
 export function createNodes(): HarmonicNode[] {
+  return layoutNodeGroups(Object.fromEntries(SECTION_ORDER.map(section => [section, NODE_SPECS[section].map(([root, label, quality, tension]) => ({ root: ROOTS[root], label, quality, tension }))])) as Record<SectionId, Array<Pick<HarmonicNode, "root" | "label" | "quality" | "tension">>>);
+}
+
+export function layoutNodeGroups(groups: Record<SectionId, Array<Pick<HarmonicNode, "root" | "label" | "quality" | "tension">>>): HarmonicNode[] {
   return SECTION_ORDER.flatMap((section) => {
-    const specs = NODE_SPECS[section];
+    const specs = groups[section];
     const radius = specs.length > 4 ? 1 : .7;
     const [cx, cy] = SECTION_CENTERS[section];
-    return specs.map(([root, label, quality, tension], slot) => {
+    return specs.map(({ root, label, quality, tension }, slot) => {
       const theta = -Math.PI / 2 + slot / specs.length * Math.PI * 2;
-      return { id: `${section}-${slot}`, section, slot, root: ROOTS[root], label, quality, tension, x: cx + Math.cos(theta) * radius, y: cy + Math.sin(theta) * radius };
+      return { id: `${section}-${slot}`, section, slot, root, label, quality, tension, x: cx + Math.cos(theta) * radius, y: cy + Math.sin(theta) * radius };
     });
   });
 }
@@ -119,7 +136,8 @@ export class CompositionEngine {
     this.rng = new SeededRandom(seed); this.nodes = nodes; this.routes = routes; this.palettes = palettes; this.controls = controls; this.scale = this.chooseScale("INTRO");
   }
   chooseScale(section: SectionId) { return this.rng.weighted(this.palettes[section].map(x => ({ value: x.scale, weight: x.weight }))); }
-  node(section = this.section, slot = this.slot) { return this.nodes.find(n => n.section === section && n.slot === slot)!; }
+  sectionNodes(section = this.section) { return this.nodes.filter(n => n.section === section).sort((a, b) => a.slot - b.slot); }
+  node(section = this.section, slot = this.slot) { const local = this.sectionNodes(section); return local.find(n => n.slot === slot) ?? local[slot % local.length] ?? this.nodes[0]; }
   makeMotif() {
     const source = this.motifBuffer.length && this.rng.next() < this.controls.familiarity ? this.rng.pick(this.motifBuffer) : undefined;
     const motif: Motif = source
@@ -129,12 +147,11 @@ export class CompositionEngine {
     this.motifBuffer.push(motif); if (this.motifBuffer.length > 6) this.motifBuffer.shift(); return motif;
   }
   advance() {
-    const specs = NODE_SPECS[this.section];
+    const local = this.sectionNodes(this.section);
     if (this.section === "BRIDGE") {
-      if (this.slot === 0) this.slot = 1;
-      else if (this.rng.next() < (this.routes.BRIDGE.BRIDGE ?? .48)) { this.slot = 0; this.scale = this.chooseScale("BRIDGE"); }
-      else { this.section = "CHORUS"; this.slot = 0; this.scale = this.chooseScale("CHORUS"); }
-    } else if (this.slot < specs.length - 1) this.slot += 1;
+      if (this.slot < local.length - 1) this.slot += 1;
+      else { const options = Object.entries(this.routes.BRIDGE).map(([value, weight]) => ({ value: value as SectionId, weight: weight ?? 0 })); const destination = this.rng.weighted(options); this.section = destination; this.slot = 0; this.scale = this.chooseScale(destination); }
+    } else if (this.slot < local.length - 1) this.slot += 1;
     else {
       const options = Object.entries(this.routes[this.section]).map(([value, weight]) => ({ value: value as SectionId, weight: weight ?? 0 }));
       const destination = this.rng.weighted(options); this.section = destination; this.slot = 0; this.scale = this.chooseScale(destination);

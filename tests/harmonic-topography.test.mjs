@@ -53,3 +53,19 @@ test("reference routing and palettes retain the v24 probabilities", () => {
   assert.deepEqual(engine.DEFAULT_PALETTES.BRIDGE.map(item => item.weight), [.52, .48]);
 });
 
+test("dynamic section lengths preserve complete local cycles and repeated bars", () => {
+  const chord = (root, quality, label) => ({ root, quality, label, tension: engine.QUALITY_TENSION[quality] });
+  const groups = {
+    INTRO: [chord(5, "m9", "Fm9"), chord(5, "m9", "Fm9"), chord(10, "13", "Bb13")],
+    VERSE: [chord(3, "maj7", "Ebmaj7"), chord(8, "7", "Ab7"), chord(1, "m7", "Dbm7"), chord(6, "7", "Gb7")],
+    CHORUS: [chord(0, "6", "C6"), chord(7, "7", "G7")],
+    BRIDGE: [chord(1, "dim7", "Dbdim7"), chord(2, "m7", "Dm7"), chord(7, "7", "G7")],
+  };
+  const nodes = engine.layoutNodeGroups(groups);
+  const generator = new engine.CompositionEngine(44, nodes, structuredClone(engine.DEFAULT_ROUTES), structuredClone(engine.DEFAULT_PALETTES), controls);
+  assert.deepEqual(nodes.filter(node => node.section === "INTRO").map(node => node.label), ["Fm9", "Fm9", "Bb13"]);
+  for (let i = 0; i < 100; i++) {
+    const event = generator.nextEvent();
+    if (event.node.section !== event.nextNode.section) assert.equal(event.node.slot, nodes.filter(node => node.section === event.node.section).length - 1);
+  }
+});

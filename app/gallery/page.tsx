@@ -192,6 +192,12 @@ export default function Gallery() {
           <strong>Harmonic Topography</strong>
           <small>Walk the harmony →</small>
         </Link>
+        <Link className="study phase-barrel-entry" data-topics="audio visualizers oscillators" href="/gallery/phase-barrel">
+          <span className="eyebrow">Exhibit 32 / Audiovisual Rhythm</span>
+          <div className="phase-barrel-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /></div>
+          <strong>Phase Barrel</strong>
+          <small>Watch the ratios collide →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }
