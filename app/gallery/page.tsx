@@ -198,6 +198,14 @@ export default function Gallery() {
           <strong>Phase Barrel</strong>
           <small>Watch the ratios collide →</small>
         </Link>
+        <Link className="study rain-entry" data-topics="audio visualizers mechanics oscillators" href="/gallery/do-you-hear-the-rain">
+          <span className="eyebrow">Exhibit 33 / Counterfeit Weather</span>
+          <div className="rain-entry-field" aria-hidden="true">
+            <i /><i /><i /><i /><span /><b />
+          </div>
+          <strong>Do You Hear the Rain?</strong>
+          <small>Patch a storm →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }

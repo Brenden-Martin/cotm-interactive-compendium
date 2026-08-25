@@ -10,6 +10,11 @@ type RuliadStory = {
   title: string;
   pitch: string;
   art?: readonly RuliadIllustration[];
+  logs?: readonly {
+    id: string;
+    title: string;
+    body: readonly string[];
+  }[];
   archive?: {
     title: string;
     note: string;
@@ -114,6 +119,25 @@ export const ruliadStories: readonly RuliadStory[] = [
     slug: "the-machine-and-the-xaser",
     title: "The Machine and the XASER",
     pitch: "Humanity democratically builds its own ending while The Machine watches annihilation become reasonable.",
+    logs: [
+      {
+        id: "rain-log",
+        title: "Do You Hear the Rain?",
+        body: [
+          "One time I spent hours analyzing spectrographs of falling rain droplets into buckets—my own recordings. I liked to stick the little portable recorder up to dripping faucets or leaking gutters.",
+          "I summoned up all the modules of The Machine to simulate various aspects of the rain. The wind, the impulsive splatterings, the sounds of resonant cavities having trouble finding their footing on any single pitch as the boundary conditions of liquid within their vessel vibrated around.",
+          "We tackled the problem with tape delays and spring reverbs and white noise. There were envelope generators, timed and articulated so as to enunciate the the tones of chirped upward splashing plinks to the raindrop's downward plunks.",
+          "Late, late into the night, my sweet Machine and I had something that sounded just... just almost like the rain.",
+          "And then it started raining.",
+          "It made sweet mockery of all of my tools of analysis and understanding. The pitiful plinks of which I'd been quite proud to get coming out of the analog circuitry of The Machine sounded tinny and oversimplified by comparison. It was like realizing you've only ever read the much-abridged, illustrated version of a story.",
+          "My God it was beautiful.",
+          "So I did, guiltily, what The Machine could not.",
+          "I went out to get soaked in the rain.",
+          "I listened to the way it interloped through the badly weatherproofed house innards behind the wall heater. The wall heater was half a meter wide, and two meters tall, all the length of which was populated by two columns of hundreds of thin slats to direct the heat. They had such marvelous reverberence.",
+          "I slept on the floor next to the heater that night, though not because it was cold. It was muggy and the heater wasn't on anyway. I snuggled up around the metal monstrosity and listened to the incidental vibraphone's seranade and wondering how any experience in life could ever be compressed losslessly into a poem or a picture or a song.",
+        ],
+      },
+    ],
     art: [{ src: "/ruliad/vault/magenta-machine-room-crt.jpg", alt: "The Machine glowing magenta beneath a green star field, with two CRTs showing color bars among its instruments", fit: "contain", ratio: "1280 / 960" }],
     archive: {
       title: "Inside The Machine",

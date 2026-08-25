@@ -70,11 +70,30 @@ export default async function RuliadStoryPage({ params }: { params: Promise<{ sl
           </div>
         </section>
       ) : null}
-      <section className="ruliad-manuscript-slot">
-        <span className="eyebrow">Manuscript slot</span>
-        <h2>Awaiting publication material</h2>
-        <p>The page structure is intentionally quiet until the story text and its selected artwork are supplied.</p>
-      </section>
+      {story.logs?.length ? (
+        <section className="ruliad-log-library" aria-label={`${story.title} field logs`}>
+          {story.logs.map((log) => (
+            <article className="ruliad-log" id={log.id} key={log.id}>
+              <header>
+                <div>
+                  <span className="eyebrow">Field log · The Machine remembers</span>
+                  <h2>{log.title}</h2>
+                </div>
+                <Link href="/gallery/do-you-hear-the-rain">Enter the counterfeit weather →</Link>
+              </header>
+              <div className="ruliad-log-body">
+                {log.body.map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>)}
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <section className="ruliad-manuscript-slot">
+          <span className="eyebrow">Manuscript slot</span>
+          <h2>Awaiting publication material</h2>
+          <p>The page structure is intentionally quiet until the story text and its selected artwork are supplied.</p>
+        </section>
+      )}
       <nav className="ruliad-story-nav" aria-label="Tales from the Ruliad story order">
         {previous ? <Link href={`/compendium/tales-from-the-ruliad/${previous.slug}`}>← {previous.title}</Link> : <span />}
         {next ? <Link href={`/compendium/tales-from-the-ruliad/${next.slug}`}>{next.title} →</Link> : <Link href="/compendium/tales-from-the-ruliad">Story index →</Link>}
