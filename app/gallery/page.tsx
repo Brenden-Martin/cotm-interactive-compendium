@@ -186,6 +186,12 @@ export default function Gallery() {
           <strong>Hysteretic Kinetics</strong>
           <small>Draw the living loop →</small>
         </Link>
+        <Link className="study topography-entry" data-topics="audio visualizers games-of-life" href="/gallery/harmonic-topography">
+          <span className="eyebrow">Exhibit 31 / Generative Harmony</span>
+          <div className="topography-entry-field" aria-hidden="true"><i /><i /><i /><i /><span /><b /></div>
+          <strong>Harmonic Topography</strong>
+          <small>Walk the harmony →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }

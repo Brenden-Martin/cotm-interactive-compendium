@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Live museum
 
-The next Site version contains twenty-eight gallery exhibits:
+The current private-workbench Site contains thirty-one gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -67,6 +67,9 @@ The next Site version contains twenty-eight gallery exhibits:
 26. Phosphor Scan
 27. Current
 28. Material Phases
+29. Respiration Monitor
+30. Hysteretic Kinetics
+31. Harmonic Topography
 
 The Compendium currently contains five linked theory entries:
 
@@ -96,6 +99,7 @@ Other established systems include:
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
 - **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with a full UV-to-IR spectrum, an iconic linear wavelength view for Thermal temperatures, logarithmic Stellar/Cosmic views, tiered controls reaching the Planck scale, source presets, and a Wien-peak readout.
 - **HOME-001 — Testing:** The homepage now introduces COTM as “An interactive museum of emergent phenomenon in physics and art.”
+- **HARMONY-001 — Testing:** Harmonic Topography reconstructs the v24 “Herbie colors, fixed tempo” generative instrument as an inspectable Web Audio machine. Its four exact section cycles complete before routing, every harmonic event remains four transport beats, seed 1513 deterministically reproduces the symbolic walk, a six-slot motif FIFO creates visible phrase recurrence, and the compact chord voicer, modal lead, two lower harmony voices, bass vamp, shaker, 32nd hat, pulse, snare, swing, editable routing/palettes/tensions, portable JSON state, probability inspector, and draggable Gaussian tension terrain all remain separate live layers.
 - **GOLF-001 through GOLF-005 — Testing:** Manifold Golf ports the recovered Pygame/OpenGL lineage into a browser laboratory with torus, sphere, Möbius-strip, and Klein-bottle courses; Golf and Pool modes; seam-aware trails and UV maps; equal-mass ball collisions; Gaussian torus/sphere terrain; world-down gravity; and a local normal-field experiment that makes the orientability obstruction visible.
 
 ## Prioritization principles
@@ -510,6 +514,10 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **MUSIC-007 through MUSIC-012** — Refactored Sold As Is into a shared configurable listening-room template, added Tube Groove and the complete seven-track Ein Kleine Sternmusic directory, added automatic tempo/onset analysis and live spectrogram boundaries, repaired the randomized logo entrance, and built the interactive Child of the Machine poster terminal. The first full-quality checkpoint was deployed owner-only to the private workbench as Sites version 41; the public site remains unchanged. Subsequent MUSIC-009 tuning adds stable seek controls, reflecting walls, full-bank randomization, boundary capture/clear, and configurable spectrum resolution/rate for private review.
 - **MUSIC-012 / FORTUNE-008 / EGG-001** — Centered the original falling figure at desktop and mobile breakpoints, made Space toggle a faster accelerating fall with a near-instant offscreen reset, and made random key displacement relax back to center. The forced or rare Golden Ticket now triggers a blockwise psychedelic page collapse and links to the first **The Outernet** construction placeholder. This checkpoint remains private-workbench-only pending hands-on review.
+
+### 2026-08-25
+
+- **HARMONY-001 — Harmonic Topography V24.** Added the modular seeded composition engine, fixed four-beat Web Audio scheduler with 25 ms wakeups and 140 ms look-ahead, complete v24 section graph and modal palettes, motif-memory lead and breakout gestures, compact chord voice leading, two modal harmony voices, reference rhythm section, editable transition and palette weights, chord/tension controls, mixer mute/solo/gain strips, serialized machine import/export, live candidate-weight diagnostics, and a draggable continuous tension terrain with an AudioContext-phased traveler. Added focused regression tests for exact cycles, deterministic replay, cycle-completion routing, motif recurrence, route weights, and modal palettes. This checkpoint is private-workbench-only pending hands-on review.
 
 ## Decision log
 
