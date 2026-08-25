@@ -1,6 +1,5 @@
 export type RandomSource = () => number;
 export type GuidanceSource = { x: number; y: number; radius: number; polarity: 1 | -1 };
-export type TopologyNode = { id: number; parent: number; depth: number };
 
 export const clamp = (value: number, minimum: number, maximum: number) =>
   Math.max(minimum, Math.min(maximum, value));
@@ -111,40 +110,25 @@ export function guidanceVector(x: number, y: number, sources: GuidanceSource[], 
   return { x: forceX * strength, y: forceY * strength };
 }
 
-export function mergeLinearTopology<T extends TopologyNode>(
-  nodes: T[],
-  preservedIds: Iterable<number>,
-  activeTipIds: Iterable<number>,
-  stride: number,
-  tipTail: number,
+export function shouldDecimatePrevious(
+  nextDepth: number,
+  interval: number,
+  previous: { parent: number; createdFrame: number; retired: boolean },
+  currentFrame: number,
+  protectedPoint: boolean,
 ) {
-  const keep = new Set<number>(preservedIds);
-  const childCounts = new Uint16Array(nodes.length);
-  for (const node of nodes) if (node.parent >= 0 && node.parent < childCounts.length) childCounts[node.parent]++;
-  for (const node of nodes) {
-    if (node.parent < 0 || childCounts[node.id] > 1 || node.depth % Math.max(2, Math.round(stride)) === 0) keep.add(node.id);
-  }
-  for (const tipId of activeTipIds) {
-    let cursor = tipId;
-    for (let step = 0; step <= Math.max(1, Math.round(tipTail)) && cursor >= 0; step++) {
-      keep.add(cursor);
-      cursor = nodes[cursor]?.parent ?? -1;
-    }
-  }
-  const remap = new Map<number, number>();
-  const merged: T[] = [];
-  for (const node of nodes) {
-    if (!keep.has(node.id)) continue;
-    let parent = node.parent;
-    while (parent >= 0 && !keep.has(parent)) parent = nodes[parent]?.parent ?? -1;
-    const next = { ...node, id: merged.length, parent: parent < 0 ? -1 : (remap.get(parent) ?? -1) };
-    remap.set(node.id, next.id);
-    merged.push(next);
-  }
-  return { nodes: merged, remap, removed: nodes.length - merged.length };
+  return nextDepth % Math.max(2, Math.round(interval)) === 0
+    && previous.createdFrame < currentFrame
+    && previous.parent >= 0
+    && !previous.retired
+    && !protectedPoint;
 }
 
 export function bloomProgress(ageSeconds: number, durationSeconds: number) {
   const progress = clamp(ageSeconds / Math.max(.001, durationSeconds), 0, 1);
   return smoothstep(progress);
+}
+
+export function randomizedFlowersEnabled(random: RandomSource) {
+  return random() >= .5;
 }

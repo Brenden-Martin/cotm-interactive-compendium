@@ -52,27 +52,22 @@ test("sunlight attracts while shade repels", () => {
   assert.ok(Math.abs(sunlight.y) < 1e-12);
 });
 
-test("topology merging preserves roots, forks, ornament nodes, and the active lead tail", () => {
-  const nodes = [
-    { id: 0, parent: -1, depth: 0, label: "root" },
-    { id: 1, parent: 0, depth: 1, label: "linear-a" },
-    { id: 2, parent: 1, depth: 2, label: "fork" },
-    { id: 3, parent: 2, depth: 3, label: "ornament" },
-    { id: 4, parent: 3, depth: 4, label: "tip" },
-    { id: 5, parent: 2, depth: 3, label: "side" },
-  ];
-  const result = vines.mergeLinearTopology(nodes, new Set([0, 3]), [4], 8, 1);
-  const labels = new Set(result.nodes.map((node) => node.label));
-  assert.ok(labels.has("root"));
-  assert.ok(labels.has("fork"));
-  assert.ok(labels.has("ornament"));
-  assert.ok(labels.has("tip"));
-  assert.ok(result.removed > 0);
-  for (const node of result.nodes) assert.ok(node.parent < node.id || node.parent === -1);
+test("continuous decimation touches only a drawn, unprotected near-tip predecessor", () => {
+  const eligible = { parent: 2, createdFrame: 8, retired: false };
+  assert.equal(vines.shouldDecimatePrevious(12, 3, eligible, 9, false), true);
+  assert.equal(vines.shouldDecimatePrevious(11, 3, eligible, 9, false), false);
+  assert.equal(vines.shouldDecimatePrevious(12, 3, eligible, 9, true), false);
+  assert.equal(vines.shouldDecimatePrevious(12, 3, { ...eligible, createdFrame: 9 }, 9, false), false);
+  assert.equal(vines.shouldDecimatePrevious(12, 3, { ...eligible, parent: -1 }, 9, false), false);
 });
 
 test("leaf and flower growth eases monotonically from bud to maturity", () => {
   assert.equal(vines.bloomProgress(0, 5), 0);
   assert.equal(vines.bloomProgress(5, 5), 1);
   assert.ok(vines.bloomProgress(1, 5) < vines.bloomProgress(3, 5));
+});
+
+test("randomized lineages have an explicit fair flower gate", () => {
+  assert.equal(vines.randomizedFlowersEnabled(() => .4999), false);
+  assert.equal(vines.randomizedFlowersEnabled(() => .5), true);
 });
