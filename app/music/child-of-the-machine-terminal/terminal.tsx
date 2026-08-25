@@ -9,10 +9,27 @@ const mainKeys = [
   "SHIFT", "A", "S", "D", "F", "G", "H", "J", "K", "L", "SPACE",
 ];
 const padKeys = ["7", "8", "9", "÷", "4", "5", "6", "×", "1", "2", "3", "−", "0", ".", "+"];
+const OUTERNET_PASSWORD = "HELLO WORLD";
+
+function scatterStyle(index: number, total: number) {
+  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
+  const distance = 58 + (index * 17) % 48;
+  return {
+    "--scatter-x": `${Math.cos(angle) * distance}vw`,
+    "--scatter-y": `${Math.sin(angle) * distance}vh`,
+    "--scatter-spin": `${-540 + (index * 137) % 1080}deg`,
+    "--scatter-scale": `${2.2 + (index % 7) * .42}`,
+    "--scatter-delay": `${(index % 13) * 11}ms`,
+  } as React.CSSProperties;
+}
 
 export function ChildMachineTerminal() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const chaosTimerRef = useRef<number | null>(null);
+  const transitionTimerRef = useRef<number | null>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const typedRef = useRef("");
+  const enteringRef = useRef(false);
   const [power, setPower] = useState(true);
   const [activeKey, setActiveKey] = useState("");
   const [glitch, setGlitch] = useState(0);
@@ -20,12 +37,40 @@ export function ChildMachineTerminal() {
   const [noise, setNoise] = useState(34);
   const [falling, setFalling] = useState(false);
   const [fallCycle, setFallCycle] = useState(0);
+  const [typedBuffer, setTypedBuffer] = useState("");
+  const [entering, setEntering] = useState(false);
+  const [entryRect, setEntryRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const [chaos, setChaos] = useState({ effect: 0, spin: 0, scale: 1, x: 0, y: 0, skew: 0, codeX: 0, codeY: 0, codeTilt: 0, duration: 700 });
+
+  const beginOuternet = useCallback(() => {
+    if (enteringRef.current) return;
+    enteringRef.current = true;
+    const rect = screenRef.current?.getBoundingClientRect();
+    setEntryRect(rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight });
+    setEntering(true);
+    document.body.style.overflow = "hidden";
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    transitionTimerRef.current = window.setTimeout(() => window.location.assign("/the-outernet"), reducedMotion ? 900 : 3600);
+  }, []);
+
+  const recordKey = useCallback((key: string) => {
+    if (enteringRef.current) return;
+    let next = typedRef.current;
+    if (key === "DEL") next = next.slice(0, -1);
+    else if (key === "ESC" || key === "RETURN") next = "";
+    else if (key === "SPACE") next += " ";
+    else if (/^[A-Z0-9]$/.test(key)) next += key;
+    next = next.replace(/\s+/g, " ").slice(-28);
+    typedRef.current = next;
+    setTypedBuffer(next);
+    if (next.endsWith(OUTERNET_PASSWORD)) beginOuternet();
+  }, [beginOuternet]);
 
   const playKey = useCallback((key: string, index: number) => {
     setActiveKey(`${key}-${index}`);
     window.setTimeout(() => setActiveKey(""), 130);
     if (!power) return;
+    recordKey(key);
     if (key === "SPACE") {
       setFalling((value) => !value);
       setFallCycle((value) => value + 1);
@@ -86,7 +131,7 @@ export function ChildMachineTerminal() {
       source.connect(noiseGain).connect(context.destination);
       source.start(now);
     }
-  }, [noise, power, tone]);
+  }, [noise, power, recordKey, tone]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -107,6 +152,8 @@ export function ChildMachineTerminal() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       if (chaosTimerRef.current) window.clearTimeout(chaosTimerRef.current);
+      if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+      document.body.style.overflow = "";
     };
   }, [playKey]);
 
@@ -132,14 +179,15 @@ export function ChildMachineTerminal() {
     "--chaos-duration": `${chaos.duration}ms`,
   } as React.CSSProperties;
 
-  return (
-    <section style={chaosStyle} className={`poster-computer glitch-${glitch} chaos-${chaos.effect}${chaos.effect ? " has-chaos" : ""}${power ? " is-powered" : " is-off"}`} aria-label="Interactive Child of the Machine computer">
+  return <>
+    <section style={chaosStyle} className={`poster-computer glitch-${glitch} chaos-${chaos.effect}${chaos.effect ? " has-chaos" : ""}${power ? " is-powered" : " is-off"}${entering ? " is-entering-outernet" : ""}`} aria-label="Interactive Child of the Machine computer">
       <div className="poster-monitor">
-        <div className="poster-screen" aria-live="polite">
+        <div className="poster-screen" ref={screenRef} aria-live="polite">
           <div className="terminal-code" aria-hidden="true">{codeBlocks}</div>
           <div className={`terminal-faller${falling ? " is-falling" : ""}`} key={fallCycle} aria-hidden="true">
             <img src="/music/child-of-the-machine-terminal/falling-man-original-cutout.png" alt="" />
           </div>
+          <span className="terminal-command-buffer" aria-hidden="true">{typedBuffer || "\u00a0"}<i /></span>
           <span className="sr-only">{power ? glitch ? "The display glitches and the falling figure shifts." : "The display is running." : "The display is powered off."}</span>
         </div>
       </div>
@@ -153,15 +201,24 @@ export function ChildMachineTerminal() {
         <div className="poster-keyboard">
           <div className="poster-main-keys">
             {mainKeys.map((key, index) => (
-              <button type="button" className={`${key === "SPACE" ? "is-space" : ""}${activeKey === `${key}-${index}` ? " is-active" : ""}`} key={`${key}-${index}`} aria-label={`${key} glitch key`} onClick={() => playKey(key, index)}><span>{key.length <= 2 ? key : ""}</span></button>
+              <button type="button" style={scatterStyle(index, mainKeys.length + padKeys.length)} className={`${key === "SPACE" ? "is-space" : ""}${activeKey === `${key}-${index}` ? " is-active" : ""}`} key={`${key}-${index}`} aria-label={`${key} glitch key`} onClick={() => playKey(key, index)}><span>{key.length <= 2 ? key : ""}</span></button>
             ))}
           </div>
           <div className="poster-pad">
-            {padKeys.map((key, index) => <button type="button" key={`${key}-${index}`} aria-label={`Number pad ${key} glitch key`} onClick={() => playKey(key, index + mainKeys.length)}>{key}</button>)}
+            {padKeys.map((key, index) => <button type="button" style={scatterStyle(index + mainKeys.length, mainKeys.length + padKeys.length)} key={`${key}-${index}`} aria-label={`Number pad ${key} glitch key`} onClick={() => playKey(key, index + mainKeys.length)}>{key}</button>)}
           </div>
         </div>
       </div>
       <p className="terminal-instruction">POWER · SLIDERS · KEYS / SPACE toggles the fall / sound begins only when you touch the machine</p>
     </section>
-  );
+    {entering && <div className="outernet-terminal-transition" style={{
+      "--entry-left": `${entryRect.left}px`,
+      "--entry-top": `${entryRect.top}px`,
+      "--entry-width": `${entryRect.width}px`,
+      "--entry-height": `${entryRect.height}px`,
+    } as React.CSSProperties} role="status" aria-label="The terminal is opening The Outernet">
+      <div className="outernet-terminal-code" aria-hidden="true">{codeBlocks}</div>
+      <div className="outernet-terminal-faller" aria-hidden="true"><img src="/music/child-of-the-machine-terminal/falling-man-original-cutout.png" alt="" /></div>
+    </div>}
+  </>;
 }

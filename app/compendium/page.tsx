@@ -47,6 +47,19 @@ export default function Compendium() {
           <p>Seven ordered stories from a computational universe whose cosmology is wrapped in storytelling.</p>
           <small>Enter the Ruliad →</small>
         </Link>
+
+        <a
+          className="compendium-site-qr"
+          href="https://cotm-interactive-compendium.nednerdnitram.chatgpt.site/"
+          aria-label="Open the Child of the Machine website"
+        >
+          <img
+            src="/compendium-site-qr.png"
+            width="1272"
+            height="1272"
+            alt="QR code linking to the Child of the Machine website"
+          />
+        </a>
       </section>
     </main>
   );

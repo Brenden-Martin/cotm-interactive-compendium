@@ -35,9 +35,9 @@ Status vocabulary:
 
 ## Current snapshot
 
-### Live museum
+### Public museum — Major Laboratory Expansion candidate
 
-The next Site version contains twenty-three gallery exhibits:
+The approved public release contains thirty-two gallery exhibits:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -62,6 +62,15 @@ The next Site version contains twenty-three gallery exhibits:
 21. The Luckfield
 22. Gibberish Generator
 23. Ratz
+24. Polymorphic Goo
+25. ChromaDepth
+26. Phosphor Scan
+27. Current
+28. Material Phases
+29. Respiration Monitor
+30. Hysteretic Kinetics
+31. Harmonic Topography
+32. Phase Barrel
 
 The Compendium currently contains five linked theory entries:
 
@@ -91,6 +100,9 @@ Other established systems include:
 - **FORTUNE-001 and FORTUNE-004 — Testing:** Fortune Cookie provides a flat-color cracking animation, a curated starter bank, and a durable suggestion box. Brenden's initial owner-submitted batch is approved; later visitor submissions remain pending until a deliberate review pass.
 - **COLOR-001 through COLOR-007 and COLOR-009 — Testing:** Spectrum to RGB uses official CIE 1931 2° observer data sampled at 5 nm, live signed D65 sRGB conversion, multiple Lorentzian emitters, direct peak/linewidth gestures, emission presets, gamut warnings, the purple challenge, and a Planck-law blackbody laboratory with a full UV-to-IR spectrum, an iconic linear wavelength view for Thermal temperatures, logarithmic Stellar/Cosmic views, tiered controls reaching the Planck scale, source presets, and a Wien-peak readout.
 - **HOME-001 — Testing:** The homepage now introduces COTM as “An interactive museum of emergent phenomenon in physics and art.”
+- **HARMONY-001 — Done:** Harmonic Topography reconstructs the v24 “Herbie colors, fixed tempo” generative instrument as an inspectable Web Audio machine. Its four exact section cycles complete before routing, every harmonic event remains four transport beats, seed 1513 deterministically reproduces the symbolic walk, a six-slot motif FIFO creates visible phrase recurrence, and the compact chord voicer, modal lead, two lower harmony voices, bass vamp, shaker, 32nd hat, pulse, snare, swing, editable routing/palettes/tensions, portable JSON state, probability inspector, and draggable Gaussian tension terrain all remain separate live layers.
+- **HARMONY-002 — Done:** Harmonic Topography can replace the entire four-section architecture with theory-tamed, variable two-to-ten-chord cycles that permit repeated bars, randomized exit routing, and modal-palette mutations. It also includes public-domain score-derived progression presets for Chopin's *Prelude in E minor*, *To a Wild Rose*, *Rhapsody in Blue*, and *The Entertainer*, plus original era-vocabulary presets for Nat King Cole and Louis Armstrong that are explicitly not transcriptions.
+- **RHYTHM-001 — Done:** Phase Barrel is a ten-ring audiovisual polyrhythm sculpture with continuously integrated phase, integer-locked or freeform subdivision, optional uniform frequency acceleration, RMS-like trigger heights, phosphor trajectories, radial chirp percussion, Gaussian temporal coincidence, and switchable response mappings for spacing, rotation, barrel breathing, background flare, and axial motion.
 - **GOLF-001 through GOLF-005 — Testing:** Manifold Golf ports the recovered Pygame/OpenGL lineage into a browser laboratory with torus, sphere, Möbius-strip, and Klein-bottle courses; Golf and Pool modes; seam-aware trails and UV maps; equal-mass ball collisions; Gaussian torus/sphere terrain; world-down gravity; and a local normal-field experiment that makes the orientability obstruction visible.
 
 ## Prioritization principles
@@ -232,6 +244,23 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **CURRENT-001 — Review — Doodle-driven conservative Laplace solver.** Recover the historic Current idea as Gallery exhibit 27 with pointer/touch drawing, grayscale mask import, Funnel, Maze, Lattice, Islands, and Empty material presets. Solve `∇·(σ∇V)=0` live with simultaneous Jacobi updates, harmonic face conductances, insulating un-driven walls, selectable horizontal/vertical/diagonal electrodes, and adjustable relaxation, batch size, resolution, and six decades of conductivity contrast.
 - **CURRENT-002 — Review — Side-by-side convergence instrument.** Continuously render a psychedelic orange/purple/cyan/lime/sunflower cyclic potential map beside a logarithmic current-magnitude heat map with magnitude-scaled quiver arrows. Expose color-band density, phase, arrow spacing/gain, pause, single-cycle stepping, reset, RMS residual, largest nudge, and source/sink flux mismatch so useful convergence and numerical failure remain visible rather than hidden behind a fixed iteration count.
 
+### Material Phases
+
+- **PHASE-001 — Review — Dual-screen phase laboratory.** Gallery exhibit 28 uses a Nintendo-DS-like instrument: an upper particle/domain simulation and a lower pointer/touch phase diagram. Every diagram supports direct numerical entry as well as cursor control, and changing thermodynamic coordinates immediately retunes the live material.
+- **PHASE-002 — Review — Magnetic ordering.** A finite periodic lattice of freely rotating planar spins combines nearest-neighbor exchange, weak easy-axis anisotropy, thermal noise, and a horizontal external field. The normalized temperature-field diagram exposes a finite-grid Curie-like ordering crossover while explicitly avoiding calibration to a named magnetic material.
+- **PHASE-003 — Review — Steel grains and thermal processing.** A Potts-style grain field uses curvature-driven boundary motion, temperature-dependent mobility, carbon-defect pinning, melt disorder, and a rapid-cooling martensite cue. Its approximate Fe-C diagram and direct controls share a four-stage heat ramp {attack}, equalize {decay}, soak {sustain}, and cooldown {release} envelope without claiming CALPHAD, TTT, or CCT accuracy.
+- **PHASE-004 — Review — Au-Si eutectic and water.** A conservative phase-field sketch begins with stacked Au/Si films, mixes above a composition-dependent liquidus, and demixes during cooling around the 18.6 atomic % Si / 363 °C eutectic anchor recovered from Brenden's mesopyramid process history. A separate schematic IAPWS-anchored water map spans vapor, liquid, supercritical water, and ice Ih/III/V/VI/VII, with particles settling into visually distinct lattices after each phase-space selection.
+- **PHASE-005 — Review — Conservative inventory, universal envelopes, and phase-space loci.** The Au-Si solver now computes chemical potential and field updates in separate buffers, projects every completed cycle back onto the selected bounded composition, and reports live Au/Si percentages. Its independent temperature slider changes thermal state without resetting the material. All four systems have independent ADSR-style thermal envelopes; magnetic, steel, and water diagrams can traverse an adjustable circular locus whose center is set by touch or pointer. Starting a thermal envelope parks the locus, while starting the locus stops the envelope. The Material Phases Gallery card now establishes its own positioning context so its animated field remains inside exhibit 28.
+- **PHASE-006 — Review — Diagram-space loci and gravitational segregation.** Circular traversals now use one bounded screen-space radius for both the drawn guide and live cursor, then invert each diagram axis—including logarithmic water pressure—back into physical values. Au-Si mobility extends to 7.5 relative (five times the previous control ceiling) with stable numerical substeps. Optional density buoyancy applies simultaneous conservative vertical transport so denser gold settles while lighter silicon rises without changing the selected inventory.
+- **PHASE-007 — Review — Continuous steel sweep and expanded magnetic temperatures.** Crystal tempering now has the same non-destructive temperature scrubber as Au-Si, leaving the grain and defect state intact while temperature moves. Magnetic temperature spans `-1.8` through `3.6 T/Tc`; the negative effective-temperature branch visibly inverts local spin alignment and is explicitly described as a bounded population inversion rather than sub-zero absolute temperature.
+
+### Respiration Monitor and Hysteretic Kinetics
+
+- **LWS-001 — Review — Draggable light-wave respiration instrument.** Gallery exhibit 29 pairs a curved moving torso segment with a draggable and rotatable source/receiver, explicit Lambertian range and angle dependence, cloth absorption, quantization, noise, lock-in filtering, and simultaneous motion/ideal/measured traces. The stochastic breath generator follows the published correlated amplitude and instantaneous-frequency construction with a sixth-power pulse, while the page plainly identifies itself as an explanatory simulation rather than a calibrated medical device.
+- **LWS-002 — Review — Research pathway.** Link the exhibit in both directions with the Noncontact Respiration Monitoring Private Research archive so the interactive explanation and preserved research record remain distinct but adjacent.
+- **KINETICS-001 — Review — Shared live-loop and sweep laboratory.** Gallery exhibit 30 provides heuristic diode/two-reservoir, SRH plus four-channel TAAM, general recombination-mixer, and explicitly experimental amphoteric modes. A shared parameter bank drives a persistent CRT live-loop view or a logarithmically climbing rate-sweep theater without resetting controls between views.
+- **KINETICS-002 — Review — Stable browser reduction and provenance boundary.** Preserve the current Mesopyramids capture-channel structure while using bounded positivity-preserving population updates and normalized coefficients for responsive browser exploration. Link directly to the Mesopyramids archive, label the amphoteric extension as frontier work, and do not present the browser reduction as a replacement for the stiff native research solver.
+
 ### YOU ARE HERE and homepage behavior
 
 - **HOME-001 — Testing — Museum identity line.** Replace the longer “evolving cabinet” introduction with the concise homepage statement “An interactive museum of emergent phenomenon in physics and art.”
@@ -243,6 +272,8 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **YAH-006 — Working — Elevator to This Floor.** Close brass elevator doors over YOU ARE HERE, race through impossible floor labels, and reopen on HERE; preserve the real control, reduced-motion fallback, captions, and optional audio.
 - **YAH-007 — Review — Chromatic Custodian.** A squeegee crosses the homepage, corrals its color into a temporary sRGB triangle, then lets the spectrum leak back into the page. The real YOU ARE HERE control remains authoritative, the caption carries the joke, and reduced-motion receives a static color-space card without sweeping or dripping motion. Idea Hatch item 92.
 - **YAH-008 — Review — Bureau of Relative Position.** A surveyor crosshair measures YOU ARE HERE against itself, reports `0.0 m FROM ITSELF`, and applies a rubber-stamped `JURISDICTION CONFIRMED`. The accessible caption carries the complete joke, the real control remains authoritative, and reduced-motion receives the finished survey card without approach, rotation, or stamping animation.
+
+- **YAH-009 — Review — Emergency Hotel Directory.** A rare press converts the homepage into a sepia 1960s hotel directory, assigns the collection room numbers, and swings in a brass key tagged `ROOM ∞` for YOU ARE HERE. Preserve navigation semantics beneath the temporary tableau, avoid flashing, and present the completed directory without movement under reduced motion. Idea Hatch item `a4a78db7-72b1-49e2-918d-b78ebf71d43e`.
 
 ### Daily archive-mining routine
 
@@ -284,6 +315,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **RESEARCH-009 — Testing — Collection selector.** Private Research now uses the Gallery-style destination selector in its established blue identity. Experiments and reference collections grow as independent nested pages rather than replacing one another.
 - **RESEARCH-010 — Testing — Pendulum Laboratory.** Preserve the original draggable-pendulum impulse as a full Gallery exhibit with small-angle, exact nonlinear, double, and triple modes; adjustable segment length and lowest mass; nonlinear coupled-link equations; fading phosphor paths at every mass; and a twelve-second horizontal-position history for every link. Keep the former Private Research URL as a redirect so saved links survive the move.
 - **RESEARCH-011 — Waiting — Mesopyramids archive.** Reserve a project room for later reports, presentations, figures, research-notebook photographs, simulations, and key plots sourced from the project directories.
+- **RESEARCH-014 — Review — Mesopyramids interactive instruments.** The Mesopyramids room now links directly to Material Phases, Current, and Square Aperture through compact Gallery-preview cards, while the source-report, figure, notebook, and simulation archive slots remain additive and reserved.
 - **RESEARCH-012 — Waiting — Noncontact Respiration Monitoring archive.** Reserve a project room for later reports, presentations, figures, research-notebook photographs, simulations, and key plots sourced from the project directories.
 - **RESEARCH-013 — Waiting — Electro-Optic Fabry–Pérot archive.** Reserve a project room for later reports, presentations, figures, research-notebook photographs, simulations, and key plots sourced from the project directories.
 
@@ -315,6 +347,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **HALL-003 — Exploration — Perspective selection scene.** Present the destinations as playful hallways in one-point perspective rather than ordinary category cards. Develop themed architectural graphics with small environmental details such as waving potted plants and framed paintings of orbitals, telescopes, and other exhibit-adjacent curiosities.
 - **HALL-004 — Exploration — Living preview ensembles.** Give each destination icon or vignette a tiny self-contained interaction or physics system—such as torsion-coupled rotating rings—that idles gently and responds to hover, keyboard focus, click, or touch perturbations. Each preview should suggest the hall's character without duplicating a full exhibit.
 - **HALL-005 — Technical plan — Whimsy within a budget.** Isolate and suspend preview simulations when offscreen, cap their aggregate frame cost, provide reduced-motion behavior, and make every destination fully usable by keyboard and touch so the point-and-click layer remains charming rather than obstructive.
+- **HALL-006 — Review — Topic filter foundation.** The Gallery banner now includes an accessible **Topic** selector with See All plus Glitch Goo, Visualizers, Mechanics, Materials Science, Electromagnetics, Audio, Optics, Oscillators, Games of Life, and Lava Lamps. Exhibit tags deliberately overlap, preserving the complete index while establishing data for a later multi-floor Museum Wing map.
 
 ### Recommended Reading
 
@@ -328,6 +361,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **COMP-002 — Testing — Logs preserve the original index.** The former Compendium page now lives intact under **Logs** as the destination for interactive-exhibit companion articles. Existing article URLs remain stable, and their back links return to Logs.
 - **COMP-003 — Testing / Waiting — Memo Dump.** Reserve three ordered eras—**Memo Dump I**, **Memo Dump II**, and **Memo Dump III**—for hundreds of photographed pocket notes. Later intake should preserve the original scan and add dates, transcription, and tags without overwriting source images.
 - **COMP-004 — Testing / Waiting — Class Notes.** Reserve a course-indexed handwritten-notes archive. Each class receives an independent scan sequence with room for annotations, while the original artistic diagrams remain visually primary.
+- **COMP-005 — Done — Portable site doorway.** The bottom of the Compendium index carries a high-contrast, error-corrected QR code for the canonical public COTM URL. The code itself is also a conventional accessible link.
 
 ### Music
 
@@ -355,6 +389,7 @@ The estimates below are relative work sessions, not calendar promises. A session
 - **EGG-007 — Planned — Layered progression.** Let one hidden room lead to additional rooms and cross-page clues so accidental discovery can become a sustained puzzle trail.
 - **EGG-008 — Safeguard — Accessibility and escape.** Surreal interactions still need a reliable way out, reduced-motion behavior, keyboard reachability where practical, and no unavoidable audio.
 - **EGG-009 — Working — Interactive computer-poster entrance.** Preserve the old COTM computer poster as the visual base, make its keyboard interactive, and let key presses glitch the falling figure. A traced/vector-derived presentation may accompany but must not overwrite the source poster; the resulting Easter egg may title and enter its corresponding Outernet page.
+- **EGG-010 — Review — HELLO WORLD terminal breach.** The poster keyboard and physical keyboard share a hidden command buffer. Typing `HELLO WORLD` makes the reconstructed controls, keys, console, and monitor scatter outward at increasing scale while a duplicate CRT expands from its measured on-page bounds to engulf the viewport. The original falling-man cutout remains behind, undergoes stepped horizontal displacement glitches, collapses to nothing, and then routes to `/the-outernet`; reduced-motion visitors receive the same destination through a shortened transition.
 
 ### Tales from the Ruliad
 
@@ -482,6 +517,12 @@ This is a human-readable summary of the repository history, not a substitute for
 
 - **MUSIC-007 through MUSIC-012** — Refactored Sold As Is into a shared configurable listening-room template, added Tube Groove and the complete seven-track Ein Kleine Sternmusic directory, added automatic tempo/onset analysis and live spectrogram boundaries, repaired the randomized logo entrance, and built the interactive Child of the Machine poster terminal. The first full-quality checkpoint was deployed owner-only to the private workbench as Sites version 41; the public site remains unchanged. Subsequent MUSIC-009 tuning adds stable seek controls, reflecting walls, full-bank randomization, boundary capture/clear, and configurable spectrum resolution/rate for private review.
 - **MUSIC-012 / FORTUNE-008 / EGG-001** — Centered the original falling figure at desktop and mobile breakpoints, made Space toggle a faster accelerating fall with a near-instant offscreen reset, and made random key displacement relax back to center. The forced or rare Golden Ticket now triggers a blockwise psychedelic page collapse and links to the first **The Outernet** construction placeholder. This checkpoint remains private-workbench-only pending hands-on review.
+
+### 2026-08-25
+
+- **HARMONY-001 — Harmonic Topography V24.** Added the modular seeded composition engine, fixed four-beat Web Audio scheduler with 25 ms wakeups and 140 ms look-ahead, complete v24 section graph and modal palettes, motif-memory lead and breakout gestures, compact chord voice leading, two modal harmony voices, reference rhythm section, editable transition and palette weights, chord/tension controls, mixer mute/solo/gain strips, serialized machine import/export, live candidate-weight diagnostics, and a draggable continuous tension terrain with an AudioContext-phased traveler. Added focused regression tests for exact cycles, deterministic replay, cycle-completion routing, motif recurrence, route weights, and modal palettes. Approved for the Major Laboratory Expansion public release.
+- **HARMONY-002 / RHYTHM-001 — Mutable harmony and Phase Barrel.** Expanded Harmonic Topography with complete theory-tamed graph mutation, section lengths from two through ten bars, legal repeated chords, live relayout, six progression vocabularies, and the expanded chord/scale data required by them while keeping V24 as a clean reference reset. Added Phase Barrel as a separate Tempest-like vector sculpture whose ring phases are integrated rather than recomputed, so live frequency changes remain continuous; Gaussian hit memory drives five selectable visual couplings while radius-scaled Web Audio chirps, amplitude heights, acceleration, trails, presets, per-ring controls, and full randomization make the sculpture playable. Approved for the Major Laboratory Expansion public release.
+- **RELEASE-002 — Major Laboratory Expansion.** Brenden approved the complete private-workbench checkpoint for public release after hands-on testing. The release promotes the Compendium QR doorway, Material Phases, Gallery topics and research links, the HELLO WORLD Outernet breach, Respiration Monitor, the rebuilt Hysteretic Kinetics instruments, Harmonic Topography, Phase Barrel, and their supporting tests as one named public snapshot. Respiration Monitor's accepted defaults are 35 BPM, 0.18 variability, 9 cm excursion, 0.32 minimum depth, 14 s correlation, receiver gain 15, 0° sensor angle, source/detector orders 2, absorption 0.16, noise 0.02, 4-bit ADC, and 0.02 s lock-in time.
 
 ## Decision log
 
