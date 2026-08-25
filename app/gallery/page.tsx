@@ -212,6 +212,12 @@ export default function Gallery() {
           <strong>Fractal Vines</strong>
           <small>Scramble the lineage →</small>
         </Link>
+        <Link className="study march-entry" data-topics="visualizers oscillators electromagnetics optics" href="/gallery/phase-march">
+          <span className="eyebrow">Exhibit 35 / Traveling Phase</span>
+          <div className="march-entry-field" aria-hidden="true"><i /><i /><i /><i /><i /><span /></div>
+          <strong>Phase March</strong>
+          <small>Paint the clock →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }
