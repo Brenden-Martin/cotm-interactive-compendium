@@ -206,6 +206,12 @@ export default function Gallery() {
           <strong>Do You Hear the Rain?</strong>
           <small>Patch a storm →</small>
         </Link>
+        <Link className="study vine-entry" data-topics="games-of-life visualizers mechanics" href="/gallery/fractal-vines">
+          <span className="eyebrow">Exhibit 34 / Generative Botany</span>
+          <div className="vine-entry-field" aria-hidden="true"><i /><i /><i /><i /><i /><span /><b /></div>
+          <strong>Fractal Vines</strong>
+          <small>Scramble the lineage →</small>
+        </Link>
     </GalleryTopicShell>
   );
 }

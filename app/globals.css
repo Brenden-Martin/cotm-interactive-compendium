@@ -1849,6 +1849,35 @@ button { font: inherit; }
   .voice-legend { grid-template-columns:1fr; }
 }
 
+/* Fractal Vines */
+.vine-entry { background:#0b1b16;color:#d9f29c;overflow:hidden; }
+.vine-entry:hover,.vine-entry:focus-visible { background:#10281f; }
+.vine-entry-field { position:absolute;inset:0;pointer-events:none;opacity:.78;background:linear-gradient(180deg,transparent,#0f2d21); }
+.vine-entry-field::before { content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(211,242,171,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(211,242,171,.07) 1px,transparent 1px);background-size:32px 32px; }
+.vine-entry-field i { position:absolute;width:4px;height:62%;left:50%;bottom:-5%;border-radius:50%;background:#7cb873;transform-origin:bottom;box-shadow:0 0 11px rgba(141,239,142,.28); }
+.vine-entry-field i:nth-child(1){transform:rotate(-36deg)}.vine-entry-field i:nth-child(2){transform:rotate(-19deg);height:74%}.vine-entry-field i:nth-child(3){transform:rotate(4deg);height:80%}.vine-entry-field i:nth-child(4){transform:rotate(27deg);height:70%}.vine-entry-field i:nth-child(5){transform:rotate(48deg);height:58%}
+.vine-entry-field i::before,.vine-entry-field i::after { content:"";position:absolute;width:46%;height:4px;right:0;background:inherit;transform-origin:right; }
+.vine-entry-field i::before{top:30%;transform:rotate(38deg)}.vine-entry-field i::after{top:58%;transform:rotate(-45deg)}
+.vine-entry-field span,.vine-entry-field b { position:absolute;width:18px;height:9px;border-radius:100% 0 100% 0;background:#bef05f;box-shadow:89px -45px 0 #8be971,-73px -81px 0 #d7f37b,34px -133px 0 #a3e962; }
+.vine-entry-field span{left:37%;bottom:28%;transform:rotate(30deg)}.vine-entry-field b{right:25%;bottom:45%;transform:rotate(-28deg)}
+.vine-entry>strong,.vine-entry>.eyebrow,.vine-entry>small{position:relative;z-index:2}
+
+.vine-page { --vine-cream:#eef0c5;--vine-ink:#0b1713;min-height:100svh;background:#07130f;color:var(--vine-cream);padding:clamp(18px,3vw,46px); }
+.vine-head { display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(20px,4vw,70px);align-items:start;margin-bottom:clamp(30px,6vh,72px);transition:opacity .25s ease,transform .25s ease; }
+.vine-head a { color:inherit;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;border-bottom:1px solid;padding-bottom:5px; }
+.vine-head>div { max-width:980px; }.vine-head h1{font-size:clamp(74px,12vw,176px);line-height:.72;letter-spacing:-.08em;margin:22px 0 28px;color:#c9f07c}.vine-head p{font:16px/1.55 Georgia,serif;max-width:660px;color:#cbd7bd}.vine-seed{font-size:9px;font-weight:900;letter-spacing:.14em;text-align:right}.vine-seed b{display:block;font-size:18px;margin-top:7px;color:#c9f07c}
+.vine-console { display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.72fr);border:2px solid var(--vine-cream);min-height:760px;box-shadow:11px 11px 0 #315638;transition:grid-template-columns .3s ease; }
+.vine-stage { position:relative;min-height:760px;overflow:hidden;background:#081615; }.vine-stage canvas{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:none;cursor:crosshair}.vine-stage>p{position:absolute;right:14px;bottom:12px;margin:0;font-size:8px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:rgba(238,240,197,.58)}
+.vine-telemetry { position:absolute;left:14px;top:14px;display:flex;flex-wrap:wrap;gap:1px;max-width:calc(100% - 28px); }.vine-telemetry span{background:rgba(5,15,12,.82);border:1px solid rgba(211,242,171,.35);padding:7px 9px;font-size:7px;font-weight:900;letter-spacing:.12em}.vine-telemetry b{color:#c9f07c;margin-left:5px}
+.vine-controls { background:#edf0c8;color:var(--vine-ink);padding:20px;max-height:92svh;overflow:auto;scrollbar-color:#315638 #dfe3b6; }
+.vine-actions { display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:15px; }.vine-actions button,.vine-presets button{min-height:42px;border:1px solid #183025;background:transparent;color:inherit;font:900 8px/1.2 inherit;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.vine-actions button:hover,.vine-actions button:focus-visible,.vine-actions .primary{background:#183025;color:#dff197}.vine-actions button:focus-visible,.vine-presets button:focus-visible{outline:3px solid #95bf58;outline-offset:2px}
+.vine-presets { display:flex;flex-wrap:wrap;gap:5px;padding:0 0 17px;border-bottom:2px solid #183025; }.vine-presets button{min-height:32px;padding:7px 9px}.vine-presets button.active{background:#9ecb61;color:#102319}
+.vine-controls details { border-bottom:1px solid rgba(24,48,37,.38);padding:15px 0; }.vine-controls summary{cursor:pointer;font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.vine-grid{display:grid;gap:13px;padding-top:15px}.vine-slider span{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;font-size:8px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.vine-slider output{font-variant-numeric:tabular-nums;color:#315638}.vine-slider input{width:100%;accent-color:#315638}.vine-note{font:12px/1.55 Georgia,serif;margin:22px 0 4px;color:#293b32}.vine-note b{font-family:inherit}
+.vine-ui-toggle { position:fixed;z-index:40;right:14px;bottom:14px;border:2px solid #dff197;background:#0b1713;color:#dff197;padding:12px 15px;font:900 8px/1 inherit;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;box-shadow:5px 5px 0 #315638; }
+.vine-page.controls-hidden { padding:0;overflow:hidden }.vine-page.controls-hidden .vine-head{display:none}.vine-page.controls-hidden .vine-console{border:0;box-shadow:none;display:block;min-height:100svh}.vine-page.controls-hidden .vine-stage{min-height:100svh;height:100svh}.vine-page.controls-hidden .vine-controls{display:none}.vine-page.controls-hidden .vine-telemetry{opacity:.5}
+@media (max-width:900px){.vine-head{grid-template-columns:1fr auto}.vine-head>div{grid-column:1/-1;grid-row:2}.vine-head h1{font-size:clamp(68px,21vw,118px)}.vine-seed{grid-column:2;grid-row:1}.vine-console{grid-template-columns:1fr;min-height:0}.vine-stage{min-height:72svh}.vine-controls{max-height:none;border-top:2px solid var(--vine-cream)}.vine-page.controls-hidden .vine-stage{min-height:100svh}.vine-telemetry{right:14px}.vine-stage>p{left:14px;right:auto}}
+@media (max-width:520px){.vine-page{padding:14px 11px 28px}.vine-head p{font-size:14px}.vine-stage{min-height:68svh}.vine-controls{padding:15px}.vine-actions{grid-template-columns:1fr 1fr}.vine-ui-toggle{right:10px;bottom:10px}.vine-page.controls-hidden{padding:0}}
+
 /* Compendium backbone */
 .compendium-index { overflow:hidden; }
 .compendium-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:70px; }

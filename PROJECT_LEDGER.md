@@ -37,7 +37,7 @@ Status vocabulary:
 
 ### Public museum — Major Laboratory Expansion candidate
 
-The approved public release contains thirty-two gallery exhibits:
+The museum checkout contains thirty-four gallery exhibits; Fractal Vines remains private-workbench-only pending hands-on review:
 
 1. Two & Three Bodies
 2. Lava Lamp
@@ -72,6 +72,7 @@ The approved public release contains thirty-two gallery exhibits:
 31. Harmonic Topography
 32. Polyrhythm Playground
 33. Do You Hear the Rain?
+34. Fractal Vines
 
 The Compendium currently contains five linked theory entries:
 
@@ -106,6 +107,7 @@ Other established systems include:
 - **RHYTHM-001 — Done:** Polyrhythm Playground, originally titled Phase Barrel, is a ten-voice audiovisual polyrhythm sculpture with continuously integrated phase, integer-locked or freeform subdivision, optional uniform frequency acceleration, RMS-like trigger heights, phosphor trajectories, radial chirp percussion, Gaussian temporal coincidence, and switchable response mappings for spacing, rotation, geometry breathing, background flare, and axial motion.
 - **RHYTHM-002 — Review:** The same uninterrupted oscillator state can now be viewed as the original Atari-bright vector barrel or as layered luminous pendulums. Pendulum angle is a periodic projection of integrated phase, so switching geometry never resets or teleports a voice; the existing perspective, tilt, spacing, breathing, axial, rotation, envelope, hue, and trail controls acquire meaningful pendulum interpretations. `/gallery/polyrhythm-playground` is canonical while the former Phase Barrel URL redirects safely.
 - **RAIN-001 — Review:** Do You Hear the Rain? is a pointer-playable counterfeit-weather instrument with correlated rain and wind, intermittent noise-derived impacts, weighted bucket/gutter/heater/puddle routing, wet-surface memory, moving cavity pitch, upward plinks and downward plunks, spring and tape feedback, topology glitches, structure-borne rumble, a live spectrograph, six named patches, and a complete 40-control repatching bank. The related first-person field log is preserved verbatim inside **The Machine and the XASER** rather than rewritten as explanatory copy.
+- **VINES-001 — Review:** Fractal Vines grows pointer-plantable spline lineages with probabilistic splitting and leaf termination, variable child counts, saturated logarithmic age-thickening, smooth correlated curvature, live classic-tree-to-stochastic-vine chaos, straight-to-fan-to-radial directional spread, deterministic cuttings, and a horizontally advected coherent wind field with independent parented branch and leaf responses. Five presets and thirty live controls make both orderly recursion and unruly overgrowth reproducible.
 - **GOLF-001 through GOLF-005 — Testing:** Manifold Golf ports the recovered Pygame/OpenGL lineage into a browser laboratory with torus, sphere, Möbius-strip, and Klein-bottle courses; Golf and Pool modes; seam-aware trails and UV maps; equal-mass ball collisions; Gaussian torus/sphere terrain; world-down gravity; and a local normal-field experiment that makes the orientability obstruction visible.
 
 ## Prioritization principles
@@ -528,6 +530,7 @@ This is a human-readable summary of the repository history, not a substitute for
 - **RELEASE-002 — Major Laboratory Expansion.** Brenden approved the complete private-workbench checkpoint for public release after hands-on testing. The release promotes the Compendium QR doorway, Material Phases, Gallery topics and research links, the HELLO WORLD Outernet breach, Respiration Monitor, the rebuilt Hysteretic Kinetics instruments, Harmonic Topography, Polyrhythm Playground (then titled Phase Barrel), and their supporting tests as one named public snapshot. Respiration Monitor's accepted defaults are 35 BPM, 0.18 variability, 9 cm excursion, 0.32 minimum depth, 14 s correlation, receiver gain 15, 0° sensor angle, source/detector orders 2, absorption 0.16, noise 0.02, 4-bit ADC, and 0.02 s lock-in time.
 - **RHYTHM-002 — Layered pendulum geometry and exhibit rename.** Renamed Phase Barrel to **Polyrhythm Playground**, moved its Gallery doorway to the matching canonical route without breaking the former URL, and added a live-selectable layered-pendulum projection. Both geometries consume the exact same continuously integrated phase, hit envelopes, coincidence field, audio triggers, and phosphor history.
 - **RAIN-001 — Counterfeit weather / rain log.** Added Gallery exhibit 33 as a playable room-scale rain and wind synthesis patch with six surface/environment presets, pointer-created leaks, randomized repatching, canvas weather, live audio/spectrograph diagnostics, and focused stochastic-helper tests. Installed Brenden's supplied rain poem, unchanged, as a new field log within **The Machine and the XASER**, with reciprocal links between the lived account and the deliberately inadequate machine weather.
+- **VINES-001 — Fractal Vines.** Added Gallery exhibit 34 as a reproducible generative-botany instrument: pointer-planted spline lineages split into variable child counts, terminate in parented leaves, thicken logarithmically toward a saturation width, and interpolate from straight recursive trees through curving vines to radial brambles. A horizontally advected coherent-noise field independently deforms branches, fluttering leaves, and active leads; five named cuttings and thirty live controls expose the complete growth grammar. This checkpoint is private-workbench-only pending hands-on review.
 
 ## Decision log
 
