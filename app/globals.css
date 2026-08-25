@@ -1850,7 +1850,7 @@ button { font: inherit; }
 }
 
 /* Fractal Vines */
-.vine-entry { background:#0b1b16;color:#d9f29c;overflow:hidden; }
+.vine-entry { position:relative;background:#0b1b16;color:#d9f29c;overflow:hidden; }
 .vine-entry:hover,.vine-entry:focus-visible { background:#10281f; }
 .vine-entry-field { position:absolute;inset:0;pointer-events:none;opacity:.78;background:linear-gradient(180deg,transparent,#0f2d21); }
 .vine-entry-field::before { content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(211,242,171,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(211,242,171,.07) 1px,transparent 1px);background-size:32px 32px; }
@@ -1879,7 +1879,7 @@ button { font: inherit; }
 @media (max-width:520px){.vine-page{padding:14px 11px 28px}.vine-head p{font-size:14px}.vine-stage{min-height:68svh}.vine-controls{padding:15px}.vine-actions{grid-template-columns:1fr 1fr}.vine-ui-toggle{right:10px;bottom:10px}.vine-page.controls-hidden{padding:0}}
 
 /* Phase March */
-.march-entry { background:#160f2b;color:#f6e85a;overflow:hidden; }
+.march-entry { position:relative;background:#160f2b;color:#f6e85a;overflow:hidden; }
 .march-entry:hover,.march-entry:focus-visible{background:#211542}.march-entry>strong,.march-entry>.eyebrow,.march-entry>small{position:relative;z-index:3}.march-entry-field{position:absolute;inset:0;opacity:.9;background:linear-gradient(135deg,#140c29,#25154b 45%,#071b2b)}.march-entry-field i{position:absolute;left:-10%;width:125%;height:32px;border-radius:50%;border:7px solid transparent;filter:saturate(1.45);transform:rotate(-9deg)}.march-entry-field i:nth-child(1){top:12%;border-top-color:#ff4b61}.march-entry-field i:nth-child(2){top:26%;border-top-color:#ffcf40}.march-entry-field i:nth-child(3){top:41%;border-top-color:#87ed68}.march-entry-field i:nth-child(4){top:57%;border-top-color:#4be3e6}.march-entry-field i:nth-child(5){top:73%;border-top-color:#ad5cff}.march-entry-field span{position:absolute;right:17%;top:18%;width:13px;height:13px;background:#fff;border-radius:50%;box-shadow:22px 15px 0 #fff,44px 30px 0 #fff,66px 45px 0 #fff,88px 60px 0 #fff}
 
 .march-page{--march-ink:#101119;--march-paper:#f1edc9;min-height:100svh;background:#110b22;color:var(--march-paper);padding:clamp(18px,3vw,48px)}.march-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(20px,4vw,70px);align-items:start;margin-bottom:clamp(32px,7vh,82px)}.march-head a{color:inherit;text-decoration:none;border-bottom:1px solid;font-size:9px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding-bottom:5px}.march-head>div:nth-child(2){max-width:1000px}.march-head h1{font-size:clamp(80px,13vw,190px);line-height:.69;letter-spacing:-.085em;margin:23px 0 32px;background:linear-gradient(100deg,#ff5b62,#ffd852,#75ec78,#4cdae9,#bd66ff);background-clip:text;color:transparent}.march-head p{font:16px/1.55 Georgia,serif;max-width:660px;color:#d3cceb}.march-law{border:1px solid rgba(241,237,201,.55);padding:13px;min-width:190px}.march-law span{display:block;font-size:7px;font-weight:900;letter-spacing:.15em;margin-bottom:9px}.march-law b{font:14px Georgia,serif;color:#f3e55a}
