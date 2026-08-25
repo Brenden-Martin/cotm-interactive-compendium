@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type Settings = { bpm:number; variability:number; depth:number; floor:number; correlation:number; range:number; angle:number; sourceOrder:number; detectorOrder:number; absorption:number; noise:number; bits:number; lock:number };
-const defaults: Settings = { bpm:14, variability:.18, depth:9, floor:.32, correlation:14, range:52, angle:0, sourceOrder:2, detectorOrder:2, absorption:.16, noise:.018, bits:12, lock:.28 };
+const defaults: Settings = { bpm:35, variability:.18, depth:9, floor:.32, correlation:14, range:15, angle:0, sourceOrder:2, detectorOrder:2, absorption:.16, noise:.02, bits:4, lock:.02 };
 const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 
 function Slider({label,value,min,max,step,onChange,unit=""}:{label:string;value:number;min:number;max:number;step:number;onChange:(v:number)=>void;unit?:string}) {
