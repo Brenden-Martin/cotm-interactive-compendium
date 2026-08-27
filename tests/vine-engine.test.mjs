@@ -71,3 +71,17 @@ test("randomized lineages have an explicit fair flower gate", () => {
   assert.equal(vines.randomizedFlowersEnabled(() => .4999), false);
   assert.equal(vines.randomizedFlowersEnabled(() => .5), true);
 });
+
+test("ordinary vines and bouquets use distinct lineage ceilings", () => {
+  assert.equal(vines.DEFAULT_LINEAGE_DEPTH, 300);
+  assert.equal(vines.BOUQUET_LINEAGE_DEPTH, 100);
+  assert.equal(vines.resolvedLineageDepth(900, null), 900);
+  assert.equal(vines.resolvedLineageDepth(900, vines.BOUQUET_LINEAGE_DEPTH), 100);
+  assert.equal(vines.resolvedLineageDepth(80, vines.BOUQUET_LINEAGE_DEPTH), 80);
+});
+
+test("leaves and flowers share one 500-object growth ceiling", () => {
+  assert.equal(vines.MAX_ORNAMENTS, 500);
+  assert.equal(vines.ornamentLimitReached(499), false);
+  assert.equal(vines.ornamentLimitReached(500), true);
+});

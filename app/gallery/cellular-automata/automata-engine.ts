@@ -2,11 +2,22 @@ export type CollisionMode = "parity" | "all" | "cycle";
 export type CellState = { color: number; ready: boolean };
 export type SpawnRule = { dx: number; dy: number; action: number };
 export type StepResult = { cells: Map<string, CellState>; births: number; deaths: number; collisions: number };
+export type FieldScale = 1 | 2 | 4 | 8 | 16 | 32;
 
 export const EMPTY_RULE = -1;
 export const ANNIHILATE_RULE = -2;
+export const FIELD_SCALES: FieldScale[] = [1, 2, 4, 8, 16, 32];
+export const BASE_FIELD = { columns: 101, rows: 73 } as const;
 
 export const cellKey = (x: number, y: number) => `${x},${y}`;
+
+export function fieldDimensions(scale: FieldScale) {
+  return { columns: BASE_FIELD.columns * scale, rows: BASE_FIELD.rows * scale };
+}
+
+export function centeredSeed(columns: number, rows: number, color = 0) {
+  return new Map<string, CellState>([[cellKey(Math.floor(columns / 2), Math.floor(rows / 2)), { color, ready: true }]]);
+}
 
 export function parseCellKey(key: string) {
   const [x, y] = key.split(",").map(Number);

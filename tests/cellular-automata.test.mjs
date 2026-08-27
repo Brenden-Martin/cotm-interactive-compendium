@@ -62,3 +62,15 @@ test("symmetric seed helpers preserve the requested structures", () => {
   assert.equal(automata.symmetricSeeds("fourfold", 101, 73).size, 4);
   assert.equal(automata.symmetricSeeds("ring", 101, 73).size, 12);
 });
+
+test("field scales preserve the original lattice and expand through 32x", () => {
+  assert.deepEqual(automata.FIELD_SCALES, [1, 2, 4, 8, 16, 32]);
+  assert.deepEqual(automata.fieldDimensions(1), { columns: 101, rows: 73 });
+  assert.deepEqual(automata.fieldDimensions(32), { columns: 3232, rows: 2336 });
+});
+
+test("direction-agnostic rules can start from the exact field center", () => {
+  const { columns, rows } = automata.fieldDimensions(16);
+  const seeds = automata.centeredSeed(columns, rows, 3);
+  assert.deepEqual([...seeds.entries()], [[automata.cellKey(Math.floor(columns / 2), Math.floor(rows / 2)), { color: 3, ready: true }]]);
+});

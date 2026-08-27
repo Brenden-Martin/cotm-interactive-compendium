@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
+  BOUQUET_LINEAGE_DEPTH,
+  DEFAULT_LINEAGE_DEPTH,
+  MAX_ORNAMENTS,
   bloomProgress,
   childHeading,
   clamp,
@@ -10,6 +13,7 @@ import {
   logarithmicThickness,
   mulberry32,
   randomizedFlowersEnabled,
+  resolvedLineageDepth,
   sampleChildCount,
   shouldDecimatePrevious,
   windVector,
@@ -86,11 +90,11 @@ type VineGenome = {
 type VineNode = { id: number; parent: number; x: number; y: number; heading: number; birth: number; depth: number; generation: number; genome: number; createdFrame: number; retired: boolean };
 type Tip = { node: number; heading: number; curvature: number; run: number; generation: number; genome: number };
 type Ornament = { node: number; size: number; angle: number; birth: number; kind: "leaf" | "flower" };
-type Forest = { nodes: VineNode[]; visibleNodeIds: Set<number>; tips: Tip[]; ornaments: Ornament[]; roots: number[]; genomes: VineGenome[]; protectedNodes: Set<number>; random: RandomSource; seed: number; frame: number };
+type Forest = { nodes: VineNode[]; visibleNodeIds: Set<number>; tips: Tip[]; ornaments: Ornament[]; roots: number[]; genomes: VineGenome[]; protectedNodes: Set<number>; random: RandomSource; seed: number; frame: number; depthLimit: number | null };
 type SliderSpec = { key: keyof Settings; label: string; min: number; max: number; step: number; suffix?: string };
 
 const DEFAULTS: Settings = {
-  growthRate: 8.5, segmentLength: 1.15, lengthVariance: .24, maximumDepth: 900, decimationInterval: 3,
+  growthRate: 8.5, segmentLength: 1.15, lengthVariance: .24, maximumDepth: DEFAULT_LINEAGE_DEPTH, decimationInterval: 3,
   splitChance: .075, averageChildren: 2, childVariance: .35, minimumRun: 9, terminationChance: .018,
   directionalSpread: .36, angleVariance: .42, upwardBias: .42,
   chaos: .48, curvatureMemory: .88, curvatureVariance: .27,
@@ -186,7 +190,7 @@ const GEOMETRIC_GROUPS: Array<{ title: string; controls: SliderSpec[] }> = [
 ];
 
 const baseGenome = (): VineGenome => ({ id: 0, weight: 1, split: 1, children: 0, termination: 1, spread: 0, angle: 1, chaos: 1, curve: 1, length: 1, leaves: 1, flowers: 1, size: 1, stemHue: 0, leafHue: 0, flowerHue: 0 });
-const makeForest = (seed: number): Forest => ({ nodes: [], visibleNodeIds: new Set(), tips: [], ornaments: [], roots: [], genomes: [baseGenome()], protectedNodes: new Set(), random: mulberry32(seed), seed, frame: 0 });
+const makeForest = (seed: number, depthLimit: number | null = null): Forest => ({ nodes: [], visibleNodeIds: new Set(), tips: [], ornaments: [], roots: [], genomes: [baseGenome()], protectedNodes: new Set(), random: mulberry32(seed), seed, frame: 0, depthLimit });
 
 function VineSlider({ spec, value, onChange }: { spec: SliderSpec; value: number; onChange: (value: number) => void }) {
   const digits = spec.step < .01 ? 3 : spec.step < 1 ? 2 : 0;
@@ -269,9 +273,9 @@ export function FractalVines() {
 
   const plantBouquet = () => {
     const bouquetBase = mutationBasis ?? settings;
-    const forest = makeForest(seed);
+    const forest = makeForest(seed, BOUQUET_LINEAGE_DEPTH);
     const flowersEnabled = randomizedFlowersEnabled(forest.random);
-    const bouquetSettings = { ...bouquetBase, flowerChance: flowersEnabled ? bouquetBase.flowerChance : 0 };
+    const bouquetSettings = { ...bouquetBase, maximumDepth: BOUQUET_LINEAGE_DEPTH, flowerChance: flowersEnabled ? bouquetBase.flowerChance : 0 };
     settingsRef.current = bouquetSettings;
     setSettings(bouquetSettings);
     const signed = (amount: number) => (forest.random() + forest.random() - 1) * amount;
@@ -339,12 +343,14 @@ export function FractalVines() {
     addEventListener("resize", resize);
 
     const sproutOrnament = (forest: Forest, node: number, size: number, angle: number, s: Settings) => {
+      if (forest.ornaments.length >= MAX_ORNAMENTS) return;
       const genome = forest.genomes[forest.nodes[node]?.genome ?? 0] ?? forest.genomes[0];
       const flower = forest.random() < clamp(s.flowerChance * genome.flowers, 0, 1);
       const sharesLeaf = !flower || forest.random() < s.flowerOnLeafChance;
       if (sharesLeaf) forest.ornaments.push({ node, size, angle, birth: timeRef.current, kind: "leaf" });
-      if (flower) forest.ornaments.push({ node, size: size * (.78 + forest.random() * .3), angle: angle + (forest.random() * 2 - 1) * .45, birth: timeRef.current, kind: "flower" });
-      if (sharesLeaf || flower) forest.protectedNodes.add(node);
+      const flowerAdded = flower && forest.ornaments.length < MAX_ORNAMENTS;
+      if (flowerAdded) forest.ornaments.push({ node, size: size * (.78 + forest.random() * .3), angle: angle + (forest.random() * 2 - 1) * .45, birth: timeRef.current, kind: "flower" });
+      if (sharesLeaf || flowerAdded) forest.protectedNodes.add(node);
     };
 
     const terminate = (tip: Tip, terminal = true) => {
@@ -359,11 +365,16 @@ export function FractalVines() {
     const grow = () => {
       const forest = forestRef.current;
       const s = settingsRef.current;
-      if (!forest.tips.length || forest.nodes.length >= 60000) return;
+      if (!forest.tips.length || forest.nodes.length >= 60000 || forest.ornaments.length >= MAX_ORNAMENTS) {
+        if (forest.ornaments.length >= MAX_ORNAMENTS) forest.tips = [];
+        return;
+      }
       const nextTips: Tip[] = [];
       for (const tip of forest.tips) {
+        if (forest.ornaments.length >= MAX_ORNAMENTS) break;
         const parent = forest.nodes[tip.node];
-        if (parent.depth >= s.maximumDepth || forest.nodes.length >= 60000) { terminate(tip, true); continue; }
+        const maximumDepth = resolvedLineageDepth(s.maximumDepth, forest.depthLimit);
+        if (parent.depth >= maximumDepth || forest.nodes.length >= 60000) { terminate(tip, true); continue; }
         const genome = forest.genomes[tip.genome] ?? forest.genomes[0];
         const randomTurn = (forest.random() * 2 - 1) * s.curvatureVariance * genome.curve * s.chaos * genome.chaos;
         tip.curvature = tip.curvature * s.curvatureMemory + randomTurn * (1 - s.curvatureMemory + .025);
@@ -407,7 +418,7 @@ export function FractalVines() {
           nextTips.push({ ...tip, node: id, run });
         }
       }
-      forest.tips = nextTips;
+      forest.tips = forest.ornaments.length >= MAX_ORNAMENTS ? [] : nextTips;
     };
 
     const displaced = (node: VineNode, now: number) => {

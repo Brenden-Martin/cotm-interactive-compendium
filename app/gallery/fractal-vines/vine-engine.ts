@@ -1,8 +1,20 @@
 export type RandomSource = () => number;
 export type GuidanceSource = { x: number; y: number; radius: number; polarity: 1 | -1 };
 
+export const DEFAULT_LINEAGE_DEPTH = 300;
+export const BOUQUET_LINEAGE_DEPTH = 100;
+export const MAX_ORNAMENTS = 500;
+
 export const clamp = (value: number, minimum: number, maximum: number) =>
   Math.max(minimum, Math.min(maximum, value));
+
+export function resolvedLineageDepth(requestedDepth: number, hardCap: number | null) {
+  return hardCap === null ? requestedDepth : Math.min(requestedDepth, hardCap);
+}
+
+export function ornamentLimitReached(ornamentCount: number) {
+  return ornamentCount >= MAX_ORNAMENTS;
+}
 
 export function mulberry32(seed: number): RandomSource {
   let state = seed >>> 0;
